@@ -17,27 +17,35 @@ var (
 	create      bool
 )
 
-var genarateCMD = &cobra.Command{
+var generateCMD = &cobra.Command{
 	Use:   "genarate",
 	Short: "Start generating reposiory",
-	Run:   genarate,
+	Run:   generate,
 }
 
 func init() {
-	genarateCMD.Flags().StringVarP(&source, "source", "s", "", "Path of struct file")
-	genarateCMD.MarkFlagRequired("source")
-	genarateCMD.Flags().StringVarP(&destination, "destination", "d", "", "Path of destination to save repository file")
-	genarateCMD.MarkFlagRequired("destination")
+	generateCMD.Flags().StringVarP(&source, "source", "s", "", "Path of struct file")
+	generateCMD.Flags().StringVarP(&destination, "destination", "d", "", "Path of destination to save repository file")
+
+	err := generateCMD.MarkFlagRequired("source")
+	if err != nil {
+		panic(err)
+	}
+
+	err = generateCMD.MarkFlagRequired("destination")
+	if err != nil {
+		panic(err)
+	}
 
 	// TODO: add flag for table name
 
-	genarateCMD.Flags().StringVarP(&packageName, "package", "p", "", "Name of repository package. default is 'repository'")
-	genarateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
-	genarateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ (var1,var2), (var2,var4), var3 ]")
-	genarateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
+	generateCMD.Flags().StringVarP(&packageName, "package", "p", "", "Name of repository package. default is 'repository'")
+	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
+	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ (var1,var2), (var2,var4), var3 ]")
+	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
 }
 
-func genarate(cmd *cobra.Command, args []string) {
+func generate(cmd *cobra.Command, args []string) {
 	if packageName == "" {
 		packageName = "repository"
 	}
