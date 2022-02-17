@@ -21,5 +21,5 @@ func Execute() {
 }
 
 func init() {
-	rootCMD.AddCommand(genarateCMD)
+	rootCMD.AddCommand(generateCMD)
 }

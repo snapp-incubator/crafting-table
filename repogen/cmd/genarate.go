@@ -1,18 +1,21 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"errors"
+	"strings"
 
-type variables struct {
-	Name []string
-}
+	"github.com/n25a/repogen/repogen/generator"
+
+	"github.com/spf13/cobra"
+)
 
 var (
 	source      string
 	destination string
 	packageName string
-	getVars     []variables
+	getVars     *[]generator.Variables
 	get         string
-	updateVars  []variables
+	updateVars  *[]generator.Variables
 	update      string
 	create      bool
 )
@@ -45,6 +48,60 @@ func init() {
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
 }
 
+func parseVariables(vars string) *[]generator.Variables {
+	newVar := vars[0 : len(vars)-2] // remove "[" and "]"
+
+	varSlice := strings.Split(newVar, ",")
+
+	result := make([]generator.Variables, 0)
+	for _, varTmp := range varSlice {
+		if string(varTmp[0]) == "(" && string(varTmp[len(varTmp)-1]) == ")" {
+			varSliceTmp := strings.Split(varTmp, ",")
+			result = append(result, generator.Variables{Name: varSliceTmp})
+			continue
+		}
+
+		result = append(result, generator.Variables{Name: []string{varTmp}})
+	}
+
+	return &result
+}
+
+func validateFlag(flag string) error {
+	flag = strings.Replace(flag, " ", "", -1)
+	if string(flag[0]) != "[" && string(flag[len(flag)-1]) != "]" {
+		return errors.New("You must set get variables in format of [ (var1,var2), (var2,var4), var3 ]")
+	}
+
+	openPrantheses := false
+	for index, char := range flag {
+		if openPrantheses && char == '(' {
+			return errors.New("Open parentheses are not closed")
+		}
+
+		if !openPrantheses && char == ')' {
+			return errors.New("Close parentheses are not opened")
+		}
+
+		if openPrantheses && char == ')' && flag[index-1] == ',' {
+			return errors.New("Close parentheses must not be followed by comma")
+		}
+
+		if openPrantheses && char == ')' && flag[index+1] != ']' && flag[index+1] != ',' {
+			return errors.New("Close parentheses must be followed by comma")
+		}
+
+		if char == '(' {
+			openPrantheses = true
+		}
+
+		if char == ')' {
+			openPrantheses = false
+		}
+	}
+	return nil
+}
+
 func generate(cmd *cobra.Command, args []string) {
 	if packageName == "" {
 		packageName = "repository"
@@ -55,21 +112,20 @@ func generate(cmd *cobra.Command, args []string) {
 	}
 
 	if get != "" {
-		if string(get[0]) != "[" && string(get[len(get)-1]) != "]" {
-			panic("You must set get variables in format of [ (var1,var2), (var2,var4), var3 ]")
+		if err := validateFlag(get); err != nil {
+			panic(err)
 		}
 		getVars = parseVariables(get)
 	}
 
 	if update != "" {
-		if string(update[0]) != "[" && string(update[len(update)-1]) != "]" {
-			panic("You must set get variables in format of [ (var1,var2), (var2,var4), var3 ]")
+		if err := validateFlag(update); err != nil {
+			panic(err)
 		}
 		updateVars = parseVariables(update)
 	}
 
-}
-
-func parseVariables(vars string) []variables {
-	// TODO : create parser for variables
+	//if err := generator.GenerateRepository(source, destination, packageName, getVars, updateVars, create); err != nil {
+	//	panic(err)
+	//}
 }
