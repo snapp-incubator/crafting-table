@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/n25a/repogen/repogen/generator"
+	"github.com/n25a/repogen/internal/generator"
 
 	"github.com/spf13/cobra"
 )
@@ -21,8 +21,8 @@ var (
 )
 
 var generateCMD = &cobra.Command{
-	Use:   "genarate",
-	Short: "Start generating reposiory",
+	Use:   "generate",
+	Short: "Start generating repository",
 	Run:   generate,
 }
 
@@ -49,14 +49,45 @@ func init() {
 }
 
 func parseVariables(vars string) *[]generator.Variables {
-	newVar := vars[0 : len(vars)-2] // remove "[" and "]"
+	newVar := vars[1 : len(vars)-1] // remove "[" and "]"
 
-	varSlice := strings.Split(newVar, ",")
+	var varSlice []string
+	var temp string
+
+	for _, c := range newVar {
+
+		if temp != "" && string(temp[0]) == "(" && string(c) == ")" {
+			varSlice = append(varSlice, temp[1:])
+			temp = ""
+			continue
+		}
+
+		if temp != "" && string(temp[0]) == "(" && string(c) != ")" {
+			temp += string(c)
+			continue
+		}
+
+		if temp != "" && string(temp[0]) != "(" && string(c) == "," {
+			varSlice = append(varSlice, temp)
+			temp = ""
+			continue
+		}
+
+		if (temp != "" && string(temp[0]) != "(" && string(c) != ",") || (temp == "" && string(c) != ",") {
+			temp += string(c)
+			continue
+		}
+
+	}
+
+	if temp != "" {
+		varSlice = append(varSlice, temp)
+	}
 
 	result := make([]generator.Variables, 0)
 	for _, varTmp := range varSlice {
 		if string(varTmp[0]) == "(" && string(varTmp[len(varTmp)-1]) == ")" {
-			varSliceTmp := strings.Split(varTmp, ",")
+			varSliceTmp := strings.Split(varTmp[1:len(varTmp)-2], ",")
 			result = append(result, generator.Variables{Name: varSliceTmp})
 			continue
 		}
@@ -116,6 +147,9 @@ func generate(cmd *cobra.Command, args []string) {
 	}
 
 	if get != "" {
+		for strings.Contains(get, " ") {
+			get = strings.Replace(get, " ", "", -1)
+		}
 		get = strings.Replace(get, " ", "", -1)
 		if err := validateFlag(get); err != nil {
 			panic(err)
@@ -124,6 +158,9 @@ func generate(cmd *cobra.Command, args []string) {
 	}
 
 	if update != "" {
+		for strings.Contains(update, " ") {
+			update = strings.Replace(update, " ", "", -1)
+		}
 		update = strings.Replace(update, " ", "", -1)
 		if err := validateFlag(update); err != nil {
 			panic(err)
