@@ -14,10 +14,13 @@ type field struct {
 }
 
 type Structure struct {
-	PackageName string
-	DBName      string
-	Name        string
-	Fields      []field
+	PackageName       string
+	DBName            string
+	Name              string
+	Fields            []field
+	FieldNameToType   map[string]string
+	FieldDBNameToName map[string]string
+	FieldNameToDBName map[string]string
 }
 
 var ErrInvalidFileName = errors.New("invalid file name")
@@ -95,6 +98,10 @@ func bindStruct(src string) (*Structure, error) {
 			structField.DBName = tmp[1][index+2 : len(tmp[1])-1]
 
 			structure.Fields = append(structure.Fields, structField)
+
+			structure.FieldDBNameToName[structField.DBName] = structField.Name
+			structure.FieldNameToDBName[structField.Name] = structField.DBName
+			structure.FieldNameToType[structField.Name] = structField.Type
 		}
 	}
 

@@ -28,7 +28,7 @@ func GenerateRepository(source, destination, packageName string, getVars, update
 	var function string
 
 	if create {
-		createSyntax, function, err = createFunctionRepository(filename, structure)
+		createSyntax, function, err = createFunctionRepository(structure)
 		if err != nil {
 			log.Println("Error in createFunctionRepository: ", err)
 			return err
@@ -36,15 +36,15 @@ func GenerateRepository(source, destination, packageName string, getVars, update
 		functions = append(functions, function)
 	}
 
-	//if getVars != nil {
-	//	getSyntax,  err = getFunctionCreator(fileContent, getVars)
-	//	if err != nil {
-	//		log.Println("Error in getFunctionCreator: ", err)
-	//		return err
-	//	}
-	//functions = append(functions, funcs...)
-	//}
-	//
+	if getVars != nil {
+		getSyntax, function, err = getFunctionCreator(getVars)
+		if err != nil {
+			log.Println("Error in getFunctionCreator: ", err)
+			return err
+		}
+		functions = append(functions, function...)
+	}
+
 	//if updateVars != nil {
 	//	updateSyntax,err = updateFunctionCreator(fileContent, updateVars)
 	//	if err != nil {
@@ -60,13 +60,13 @@ func GenerateRepository(source, destination, packageName string, getVars, update
 	//	return err
 	//}
 
-	fileContent := createTemplate(fileName, packageName, interfaceSyntax, structure)
+	//fileContent := createTemplate(fileName, packageName, interfaceSyntax, structure)
 
-	err = writeFile(fileContent, destination)
-	if err != nil {
-		log.Println("Error in writeFile: ", err)
-		return err
-	}
+	//err = writeFile(fileContent, destination)
+	//if err != nil {
+	//	log.Println("Error in writeFile: ", err)
+	//	return err
+	//}
 
 	//err = linter(distanationFileName)
 	//if err != nil {
