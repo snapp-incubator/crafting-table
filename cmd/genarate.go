@@ -86,8 +86,8 @@ func parseVariables(vars string) *[]generator.Variables {
 
 	result := make([]generator.Variables, 0)
 	for _, varTmp := range varSlice {
-		if string(varTmp[0]) == "(" && string(varTmp[len(varTmp)-1]) == ")" {
-			varSliceTmp := strings.Split(varTmp[1:len(varTmp)-2], ",")
+		if strings.Contains(varTmp, ",") {
+			varSliceTmp := strings.Split(varTmp, ",")
 			result = append(result, generator.Variables{Name: varSliceTmp})
 			continue
 		}
