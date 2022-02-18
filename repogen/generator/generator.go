@@ -7,34 +7,26 @@ type Variables struct {
 }
 
 func GenerateRepository(source, destination, packageName string, getVars, updateVars *[]Variables, create bool) error {
-	filename := "repository.go"
-	err := copyFile(source)
+	fileName, err := getFileName(source)
 	if err != nil {
-		log.Println("Error in copyfile: ", err)
+		log.Println("Error in getFileName: ", err)
 		return err
 	}
 
-	//structName, err := findStructName(filename)
+	structure, err := bindStruct(source)
+	if err != nil {
+		log.Println("Error in bindStruct: ", err)
+		return err
+	}
+
+	//interfaceSyntax, err := interfaceSyntaxCreator(structure, getVars, updateVars, create)
 	//if err != nil {
-	//	log.Println("Error in findStructName: ", err)
+	//	log.Println("Error in interfaceSyntaxCreator: ", err)
 	//	return err
 	//}
-	//
-	//instance, err := createInstance(structName, filename)
-	//if err != nil {
-	//	log.Println("Error in createInstance: ", err)
-	//	return err
-	//}
-	//structure, err := bindStruct(instance)
-	//if err != nil {
-	//	log.Println("Error in bindStruct: ", err)
-	//	return err
-	//}
-	//fileContent, err = createTemplate(filename, packageName)
-	//if err != nil {
-	//	log.Println("Error in createTemplate: ", err)
-	//	return err
-	//}
+
+	fileContent := createTemplate(fileName, packageName, interfaceSyntax, structure)
+
 	//if create {
 	//	err = createFunctionRepository(fileContent, filename, structure)
 	//	if err != nil {
@@ -59,18 +51,13 @@ func GenerateRepository(source, destination, packageName string, getVars, update
 	//	}
 	//}
 	//
-	//err = removeFile(filename)
-	//if err != nil {
-	//	log.Println("Error in removeFile: ", err)
-	//	return err
-	//}
-	//
-	//distanationFileName := destination + filename
-	//err = writeFile(fileContent, distanationFileName)
-	//if err != nil {
-	//	log.Println("Error in writeFile: ", err)
-	//	return err
-	//}
+
+	err = writeFile(fileContent, destination)
+	if err != nil {
+		log.Println("Error in writeFile: ", err)
+		return err
+	}
+
 	//err = linter(distanationFileName)
 	//if err != nil {
 	//	log.Println("Error in linter: ", err)

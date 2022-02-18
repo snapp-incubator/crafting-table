@@ -68,7 +68,6 @@ func parseVariables(vars string) *[]generator.Variables {
 }
 
 func validateFlag(flag string) error {
-	flag = strings.Replace(flag, " ", "", -1)
 	if string(flag[0]) != "[" && string(flag[len(flag)-1]) != "]" {
 		return errors.New("You must set get variables in format of [ (var1,var2), (var2,var4), var3 ]")
 	}
@@ -105,13 +104,19 @@ func validateFlag(flag string) error {
 func generate(cmd *cobra.Command, args []string) {
 	if packageName == "" {
 		packageName = "repository"
+	} else {
+		packageName = strings.Replace(packageName, " ", "", -1)
 	}
+
+	source = strings.Replace(source, " ", "", -1)
+	destination = strings.Replace(destination, " ", "", -1)
 
 	if get == "" && update == "" && !create {
 		panic("You must set at least one flag for get, update or create")
 	}
 
 	if get != "" {
+		get = strings.Replace(get, " ", "", -1)
 		if err := validateFlag(get); err != nil {
 			panic(err)
 		}
@@ -119,13 +124,14 @@ func generate(cmd *cobra.Command, args []string) {
 	}
 
 	if update != "" {
+		update = strings.Replace(update, " ", "", -1)
 		if err := validateFlag(update); err != nil {
 			panic(err)
 		}
 		updateVars = parseVariables(update)
 	}
 
-	//if err := generator.GenerateRepository(source, destination, packageName, getVars, updateVars, create); err != nil {
-	//	panic(err)
-	//}
+	if err := generator.GenerateRepository(source, destination, packageName, getVars, updateVars, create); err != nil {
+		panic(err)
+	}
 }
