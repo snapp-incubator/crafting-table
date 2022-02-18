@@ -5,16 +5,12 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/iancoleman/strcase"
 )
 
 var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
-
-func toSnakeCase(str string) string {
-	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
-	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
-	return strings.ToLower(snake)
-}
 
 func createTemplate(filename, packageName, interfaceSyntax string, structure Structure) string {
 	return fmt.Sprintf(
@@ -44,7 +40,7 @@ func NewMySQL%s(db *sqlx.DB) %s {
 `,
 		structure.PackageName,
 		structure.Name,
-		strings.Replace(toSnakeCase(structure.Name), "_", " ", -1),
+		strings.Replace(strcase.ToSnake(structure.Name), "_", " ", -1),
 		structure.Name,
 		structure.Name,
 		structure.Name,
@@ -67,4 +63,34 @@ func writeFile(content string, dst string) error {
 	}
 
 	return nil
+}
+
+func createFunctionRepository(structure Structure) (syntax string, funcDeclare string, err error) {
+	syntax = fmt.Sprintf(
+		`
+func (r *mysql%s) Create(ctx context.Context, %s *%s.%s) error {
+	_, err := r.db.NamedExecContext(ctx, "INSERT INTO %s (" +
+`+
+			structure.GetDBFields("")+
+			") VALUES ("+
+			structure.GetDBFields(":")+
+			"), %s)"+
+			`
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+`, structure.Name,
+		strcase.ToCamel(structure.Name),
+		structure.PackageName,
+		structure.Name,
+		strcase.ToSnake(structure.Name),
+		strcase.ToCamel(structure.Name),
+	)
+
+	return syntax, fmt.Sprintf(
+		"Create(ctx context.Context, %s *%s.%s) error {",
+		strcase.ToCamel(structure.Name), structure.PackageName, structure.Name), nil
 }

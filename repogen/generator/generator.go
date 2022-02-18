@@ -6,6 +6,11 @@ type Variables struct {
 	Name []string
 }
 
+var createSyntax = ""
+var updateSyntax = ""
+var getSyntax = ""
+var functions = []string{}
+
 func GenerateRepository(source, destination, packageName string, getVars, updateVars *[]Variables, create bool) error {
 	fileName, err := getFileName(source)
 	if err != nil {
@@ -19,6 +24,36 @@ func GenerateRepository(source, destination, packageName string, getVars, update
 		return err
 	}
 
+	var functions = []string{}
+	var function string
+
+	if create {
+		createSyntax, function, err = createFunctionRepository(filename, structure)
+		if err != nil {
+			log.Println("Error in createFunctionRepository: ", err)
+			return err
+		}
+		functions = append(functions, function)
+	}
+
+	//if getVars != nil {
+	//	getSyntax,  err = getFunctionCreator(fileContent, getVars)
+	//	if err != nil {
+	//		log.Println("Error in getFunctionCreator: ", err)
+	//		return err
+	//	}
+	//functions = append(functions, funcs...)
+	//}
+	//
+	//if updateVars != nil {
+	//	updateSyntax,err = updateFunctionCreator(fileContent, updateVars)
+	//	if err != nil {
+	//		log.Println("Error in updateFunctionCreator: ", err)
+	//		return err
+	//	}
+	//functions = append(functions, funcs...)
+	//}
+	//
 	//interfaceSyntax, err := interfaceSyntaxCreator(structure, getVars, updateVars, create)
 	//if err != nil {
 	//	log.Println("Error in interfaceSyntaxCreator: ", err)
@@ -26,31 +61,6 @@ func GenerateRepository(source, destination, packageName string, getVars, update
 	//}
 
 	fileContent := createTemplate(fileName, packageName, interfaceSyntax, structure)
-
-	//if create {
-	//	err = createFunctionRepository(fileContent, filename, structure)
-	//	if err != nil {
-	//		log.Println("Error in createFunctionRepository: ", err)
-	//		return err
-	//	}
-	//}
-	//
-	//if getVars != nil {
-	//	err = getFunctionCreator(fileContent, getVars)
-	//	if err != nil {
-	//		log.Println("Error in getFunctionCreator: ", err)
-	//		return err
-	//	}
-	//}
-	//
-	//if updateVars != nil {
-	//	err = updateFunctionCreator(fileContent, updateVars)
-	//	if err != nil {
-	//		log.Println("Error in updateFunctionCreator: ", err)
-	//		return err
-	//	}
-	//}
-	//
 
 	err = writeFile(fileContent, destination)
 	if err != nil {

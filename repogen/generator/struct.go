@@ -104,3 +104,15 @@ func bindStruct(src string) (*Structure, error) {
 
 	return &structure, nil
 }
+
+func (s *Structure) GetDBFields(prefix string) string {
+	result := "\""
+	for _, field := range s.Fields {
+		if len(result) > 80 {
+			result = result + "\"\n\""
+		}
+		result += prefix + field.DBName + ", "
+	}
+
+	return result[:len(result)-2] + "\""
+}
