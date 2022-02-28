@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"log"
 	"regexp"
 	"strings"
 
@@ -59,22 +60,51 @@ func parseVariables(vars string) *[]generator.Variables {
 }
 
 func parseUpdateVariables(vars string) *[]generator.UpdateVariables {
-	regex := regexp.MustCompile(`^\[\((([a-zA-Z]+[0-9]*,)*([a-zA-Z]+[0-9]*)?)\),\((([a-zA-Z]+[0-9]*,)*([a-zA-Z]+[0-9]*)?)\)\]$`)
-	arrays := regex.FindAllString(vars, -1)
+	cleanFlag := vars
+	for strings.Contains(cleanFlag, "  ") {
+		cleanFlag = strings.Replace(vars, "  ", " ", -1)
+	}
+	cleanFlag = strings.Replace(vars, " ", "", -1)
 
-	firstParenthesesRegex := regexp.MustCompile(`^\((([a-zA-Z]+[0-9]*,)*([a-zA-Z]+[0-9]*)?)\),$`)
-	secondParenthesesRegex := regexp.MustCompile(`^\((([a-zA-Z]+[0-9]*,)*([a-zA-Z]+[0-9]*)?)\)$`)
-	variablesRegex := regexp.MustCompile(`^[a-zA-Z]+[0-9]*$`)
+	regex := regexp.MustCompile(`\[\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\),\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\)\]`)
+	matches := regex.FindAllString(cleanFlag, -1)
+
+	arrays := make([]string, 0)
+	tmp := ""
+	for _, m := range matches {
+		if strings.Contains(m, "]") {
+			tmp += m
+			arrays = append(arrays, tmp)
+			tmp = ""
+			continue
+		}
+		tmp += m
+	}
+
+	firstParenthesesRegex := regexp.MustCompile(`\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)+|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\),`)
+	secondParenthesesRegex := regexp.MustCompile(`\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)+|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\)`)
+	//variablesRegex := regexp.MustCompile(`^[a-zA-Z]+[0-9]*$`)
 	result := make([]generator.UpdateVariables, 0)
 	for _, item := range arrays {
-		byVariables := firstParenthesesRegex.FindString(item)
-		filedVariables := secondParenthesesRegex.FindString(item)
-
-		itemUpdateVariables := generator.UpdateVariables{
-			By:     variablesRegex.FindAllString(byVariables, -1),
-			Fields: variablesRegex.FindAllString(filedVariables, 1),
+		byVariablesTmp := firstParenthesesRegex.FindAllString(item, -1)
+		byVariables := ""
+		for _, v := range byVariablesTmp {
+			byVariables += v
 		}
-		result = append(result, itemUpdateVariables)
+		byVariables = byVariables[:len(byVariables)-1]
+
+		filedVariablesTmp := secondParenthesesRegex.FindAllString(item, -1)
+		filedVariables := ""
+		for _, v := range filedVariablesTmp {
+			filedVariables += v
+		}
+		log.Fatal(byVariables, ":::::", filedVariablesTmp)
+		//itemUpdateVariables := generator.UpdateVariables{
+		//	By:     variablesRegex.FindAllString(byVariables, -1),
+		//	Fields: variablesRegex.FindAllString(filedVariables, 1),
+		//}
+		//_ = fmt.Sprintf("%+v", itemUpdateVariables)
+		//result = append(result, itemUpdateVariables)
 	}
 
 	return &result

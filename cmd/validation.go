@@ -49,7 +49,7 @@ func validateUpdateFlag(flag string) error {
 	}
 	cleanFlag = strings.Replace(flag, " ", "", -1)
 
-	regex := `^\[(\[\((([a-zA-Z]+[0-9]*,)*([a-zA-Z]+[0-9]*)?)\)\,\((([a-zA-Z]+[0-9]*,)*([a-zA-Z]+[0-9]*)?)\)\]\,)+(\[\((([a-zA-Z]+[0-9]*,)*([a-zA-Z]+[0-9]*)?)\)\,\((([a-zA-Z]+[0-9]*,)*([a-zA-Z]+[0-9]*)?)\)\])?\]$`
+	regex := `^\[(\[\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\),\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\)\],)+|(\[\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\),\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\)\])+\]$`
 	found, err := regexp.MatchString(regex, cleanFlag)
 
 	if err != nil {

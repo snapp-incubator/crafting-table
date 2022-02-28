@@ -67,11 +67,11 @@ func GenerateRepository(source, destination, packageName string, getVars *[]Vari
 		return err
 	}
 
-	err = linter(destination)
-	if err != nil {
-		log.Println("Error in linter: ", err)
-		return err
-	}
+	//err = linter(destination)
+	//if err != nil {
+	//	log.Println("Error in linter: ", err)
+	//	return err
+	//}
 
 	return nil
 }

@@ -177,7 +177,7 @@ func (r *mysql%s) Update(ctx context.Context, %s %s, %s %s.%s) (int64, error) {
 	%s.%s = %s
 
 	result, err := r.db.NamedExecContext(ctx, "UPDATE %s "+
-		"SET "`,
+		"SET"+`,
 		structure.Name,
 		strcase.ToLowerCamel(structure.Fields[0].Name),
 		structure.Fields[0].Type,
@@ -188,16 +188,18 @@ func (r *mysql%s) Update(ctx context.Context, %s %s, %s %s.%s) (int64, error) {
 		structure.Fields[0].Name,
 		strcase.ToLowerCamel(structure.Fields[0].Name),
 		strcase.ToSnake(structure.Name),
-	) + "\n" + setKeys(structure.Fields) + "\n" +
+	) + "\n\t" + setKeys(structure.Fields) + "+\n\t\"" +
 		getConditions([]string{
 			structure.FieldNameToDBName[structure.Fields[0].Name],
-		}, structure) + `
+		}, structure) + fmt.Sprintf(`", %s)
 	if err != nil {
 		return 0, err
 	}
 
 	return result.RowsAffected()
-}`
+}`,
+		strcase.ToLowerCamel(structure.Name),
+	)
 
 	functions = append(functions,
 		fmt.Sprintf("Update(ctx context.Context, %s %s, %s %s.%s) (int64, error)",
