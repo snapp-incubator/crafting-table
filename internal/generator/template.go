@@ -2,8 +2,6 @@ package generator
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -49,26 +47,6 @@ func NewMySQL%s(db *sqlx.DB) %s {
 	return syntax
 }
 
-func writeFile(content, dst string) error {
-	f, err := os.Create(dst)
-
-	if err != nil {
-		return err
-	}
-
-	defer func(f *os.File) {
-		_ = f.Close()
-	}(f)
-
-	_, err = f.WriteString(content)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func createFunctionRepository(structure *Structure) (syntax, funcDeclare string, err error) {
 	syntax = fmt.Sprintf(
 		`
@@ -100,57 +78,6 @@ func (r *mysql%s) Create(ctx context.Context, %s *%s.%s) error {
 	return syntax, fmt.Sprintf(
 		"Create(ctx context.Context, %s *%s.%s) error",
 		strcase.ToLowerCamel(structure.Name), structure.PackageName, structure.Name), nil
-}
-
-func getConditions(v []string, structure *Structure) string {
-	var conditions []string
-
-	for _, value := range v {
-		res := structure.FieldDBNameToName[value]
-		if res == "" {
-			panic(fmt.Sprintf("%s is not valid db_field", value))
-		}
-	}
-
-	for _, value := range v {
-		conditions = append(conditions, fmt.Sprintf("%s = ?", value))
-	}
-	return "WHERE " + strings.Join(conditions, " AND ")
-}
-
-func getFunctionVars(v []string, structure *Structure) string {
-	for _, value := range v {
-		res := structure.FieldDBNameToName[value]
-		if res == "" {
-			panic(fmt.Sprintf("%s is not valid db_field", value))
-		}
-	}
-
-	res := ""
-	for _, value := range v {
-		res += fmt.Sprintf("%s %s, ",
-			strcase.ToLowerCamel(structure.FieldDBNameToName[value]),
-			structure.FieldNameToType[structure.FieldDBNameToName[value]])
-	}
-
-	return res[:len(res)-2]
-}
-
-func getUpdateVariables(v []string, structure *Structure) string {
-	for _, value := range v {
-		res := structure.FieldDBNameToName[value]
-		if res == "" {
-			panic(fmt.Sprintf("%s is not valid db_field", value))
-		}
-	}
-
-	res := ""
-	for _, value := range v {
-		res += fmt.Sprintf("%s, ",
-			strcase.ToLowerCamel(structure.FieldDBNameToName[value]))
-	}
-
-	return res[:len(res)-2]
 }
 
 func getFunctionCreator(structure *Structure, vars *[]Variables) (syntax string, functions []string, err error) {
@@ -244,32 +171,71 @@ func (r *mysql%s) GetBy%s(ctx context.Context, `,
 	return syntax, functions, nil
 }
 
-func interfaceSyntaxCreator(structure *Structure, functions []string) string {
-	syntax := fmt.Sprintf(
-		"type %s interface {",
+func updateFunctionCreator(structure *Structure, updateVars *[]UpdateVariables) (syntax string, functions []string, err error) {
+	syntax += fmt.Sprintf(`
+func (r *mysql%s) Update(ctx context.Context, %s %s, %s %s.%s) (int64, error) {
+	%s.%s = %s
+
+	result, err := r.db.NamedExecContext(ctx, "UPDATE %s "+
+		"SET "`,
 		structure.Name,
+		strcase.ToLowerCamel(structure.Fields[0].Name),
+		structure.Fields[0].Type,
+		strcase.ToLowerCamel(structure.Name),
+		structure.PackageName,
+		structure.Name,
+		strcase.ToLowerCamel(structure.Name),
+		structure.Fields[0].Name,
+		strcase.ToLowerCamel(structure.Fields[0].Name),
+		strcase.ToSnake(structure.Name),
+	) + "\n" + setKeys(structure.Fields) + "\n" +
+		getConditions([]string{
+			structure.FieldNameToDBName[structure.Fields[0].Name],
+		}, structure) + `
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}`
+
+	functions = append(functions,
+		fmt.Sprintf("Update(ctx context.Context, %s %s, %s %s.%s) (int64, error)",
+			strcase.ToLowerCamel(structure.Fields[0].Name),
+			structure.Fields[0].Type,
+			strcase.ToLowerCamel(structure.Name),
+			structure.PackageName,
+			structure.Name),
 	)
 
-	for _, function := range functions {
-		syntax += fmt.Sprintf("\n\t%s", function)
-	}
-	syntax += "\n}"
+	for _, vars := range *updateVars {
 
-	return syntax
-}
-
-func linter(dst string) error {
-	cmd := exec.Command("gofmt", "-s", "-w", dst)
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	cmd = exec.Command("goimports", dst)
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return err
+		syntax += fmt.Sprintf(`
+func (r *mysql%s) Update%s`,
+			structure.Name,
+			structure.FieldDBNameToName[vars.Fields[0]],
+		) + "(ctx context.Context, " +
+			getFunctionVars(vars.By, structure) +
+			getFunctionVars(vars.Fields, structure) + ") (int64, error) {\n" +
+			`
+	query := "UPDATE cancellation_events SET ` + setKeysWithQuestion(vars.Fields) +
+			getConditions(vars.By, structure) + `;"
+	result, err := r.db.ExecContext(ctx, query, ` + execContextVariables(vars, structure) + `)
+	if err != nil {
+		return 0, err
 	}
 
-	return nil
+	return result.RowsAffected()
+}`
+
+		functions = append(functions,
+			fmt.Sprintf("Update%s",
+				structure.FieldDBNameToName[vars.Fields[0]],
+			)+"(ctx context.Context, "+
+				getFunctionVars(vars.By, structure)+
+				getFunctionVars(vars.Fields, structure)+") (int64, error)",
+		)
+	}
+
+	return syntax, functions, err
 }

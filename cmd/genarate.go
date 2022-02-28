@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/n25a/repogen/internal/generator"
@@ -15,7 +14,7 @@ var (
 	packageName string
 	getVars     *[]generator.Variables
 	get         string
-	updateVars  *[]generator.Variables
+	updateVars  *[]generator.UpdateVariables
 	update      string
 	create      bool
 )
@@ -44,95 +43,11 @@ func init() {
 
 	generateCMD.Flags().StringVarP(&packageName, "package", "p", "", "Name of repository package. default is 'repository'")
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
-	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ (var1,var2), (var2,var4), var3 ]")
+	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
 }
 
-func parseVariables(vars string) *[]generator.Variables {
-	newVar := vars[1 : len(vars)-1] // remove "[" and "]"
-
-	var varSlice []string
-	var temp string
-
-	for _, c := range newVar {
-
-		if temp != "" && string(temp[0]) == "(" && string(c) == ")" {
-			varSlice = append(varSlice, temp[1:])
-			temp = ""
-			continue
-		}
-
-		if temp != "" && string(temp[0]) == "(" && string(c) != ")" {
-			temp += string(c)
-			continue
-		}
-
-		if temp != "" && string(temp[0]) != "(" && string(c) == "," {
-			varSlice = append(varSlice, temp)
-			temp = ""
-			continue
-		}
-
-		if (temp != "" && string(temp[0]) != "(" && string(c) != ",") || (temp == "" && string(c) != ",") {
-			temp += string(c)
-			continue
-		}
-
-	}
-
-	if temp != "" {
-		varSlice = append(varSlice, temp)
-	}
-
-	result := make([]generator.Variables, 0)
-	for _, varTmp := range varSlice {
-		if strings.Contains(varTmp, ",") {
-			varSliceTmp := strings.Split(varTmp, ",")
-			result = append(result, generator.Variables{Name: varSliceTmp})
-			continue
-		}
-
-		result = append(result, generator.Variables{Name: []string{varTmp}})
-	}
-
-	return &result
-}
-
-func validateFlag(flag string) error {
-	if string(flag[0]) != "[" && string(flag[len(flag)-1]) != "]" {
-		return errors.New("You must set get variables in format of [ (var1,var2), (var2,var4), var3 ]")
-	}
-
-	openPrantheses := false
-	for index, char := range flag {
-		if openPrantheses && char == '(' {
-			return errors.New("Open parentheses are not closed")
-		}
-
-		if !openPrantheses && char == ')' {
-			return errors.New("Close parentheses are not opened")
-		}
-
-		if openPrantheses && char == ')' && flag[index-1] == ',' {
-			return errors.New("Close parentheses must not be followed by comma")
-		}
-
-		if openPrantheses && char == ')' && flag[index+1] != ']' && flag[index+1] != ',' {
-			return errors.New("Close parentheses must be followed by comma")
-		}
-
-		if char == '(' {
-			openPrantheses = true
-		}
-
-		if char == ')' {
-			openPrantheses = false
-		}
-	}
-	return nil
-}
-
-func generate(cmd *cobra.Command, args []string) {
+func generate(_ *cobra.Command, _ []string) {
 	if packageName == "" {
 		packageName = "repository"
 	} else {
@@ -162,10 +77,10 @@ func generate(cmd *cobra.Command, args []string) {
 			update = strings.Replace(update, " ", "", -1)
 		}
 		update = strings.Replace(update, " ", "", -1)
-		if err := validateFlag(update); err != nil {
+		if err := validateUpdateFlag(update); err != nil {
 			panic(err)
 		}
-		updateVars = parseVariables(update)
+		updateVars = parseUpdateVariables(update)
 	}
 
 	if err := generator.GenerateRepository(source, destination, packageName, getVars, updateVars, create); err != nil {

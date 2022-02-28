@@ -1,16 +1,23 @@
 package generator
 
-import "log"
+import (
+	"log"
+)
 
 type Variables struct {
 	Name []string
+}
+
+type UpdateVariables struct {
+	By     []string
+	Fields []string
 }
 
 var createSyntax = ""
 var updateSyntax = ""
 var getSyntax = ""
 
-func GenerateRepository(source, destination, packageName string, getVars, updateVars *[]Variables, create bool) error {
+func GenerateRepository(source, destination, packageName string, getVars *[]Variables, updateVars *[]UpdateVariables, create bool) error {
 	log.Println("Generating repository")
 	structure, err := bindStruct(source)
 	if err != nil {
@@ -40,14 +47,14 @@ func GenerateRepository(source, destination, packageName string, getVars, update
 		functions = append(functions, function...)
 	}
 
-	//if updateVars != nil {
-	//	updateSyntax, function, err = updateFunctionCreator(structure, updateVars)
-	//	if err != nil {
-	//		log.Println("Error in updateFunctionCreator: ", err)
-	//		return err
-	//	}
-	//	functions = append(functions, function...)
-	//}
+	if updateVars != nil {
+		updateSyntax, function, err = updateFunctionCreator(structure, updateVars)
+		if err != nil {
+			log.Println("Error in updateFunctionCreator: ", err)
+			return err
+		}
+		functions = append(functions, function...)
+	}
 
 	interfaceSyntax := interfaceSyntaxCreator(structure, functions)
 
