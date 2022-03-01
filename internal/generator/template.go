@@ -116,10 +116,16 @@ func (r *mysql%s) Get%ss(ctx context.Context) (*[]%s.%s, error) {
 			structure.Name, structure.PackageName, structure.Name))
 
 	for _, v := range *vars {
+		functionNamelist := make([]string, 0)
+		for _, name := range v.Name {
+			functionNamelist = append(functionNamelist, structure.FieldDBNameToName[name])
+		}
+		functionName := strings.Join(functionNamelist, "And")
+
 		syntax += fmt.Sprintf(
 			`
 func (r *mysql%s) GetBy%s(ctx context.Context, `,
-			structure.Name,
+			functionName,
 			structure.FieldDBNameToName[v.Name[0]],
 		) +
 			getFunctionVars(v.Name, structure) +
@@ -159,7 +165,7 @@ func (r *mysql%s) GetBy%s(ctx context.Context, `,
 
 		functions = append(functions,
 			fmt.Sprintf("GetBy%s(ctx context.Context, ",
-				structure.FieldDBNameToName[v.Name[0]],
+				functionName,
 			)+
 				getFunctionVars(v.Name, structure)+
 				fmt.Sprintf(") (*%s.%s, error)",
@@ -217,10 +223,10 @@ func (r *mysql%s) Update%s`,
 			structure.Name,
 			structure.FieldDBNameToName[vars.Fields[0]],
 		) + "(ctx context.Context, " +
-			getFunctionVars(vars.By, structure) +
+			getFunctionVars(vars.By, structure) + ", " +
 			getFunctionVars(vars.Fields, structure) + ") (int64, error) {\n" +
 			`
-	query := "UPDATE cancellation_events SET ` + setKeysWithQuestion(vars.Fields) +
+	query := "UPDATE cancellation_events SET ` + setKeysWithQuestion(vars.Fields) + " " +
 			getConditions(vars.By, structure) + `;"
 	result, err := r.db.ExecContext(ctx, query, ` + execContextVariables(vars, structure) + `)
 	if err != nil {
@@ -234,7 +240,7 @@ func (r *mysql%s) Update%s`,
 			fmt.Sprintf("Update%s",
 				structure.FieldDBNameToName[vars.Fields[0]],
 			)+"(ctx context.Context, "+
-				getFunctionVars(vars.By, structure)+
+				getFunctionVars(vars.By, structure)+", "+
 				getFunctionVars(vars.Fields, structure)+") (int64, error)",
 		)
 	}

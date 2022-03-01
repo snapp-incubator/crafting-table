@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -81,30 +81,21 @@ func parseUpdateVariables(vars string) *[]generator.UpdateVariables {
 		tmp += m
 	}
 
-	firstParenthesesRegex := regexp.MustCompile(`\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)+|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\),`)
-	secondParenthesesRegex := regexp.MustCompile(`\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)+|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\)`)
-	//variablesRegex := regexp.MustCompile(`^[a-zA-Z]+[0-9]*$`)
 	result := make([]generator.UpdateVariables, 0)
 	for _, item := range arrays {
-		byVariablesTmp := firstParenthesesRegex.FindAllString(item, -1)
-		byVariables := ""
-		for _, v := range byVariablesTmp {
-			byVariables += v
-		}
-		byVariables = byVariables[:len(byVariables)-1]
+		item = strings.Replace(item, "[", "", -1)
+		item = strings.Replace(item, "]", "", -1)
+		temp := strings.Split(item, "),(")
 
-		filedVariablesTmp := secondParenthesesRegex.FindAllString(item, -1)
-		filedVariables := ""
-		for _, v := range filedVariablesTmp {
-			filedVariables += v
+		byVariables := strings.Split(strings.Replace(temp[0], "(", "", -1), ",")
+		filedVariables := strings.Split(strings.Replace(temp[1], ")", "", -1), ",")
+
+		itemUpdateVariables := generator.UpdateVariables{
+			By:     byVariables,
+			Fields: filedVariables,
 		}
-		log.Fatal(byVariables, ":::::", filedVariablesTmp)
-		//itemUpdateVariables := generator.UpdateVariables{
-		//	By:     variablesRegex.FindAllString(byVariables, -1),
-		//	Fields: variablesRegex.FindAllString(filedVariables, 1),
-		//}
-		//_ = fmt.Sprintf("%+v", itemUpdateVariables)
-		//result = append(result, itemUpdateVariables)
+		_ = fmt.Sprintf("%+v", itemUpdateVariables)
+		result = append(result, itemUpdateVariables)
 	}
 
 	return &result

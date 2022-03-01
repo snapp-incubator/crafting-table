@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -73,21 +74,21 @@ func interfaceSyntaxCreator(structure *Structure, functions []string) string {
 	return syntax
 }
 
-//func linter(dst string) error {
-//	cmd := exec.Command("gofmt", "-s", "-w", dst)
-//	cmd.Stderr = os.Stderr
-//	if err := cmd.Run(); err != nil {
-//		return err
-//	}
-//
-//	cmd = exec.Command("goimports", dst)
-//	cmd.Stderr = os.Stderr
-//	if err := cmd.Run(); err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
+func linter(dst string) error {
+	cmd := exec.Command("gofmt", "-s", "-w", dst)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("goimports", dst)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func writeFile(content, dst string) error {
 	f, err := os.Create(dst)
@@ -139,7 +140,7 @@ func setKeysWithQuestion(vars []string) string {
 	}
 
 	if tmp != "" {
-		result += tmp[:len(tmp)-2] + "\""
+		result += tmp[:len(tmp)-2]
 	}
 
 	return result

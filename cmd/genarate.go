@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"log"
 	"strings"
 
 	"github.com/n25a/repogen/internal/generator"
@@ -84,6 +85,6 @@ func generate(_ *cobra.Command, _ []string) {
 	}
 
 	if err := generator.GenerateRepository(source, destination, packageName, getVars, updateVars, create); err != nil {
-		panic(err)
+		log.Println(err)
 	}
 }
