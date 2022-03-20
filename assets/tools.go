@@ -1,4 +1,4 @@
-package generator
+package assets
 
 import (
 	"fmt"
@@ -6,10 +6,12 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/n25a/repogen/internal/generator"
+
 	"github.com/iancoleman/strcase"
 )
 
-func getConditions(v []string, structure *Structure) string {
+func GetConditions(v []string, structure *generator.Structure) string {
 	var conditions []string
 
 	for _, value := range v {
@@ -25,7 +27,7 @@ func getConditions(v []string, structure *Structure) string {
 	return "WHERE " + strings.Join(conditions, " AND ")
 }
 
-func getFunctionVars(v []string, structure *Structure) string {
+func GetFunctionVars(v []string, structure *generator.Structure) string {
 	for _, value := range v {
 		res := structure.FieldDBNameToName[value]
 		if res == "" {
@@ -43,7 +45,7 @@ func getFunctionVars(v []string, structure *Structure) string {
 	return res[:len(res)-2]
 }
 
-func getUpdateVariables(v []string, structure *Structure) string {
+func GetUpdateVariables(v []string, structure *generator.Structure) string {
 	for _, value := range v {
 		res := structure.FieldDBNameToName[value]
 		if res == "" {
@@ -60,7 +62,7 @@ func getUpdateVariables(v []string, structure *Structure) string {
 	return res[:len(res)-2]
 }
 
-func interfaceSyntaxCreator(structure *Structure, functions []string) string {
+func InterfaceSyntaxCreator(structure *generator.Structure, functions []string) string {
 	syntax := fmt.Sprintf(
 		"type %s interface {",
 		structure.Name,
@@ -74,7 +76,7 @@ func interfaceSyntaxCreator(structure *Structure, functions []string) string {
 	return syntax
 }
 
-func linter(dst string) error {
+func Linter(dst string) error {
 	cmd := exec.Command("gofmt", "-s", "-w", dst)
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -90,7 +92,7 @@ func linter(dst string) error {
 	return nil
 }
 
-func writeFile(content, dst string) error {
+func WriteFile(content, dst string) error {
 	f, err := os.Create(dst)
 
 	if err != nil {
@@ -110,7 +112,7 @@ func writeFile(content, dst string) error {
 	return nil
 }
 
-func setKeys(fields []field) string {
+func SetKeys(fields []generator.field) string {
 	result := "\""
 	tmp := ""
 	for _, field := range fields {
@@ -128,7 +130,7 @@ func setKeys(fields []field) string {
 	return result
 }
 
-func setKeysWithQuestion(vars []string) string {
+func SetKeysWithQuestion(vars []string) string {
 	result := ""
 	tmp := ""
 	for _, varName := range vars {
@@ -146,7 +148,7 @@ func setKeysWithQuestion(vars []string) string {
 	return result
 }
 
-func execContextVariables(vars UpdateVariables, structure *Structure) string {
+func ExecContextVariables(vars generator.UpdateVariables, structure *generator.Structure) string {
 	result := ""
 	for _, variable := range vars.Fields {
 		result += fmt.Sprintf("%s, ", strcase.ToLowerCamel(structure.FieldDBNameToName[variable]))

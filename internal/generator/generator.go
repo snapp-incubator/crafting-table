@@ -2,6 +2,8 @@ package generator
 
 import (
 	"log"
+
+	"github.com/n25a/repogen/assets"
 )
 
 type Variables struct {
@@ -56,18 +58,18 @@ func GenerateRepository(source, destination, packageName string, getVars *[]Vari
 		functions = append(functions, function...)
 	}
 
-	interfaceSyntax := interfaceSyntaxCreator(structure, functions)
+	interfaceSyntax := assets.InterfaceSyntaxCreator(structure, functions)
 
 	fileContent := createTemplate(structure, packageName, interfaceSyntax,
 		createSyntax, updateSyntax, getSyntax)
 
-	err = writeFile(fileContent, destination)
+	err = assets.WriteFile(fileContent, destination)
 	if err != nil {
 		log.Println("Error in writeFile: ", err)
 		return err
 	}
 
-	err = linter(destination)
+	err = assets.Linter(destination)
 	if err != nil {
 		log.Println("Error in linter: ", err)
 		return err
