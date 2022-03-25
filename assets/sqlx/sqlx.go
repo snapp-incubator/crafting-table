@@ -178,7 +178,7 @@ func (s sqlx) UpdateAll(structure *structure.Structure) (syntax string, header s
 		contextKeys(structure.Fields),
 		conditions([]string{
 			structure.FieldNameToDBName[structure.Fields[0].Name],
-		}, structure),
+		}, structure, false),
 		strcase.ToLowerCamel(structure.Name),
 	)
 
@@ -197,15 +197,21 @@ func (s sqlx) UpdateAll(structure *structure.Structure) (syntax string, header s
 func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string, headers []string) {
 
 	for _, v := range *vars {
+		functionNameList := make([]string, 0)
+		for _, name := range v.Fields {
+			functionNameList = append(functionNameList, structure.FieldDBNameToName[name])
+		}
+		functionName := strings.Join(functionNameList, "And")
+
 		syntax += fmt.Sprintf(
 			s.updateFuncBody,
 			structure.Name,
-			structure.FieldDBNameToName[v.Fields[0]],
+			functionName,
 			headerVariables(v.By, structure),
 			headerVariables(v.Fields, structure),
 			structure.DBName,
 			contextKeys(v.Fields),
-			conditions(v.By, structure),
+			conditions(v.By, structure, true),
 			execContextVariables(v, structure),
 		)
 
@@ -213,7 +219,7 @@ func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateV
 			headers,
 			fmt.Sprintf(
 				s.updateFuncHeader,
-				structure.FieldDBNameToName[v.Fields[0]],
+				functionName,
 				headerVariables(v.By, structure),
 				headerVariables(v.Fields, structure),
 			),
@@ -271,7 +277,7 @@ func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.Variabl
 			structure.Name,
 			strcase.ToLowerCamel(structure.Name),
 			structure.DBName,
-			conditions(v.Name, structure),
+			conditions(v.Name, structure, true),
 			contextVariables(v.Name, structure),
 			structure.Name,
 			strcase.ToLowerCamel(structure.Name),
@@ -318,7 +324,7 @@ func contextKeys[T FieldType](fields []T) string {
 	return result
 }
 
-func conditions(v []string, structure *structure.Structure) string {
+func conditions(v []string, structure *structure.Structure, withQuestionMark bool) string {
 	var conditions []string
 
 	for _, value := range v {
@@ -329,7 +335,11 @@ func conditions(v []string, structure *structure.Structure) string {
 	}
 
 	for _, value := range v {
-		conditions = append(conditions, fmt.Sprintf("%s = ?", value))
+		if withQuestionMark {
+			conditions = append(conditions, fmt.Sprintf("%s = ?", value))
+		} else {
+			conditions = append(conditions, fmt.Sprintf("%s = :%s", value, value))
+		}
 	}
 	return "WHERE " + strings.Join(conditions, " AND ")
 }

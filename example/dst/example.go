@@ -5,17 +5,19 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/n25a/crafting-table/example/src"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type Example interface {
 	Create(ctx context.Context, example *src.Example) error
 	GetExamples(ctx context.Context) (*[]src.Example, error)
-	GetByVar2AndVar3(ctx context.Context, var2 string, var3 bool) (*src.Example, error)
 	GetByVar1(ctx context.Context, var1 int) (*src.Example, error)
 	GetByVar1AndVar3(ctx context.Context, var1 int, var3 bool) (*src.Example, error)
+	Update(ctx context.Context, var1 int, example src.Example) (int64, error)
+	UpdateVar2AndVar1(ctx context.Context, var3 bool, var2 string, var1 int) (int64, error)
+	UpdateVar1(ctx context.Context, var2 string, var3 bool, var1 int) (int64, error)
 }
 
 var ErrExampleNotFound = errors.New("example not found")
@@ -42,28 +44,54 @@ func (r *mysqlExample) Create(ctx context.Context, example *src.Example) error {
 	return nil
 }
 
+func (r *mysqlExample) Update(ctx context.Context, var1 int, example src.Example) (int64, error) {
+	example.Var1 = var1
+
+	result, err := r.db.NamedExecContext(ctx, "UPDATE example "+
+		"SET"+
+		"var1 = :var1, var2 = :var2, var3 = :var3 "+
+		"WHERE var1 = :var1",
+		example,
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+func (r *mysqlExample) UpdateVar2AndVar1(ctx context.Context, var3 bool, var2 string, var1 int) (int64, error) {
+	query := "UPDATE example SET " +
+		"var2 = ?, var1 = ? " +
+		"WHERE var3 = ?;"
+
+	result, err := r.db.ExecContext(ctx, query, var2, var1, var3)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
+func (r *mysqlExample) UpdateVar1(ctx context.Context, var2 string, var3 bool, var1 int) (int64, error) {
+	query := "UPDATE example SET " +
+		"var1 = ? " +
+		"WHERE var2 = ? AND var3 = ?;"
+
+	result, err := r.db.ExecContext(ctx, query, var1, var2, var3)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
+}
+
 func (r *mysqlExample) GetExamples(ctx context.Context) (*[]src.Example, error) {
 	var example []src.Example
 	err := r.db.SelectContext(ctx, &example, "SELECT * from example")
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, ErrExampleNotFound
-		}
-
-		return nil, err
-	}
-
-	return &example, nil
-}
-
-func (r *mysqlExample) GetByVar2AndVar3(ctx context.Context, var2 string, var3 bool) (*src.Example, error) {
-	var example src.Example
-
-	err := r.db.GetContext(ctx, &example, "SELECT * FROM example "+
-		"WHERE var2 = ? AND var3 = ?",
-		var2, var3,
-	)
-
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrExampleNotFound
