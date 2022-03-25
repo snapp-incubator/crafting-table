@@ -12,9 +12,9 @@ import (
 type Example interface {
 	Create(ctx context.Context, example *src.Example) error
 	GetExamples(ctx context.Context) (*[]src.Example, error)
-	GetByVar2(ctx context.Context, var2 string, var3 bool) (*src.Example, error)
+	GetByVar2AndVar3(ctx context.Context, var2 string, var3 bool) (*src.Example, error)
 	GetByVar1(ctx context.Context, var1 int) (*src.Example, error)
-	GetByVar3(ctx context.Context, var3 bool, var1 int) (*src.Example, error)
+	GetByVar1AndVar3(ctx context.Context, var1 int, var3 bool) (*src.Example, error)
 }
 
 var ErrExampleNotFound = errors.New("example not found")
@@ -55,10 +55,13 @@ func (r *mysqlExample) GetExamples(ctx context.Context) (*[]src.Example, error) 
 	return &example, nil
 }
 
-func (r *mysqlExample) GetByVar2(ctx context.Context, var2 string, var3 bool) (*src.Example, error) {
+func (r *mysqlExample) GetByVar2AndVar3(ctx context.Context, var2 string, var3 bool) (*src.Example, error) {
 	var example src.Example
+
 	err := r.db.GetContext(ctx, &example, "SELECT * FROM example "+
-		"WHERE var2 = ? AND var3 = ?", var2, var3)
+		"WHERE var2 = ? AND var3 = ?",
+		var2, var3,
+	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -73,8 +76,11 @@ func (r *mysqlExample) GetByVar2(ctx context.Context, var2 string, var3 bool) (*
 
 func (r *mysqlExample) GetByVar1(ctx context.Context, var1 int) (*src.Example, error) {
 	var example src.Example
+
 	err := r.db.GetContext(ctx, &example, "SELECT * FROM example "+
-		"WHERE var1 = ?", var1)
+		"WHERE var1 = ?",
+		var1,
+	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -87,10 +93,13 @@ func (r *mysqlExample) GetByVar1(ctx context.Context, var1 int) (*src.Example, e
 	return &example, nil
 }
 
-func (r *mysqlExample) GetByVar3(ctx context.Context, var3 bool, var1 int) (*src.Example, error) {
+func (r *mysqlExample) GetByVar1AndVar3(ctx context.Context, var1 int, var3 bool) (*src.Example, error) {
 	var example src.Example
+
 	err := r.db.GetContext(ctx, &example, "SELECT * FROM example "+
-		"WHERE var3 = ? AND var1 = ?", var3, var1)
+		"WHERE var1 = ? AND var3 = ?",
+		var1, var3,
+	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

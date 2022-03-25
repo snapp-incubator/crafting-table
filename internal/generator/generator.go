@@ -1,77 +1,68 @@
 package generator
 
 import (
-	"log"
+	"errors"
+	"fmt"
 
-	"github.com/n25a/repogen/assets"
+	"github.com/n25a/repogen/internal/structure"
 )
-
-type Variables struct {
-	Name []string
-}
-
-type UpdateVariables struct {
-	By     []string
-	Fields []string
-}
 
 var createSyntax = ""
 var updateSyntax = ""
 var getSyntax = ""
 
-func GenerateRepository(source, destination, packageName string, getVars *[]Variables, updateVars *[]UpdateVariables, create bool) error {
-	log.Println("Generating repository")
-	structure, err := bindStruct(source)
+func GenerateRepository(source, destination, packageName string, getVars *[]structure.Variables, updateVars *[]structure.UpdateVariables, create bool) error {
+	s, err := structure.BindStruct(source)
 	if err != nil {
-		log.Println("Error in bindStruct: ", err)
+		err = errors.New(fmt.Sprintf("Error in bindStruct: %s", err.Error()))
 		return err
 	}
 
-	var functions = []string{}
+	var functions []string
 	var function []string
 
 	if create {
 		var function string
-		createSyntax, function, err = createFunctionRepository(structure)
+		createSyntax, function, err = createFunctionRepository(s)
 		if err != nil {
-			log.Println("Error in createFunctionRepository: ", err)
+			err = errors.New(fmt.Sprintf("Error in createFunctionRepository: %s", err.Error()))
 			return err
 		}
 		functions = append(functions, function)
 	}
 
 	if getVars != nil {
-		getSyntax, function, err = getFunctionCreator(structure, getVars)
+		getSyntax, function, err = getFunctionCreator(s, getVars)
 		if err != nil {
-			log.Println("Error in getFunctionCreator: ", err)
+			err = errors.New(fmt.Sprintf("Error in getFunctionCreator: %s", err.Error()))
 			return err
 		}
 		functions = append(functions, function...)
 	}
 
 	if updateVars != nil {
-		updateSyntax, function, err = updateFunctionCreator(structure, updateVars)
+		updateSyntax, function, err = updateFunctionCreator(s, updateVars)
 		if err != nil {
-			log.Println("Error in updateFunctionCreator: ", err)
+			err = errors.New(fmt.Sprintf("Error in updateFunctionCreator: %s", err.Error()))
 			return err
 		}
 		functions = append(functions, function...)
 	}
 
-	interfaceSyntax := assets.InterfaceSyntaxCreator(structure, functions)
+	interfaceSyntax := interfaceSyntaxCreator(s, functions)
 
-	fileContent := createTemplate(structure, packageName, interfaceSyntax,
+	fileContent := createTemplate(s, packageName, interfaceSyntax,
 		createSyntax, updateSyntax, getSyntax)
 
-	err = assets.WriteFile(fileContent, destination)
+	err = writeFile(fileContent, destination)
 	if err != nil {
-		log.Println("Error in writeFile: ", err)
+		err = errors.New(fmt.Sprintf("Error in writeFile: %s", err.Error()))
 		return err
 	}
 
-	err = assets.Linter(destination)
+	err = linter(destination)
 	if err != nil {
-		log.Println("Error in linter: ", err)
+		err = errors.New(fmt.Sprintf("Error in linter: %s", err.Error()))
 		return err
 	}
 

@@ -1,11 +1,13 @@
 package assets
 
+import "github.com/n25a/repogen/assets/sqlx"
+
 var A Assets
 
 type Assets struct {
-	Sqlx Sqlx
+	Sqlx sqlx.Sqlx
 }
 
 func init() {
-	A.Sqlx = NewSqlx()
+	A.Sqlx = sqlx.NewSqlx()
 }

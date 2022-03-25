@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/n25a/repogen/internal/structure"
+
 	"github.com/iancoleman/strcase"
 
 	"github.com/n25a/repogen/assets"
 )
 
-func createTemplate(structure *Structure, packageName, interfaceSyntax,
-	createSyntax, updateSyntax, getSyntax string) string {
+func createTemplate(structure *structure.Structure, packageName, interfaceSyntax,
+	createFunc, updateFunc, getFunc string) string {
 	syntax := fmt.Sprintf(`
 package %s
 
@@ -18,12 +20,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 )
 
-`, packageName) + interfaceSyntax + fmt.Sprintf(`
+%s
 
 var Err%sNotFound = errors.New("%s not found")
 
@@ -35,26 +36,34 @@ func NewMySQL%s(db *sqlx.DB) %s {
 	return &mysql%s{db: db}
 }
 
+%s
+
+%s
+
+%s
 `,
+		packageName,
+		interfaceSyntax,
 		structure.Name,
 		strings.Replace(strcase.ToSnake(structure.Name), "_", " ", -1),
 		structure.Name,
 		structure.Name,
 		structure.Name,
 		structure.Name,
+		createFunc,
+		updateFunc,
+		getFunc,
 	)
-
-	syntax += createSyntax + "\n" + updateSyntax + "\n" + getSyntax + "\n"
 
 	return syntax
 }
 
-func createFunctionRepository(structure *Structure) (syntax, funcDeclare string, err error) {
-	syntax, funcDeclare = assets.A.Sqlx.UpdateAll(structure)
+func createFunctionRepository(structure *structure.Structure) (syntax, funcDeclare string, err error) {
+	syntax, funcDeclare = assets.A.Sqlx.Insert(structure)
 	return syntax, funcDeclare, nil
 }
 
-func getFunctionCreator(structure *Structure, vars *[]Variables) (syntax string, functions []string, err error) {
+func getFunctionCreator(structure *structure.Structure, vars *[]structure.Variables) (syntax string, functions []string, err error) {
 
 	body, header := assets.A.Sqlx.SelectAll(structure)
 
@@ -71,7 +80,7 @@ func getFunctionCreator(structure *Structure, vars *[]Variables) (syntax string,
 	return syntax, functions, nil
 }
 
-func updateFunctionCreator(structure *Structure, updateVars *[]UpdateVariables) (syntax string, functions []string, err error) {
+func updateFunctionCreator(structure *structure.Structure, updateVars *[]structure.UpdateVariables) (syntax string, functions []string, err error) {
 
 	body, header := assets.A.Sqlx.UpdateAll(structure)
 

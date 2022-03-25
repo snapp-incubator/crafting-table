@@ -5,11 +5,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/n25a/repogen/internal/generator"
+	"github.com/n25a/repogen/internal/structure"
 )
 
-func parseVariables(vars string) *[]generator.Variables {
+func parseVariables(vars string) *[]structure.Variables {
 	// TODO : parse variables with regex
+
 	newVar := vars[1 : len(vars)-1] // remove "[" and "]"
 
 	var varSlice []string
@@ -45,28 +46,28 @@ func parseVariables(vars string) *[]generator.Variables {
 		varSlice = append(varSlice, temp)
 	}
 
-	result := make([]generator.Variables, 0)
+	result := make([]structure.Variables, 0)
 	for _, varTmp := range varSlice {
 		if strings.Contains(varTmp, ",") {
 			varSliceTmp := strings.Split(varTmp, ",")
-			result = append(result, generator.Variables{Name: varSliceTmp})
+			result = append(result, structure.Variables{Name: varSliceTmp})
 			continue
 		}
 
-		result = append(result, generator.Variables{Name: []string{varTmp}})
+		result = append(result, structure.Variables{Name: []string{varTmp}})
 	}
 
 	return &result
 }
 
-func parseUpdateVariables(vars string) *[]generator.UpdateVariables {
+func parseUpdateVariables(vars string) *[]structure.UpdateVariables {
 	cleanFlag := vars
 	for strings.Contains(cleanFlag, "  ") {
 		cleanFlag = strings.Replace(vars, "  ", " ", -1)
 	}
 	cleanFlag = strings.Replace(vars, " ", "", -1)
 
-	regex := regexp.MustCompile(`\[\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\),\(([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*\_*)*)?\)\]`)
+	regex := regexp.MustCompile(`\[\(([a-zA-Z]+([a-zA-Z]*[0-9]*_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*_*)*)?\),\(([a-zA-Z]+([a-zA-Z]*[0-9]*_*)*,)*|([a-zA-Z]+([a-zA-Z]*[0-9]*_*)*)?\)]`)
 	matches := regex.FindAllString(cleanFlag, -1)
 
 	arrays := make([]string, 0)
@@ -81,7 +82,7 @@ func parseUpdateVariables(vars string) *[]generator.UpdateVariables {
 		tmp += m
 	}
 
-	result := make([]generator.UpdateVariables, 0)
+	result := make([]structure.UpdateVariables, 0)
 	for _, item := range arrays {
 		item = strings.Replace(item, "[", "", -1)
 		item = strings.Replace(item, "]", "", -1)
@@ -90,7 +91,7 @@ func parseUpdateVariables(vars string) *[]generator.UpdateVariables {
 		byVariables := strings.Split(strings.Replace(temp[0], "(", "", -1), ",")
 		filedVariables := strings.Split(strings.Replace(temp[1], ")", "", -1), ",")
 
-		itemUpdateVariables := generator.UpdateVariables{
+		itemUpdateVariables := structure.UpdateVariables{
 			By:     byVariables,
 			Fields: filedVariables,
 		}

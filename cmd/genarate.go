@@ -4,6 +4,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/n25a/repogen/internal/structure"
+
 	"github.com/n25a/repogen/internal/generator"
 
 	"github.com/spf13/cobra"
@@ -13,9 +15,9 @@ var (
 	source      string
 	destination string
 	packageName string
-	getVars     *[]generator.Variables
+	getVars     *[]structure.Variables
 	get         string
-	updateVars  *[]generator.UpdateVariables
+	updateVars  *[]structure.UpdateVariables
 	update      string
 	create      bool
 )
@@ -59,7 +61,7 @@ func generate(_ *cobra.Command, _ []string) {
 	destination = strings.Replace(destination, " ", "", -1)
 
 	if get == "" && update == "" && !create {
-		panic("You must set at least one flag for get, update or create")
+		log.Fatal("You must set at least one flag for get, update or create")
 	}
 
 	if get != "" {
@@ -68,7 +70,7 @@ func generate(_ *cobra.Command, _ []string) {
 		}
 		get = strings.Replace(get, " ", "", -1)
 		if err := validateFlag(get); err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		getVars = parseVariables(get)
 	}
@@ -79,12 +81,12 @@ func generate(_ *cobra.Command, _ []string) {
 		}
 		update = strings.Replace(update, " ", "", -1)
 		if err := validateUpdateFlag(update); err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		updateVars = parseUpdateVariables(update)
 	}
 
 	if err := generator.GenerateRepository(source, destination, packageName, getVars, updateVars, create); err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 }
