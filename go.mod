@@ -1,4 +1,4 @@
-module github.com/n25a/repogen
+module github.com/n25a/crafting-table
 
 go 1.18
 

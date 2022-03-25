@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/n25a/repogen/internal/structure"
-
 	"github.com/iancoleman/strcase"
+
+	"github.com/n25a/crafting-table/internal/structure"
 )
 
 type Sqlx interface {

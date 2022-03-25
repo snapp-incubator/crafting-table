@@ -8,7 +8,7 @@ import (
 )
 
 var rootCMD = &cobra.Command{
-	Use:   "repogen",
+	Use:   "crafting-table",
 	Short: "A generator for repository based struct",
 }
 

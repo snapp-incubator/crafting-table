@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/n25a/repogen/internal/structure"
-
 	"github.com/iancoleman/strcase"
 
-	"github.com/n25a/repogen/assets"
+	"github.com/n25a/crafting-table/assets"
+	"github.com/n25a/crafting-table/internal/structure"
 )
 
 func createTemplate(structure *structure.Structure, packageName, interfaceSyntax,

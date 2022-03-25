@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/n25a/repogen/internal/structure"
+	"github.com/n25a/crafting-table/internal/structure"
 )
 
 var createSyntax = ""

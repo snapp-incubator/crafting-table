@@ -1,1 +1,1 @@
-![alt text](https://github.com/n25a/repogen/blob/master/assets/logo.png?raw=true)
+![alt text](https://github.com/n25a/crafting-table/blob/master/logo.png?raw=true)

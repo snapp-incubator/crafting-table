@@ -4,11 +4,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/n25a/repogen/internal/structure"
-
-	"github.com/n25a/repogen/internal/generator"
-
 	"github.com/spf13/cobra"
+
+	"github.com/n25a/crafting-table/internal/generator"
+	"github.com/n25a/crafting-table/internal/structure"
 )
 
 var (
