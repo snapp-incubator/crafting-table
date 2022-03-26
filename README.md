@@ -1,13 +1,13 @@
 ![alt text](https://raw.githubusercontent.com/n25a/crafting-table/master/logo.jpeg?token=GHSAT0AAAAAABQEANQTVOCNJXVJ3QPQHQK6YR6HOOA)
 
 # Crafting Table
-A tool for creating functions to query to database from golang struct.
-It's use `sqlx` package to connect to database.
+A function creation tool for querying to database from golang struct.
+It uses `sqlx` package to connect to database.
 
 
 # How to use Crafting Table?
 
-The Syntax to creating functions is as below.
+The Syntax for creating functions is as below.
 
 ```bash
 crafting-table generate \
@@ -21,16 +21,16 @@ crafting-table generate \
 ## Flags
 * `-s`: Source file path.
 * `-d`: Destination file path.
-* `--get`: Get function name and arguments. You can use multiple arguments by comma `,` to define multiple `Get` functions. Also, You can use parenthesis to get records by more than one parameter. If you don't define this flag, `Get` function will not be created.
-* `--update`: Update function name and arguments. You can use multiple arguments by comma `,` and brackets `[ ]` to define multiple `Update` functions. In each bracket, you should define two parentheses. First one is for update by parameters, second one is for update fields parameters. If you don't define this flag, `Update` function will not be created.
+* `--get`: Get function name and arguments. You can use multiple arguments separated with comma `,` to define multiple `Get` functions. Also, You can use parentheses to get records by more than one parameter. If you don't define this flag, `Get` function will not be created.
+* `--update`: Update function name and arguments. You can use multiple arguments separated with comma `,` and brackets `[ ]` to define multiple `Update` functions. You should define two pairs of parentheses in each bracket, the former for updating by parameters and the latter for updating fields parameters. If you don't define this flag, `Update` function will not be created.
 * `--create`: Create function name and arguments. If you don't define this flag, `Create` function will not be created.
 
 # Note
-In each flag, you should use database name as parameter.
+In each flag, you should use the database name as parameter.
 
 ## Example
 
-Think that the following struct is a table in database.
+Suppose that the following struct is a table in the database.
 
 ```go
 package src
@@ -42,7 +42,7 @@ type Example struct {
 }
 ```
 
-With `crafting-table` you can create a functions to query to database as below.
+You can create a functions to query to database using `crafting-table` as below.
 
 Syntax:
 ```bash
@@ -196,5 +196,5 @@ func (r *mysqlExample) GetByVar1AndVar3(ctx context.Context, var1 int, var3 bool
 ```
 
 # Help Us
-You can help us to improve this tool. Send pull request or issue to GitHub.
+You can contribute to improving this tool by sending pull requests or issues on GitHub.
 Please send us your feedback. Thanks!
