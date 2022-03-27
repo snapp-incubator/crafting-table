@@ -1,4 +1,4 @@
-![alt text](https://ibb.co/GVMzjZ0)
+![alt text](https://raw.githubusercontent.com/n25a/crafting-table/logo/logo.jpeg?token=GHSAT0AAAAAABQEANQSRVGGXCHWQN43GCH6YSA37YQ)
 
 # Crafting Table
 A function creation tool for querying to database from golang struct.
