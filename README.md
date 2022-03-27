@@ -1,4 +1,4 @@
-![alt text](https://raw.githubusercontent.com/n25a/crafting-table/master/logo.jpeg?token=GHSAT0AAAAAABQEANQTVOCNJXVJ3QPQHQK6YR6HOOA)
+![alt text](https://ibb.co/GVMzjZ0)
 
 # Crafting Table
 A function creation tool for querying to database from golang struct.
@@ -7,7 +7,7 @@ It uses `sqlx` package to connect to database.
 
 # How to use Crafting Table?
 
-The Syntax for creating functions is as below.
+The Command for creating functions is as below.
 
 ```bash
 crafting-table generate \
@@ -19,11 +19,13 @@ crafting-table generate \
 ```
 
 ## Flags
-* `-s`: Source file path.
-* `-d`: Destination file path.
-* `--get`: Get function name and arguments. You can use multiple arguments separated with comma `,` to define multiple `Get` functions. Also, You can use parentheses to get records by more than one parameter. If you don't define this flag, `Get` function will not be created.
-* `--update`: Update function name and arguments. You can use multiple arguments separated with comma `,` and brackets `[ ]` to define multiple `Update` functions. You should define two pairs of parentheses in each bracket, the former for updating by parameters and the latter for updating fields parameters. If you don't define this flag, `Update` function will not be created.
-* `--create`: Create function name and arguments. If you don't define this flag, `Create` function will not be created.
+|    Flag    | Description                                                                                                                                                                                                                                                                                                                                                                   |
+|:----------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|    `-s`    | Source file path.                                                                                                                                                                                                                                                                                                                                                             |
+|    `-d`    | Destination file path.                                                                                                                                                                                                                                                                                                                                                        |
+|  `--get`   | Get function name and arguments. You can use multiple arguments separated with comma `,` to define multiple `Get` functions. Also, You can use parentheses to get records by more than one parameter. If you don't define this flag, `Get` function will not be created.                                                                                                      |
+| `--update` | Update function name and arguments. You can use multiple arguments separated with comma `,` and brackets `[ ]` to define multiple `Update` functions. You should define two pairs of parentheses in each bracket, the former for updating by parameters and the latter for updating fields parameters. If you don't define this flag, `Update` function will not be created.  |
+| `--create` | Create function name and arguments. If you don't define this flag, `Create` function will not be created.                                                                                                                                                                                                                                                                     |
 
 # Note
 In each flag, you should use the database name as parameter.
@@ -44,9 +46,14 @@ type Example struct {
 
 You can create a functions to query to database using `crafting-table` as below.
 
-Syntax:
+Command:
 ```bash
-crafting-table generate -s ./example/src/example.go -d ./example/dst/example.go --get "[ var1, (var1, var3) ]" --update "[[(var3),(var2, var1)], [(var2, var3), (var1)]]" --create true
+crafting-table generate \
+    -s ./example/src/example.go \
+    -d ./example/dst/example.go \
+    --get "[ var1, (var1, var3) ]" \
+    --update "[[(var3), (var2, var1)], [(var2, var3), (var1)]]" \
+    --create true
 ```
 
 Result:
