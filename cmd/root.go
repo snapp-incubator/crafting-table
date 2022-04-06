@@ -14,6 +14,7 @@ var rootCMD = &cobra.Command{
 
 // Execute executes the root command.
 func Execute() {
+	printAsciiArt()
 	if err := rootCMD.Execute(); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
