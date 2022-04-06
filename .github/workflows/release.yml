@@ -1,0 +1,28 @@
+name: Release crafting-table
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  releases-matrix:
+    name: Release crafting-table
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set APP_VERSION env
+        run: echo APP_VERSION=$(basename ${GITHUB_REF}) >> ${GITHUB_ENV}
+      - name: Set BUILD_TIME env
+        run: echo BUILD_TIME=$(date --iso-8601=seconds) >> ${GITHUB_ENV}
+
+      - uses: wangyoucao577/go-release-action@v1.4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          ldflags: -X "github.com/Telenav/osrm-backend/integration/util/appversion.appVersion=${{ env.APP_VERSION }}" -X "github.com/Telenav/osrm-backend/integration/util/appversion.buildTime=${{ env.BUILD_TIME }}" -X github.com/Telenav/osrm-backend/integration/util/appversion.gitCommit=${{ github.sha }}
