@@ -8,7 +8,7 @@ check-goimport:
 
 format:
 	- find $(ROOT) -type f -name "*.go" -not -path "$(ROOT)/vendor/*" | xargs -n 1 -I R goimports -w R
-	- find $(ROOT) -type f -name "*.go" -not -path "$(ROOT)/vendor/*" | xargs -n 1 -I R gofmt -s -w R
+	- find $(ROOT) -type f -name "*.go" -not -path "$(ROOT)/vendor/*" | xargs -n 1 -I R gofmt -s
 
 vendor:
 	- go mod tidy
@@ -16,3 +16,6 @@ vendor:
 
 build: format vendor
 	- go build
+
+it: build
+	- sh integration_test.sh $(ROOT)

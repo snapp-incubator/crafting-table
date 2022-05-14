@@ -16,5 +16,7 @@ vendor/
 
 .idea/
 
+.build/
+
 # Project Binary file
 crafting-table
