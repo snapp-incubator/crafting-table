@@ -24,17 +24,18 @@ func interfaceSyntaxCreator(structure *structure.Structure, functions []string) 
 }
 
 func linter(dst string) error {
-	cmd := exec.Command("gofmt", "-s", "-w", dst)
+	cmd := exec.Command("goimports", "-w", dst)
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		err = errors.New(fmt.Sprintf("Error in gofmt: %s", err.Error()))
+		fmt.Println("goooooooooooooooooooooooooooooooooooooooooooooooooooz")
+		err = errors.New(fmt.Sprintf("Error in goimports: %s", err.Error()))
 		return err
 	}
 
-	cmd = exec.Command("goimports", dst)
+	cmd = exec.Command("gofmt", "-s", dst)
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		err = errors.New(fmt.Sprintf("Error in goimports: %s", err.Error()))
+		err = errors.New(fmt.Sprintf("Error in gofmt: %s", err.Error()))
 		return err
 	}
 

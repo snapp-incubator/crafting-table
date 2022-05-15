@@ -2,8 +2,9 @@
 
 ## UNRELEASED
 
-* Updated the gitignore file to include the `vendor` folder and `Project binary` file. (2022-05-15, @n25a, !3)
+* Update the gitignore file to include the `vendor` folder and `Project binary` file. (2022-05-15, @n25a, !3)
 * Add Makefile to the project. (2022-05-15, @n25a, !4)
+* Add integration test. (2022-05-15, @n25a, !5)
 
 ## v1.0.1 - Apr 06 2022
 
