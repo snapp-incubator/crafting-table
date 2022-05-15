@@ -1,6 +1,6 @@
 # Crafting Table
 
-## UNRELEASED
+## v1.1.0 - May 15 2022
 
 * Update the gitignore file to include the `vendor` folder and `Project binary` file. (2022-05-15, @n25a, !3)
 * Add Makefile to the project. (2022-05-15, @n25a, !4)
