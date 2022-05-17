@@ -7,7 +7,7 @@ import (
 
 	"github.com/iancoleman/strcase"
 
-	"github.com/n25a/crafting-table/internal/structure"
+	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
 type Sqlx interface {

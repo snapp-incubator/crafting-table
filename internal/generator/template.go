@@ -6,8 +6,8 @@ import (
 
 	"github.com/iancoleman/strcase"
 
-	"github.com/n25a/crafting-table/assets"
-	"github.com/n25a/crafting-table/internal/structure"
+	"github.com/snapp-incubator/crafting-table/assets"
+	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
 func createTemplate(structure *structure.Structure, packageName, interfaceSyntax,

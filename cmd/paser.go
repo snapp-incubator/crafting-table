@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/n25a/crafting-table/internal/structure"
+	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
 func parseVariables(vars string) *[]structure.Variables {

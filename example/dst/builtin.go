@@ -9,7 +9,7 @@ import (
 	"errors"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/n25a/crafting-table/example/src"
+	"github.com/snapp-incubator/crafting-table/example/src"
 )
 
 type Example interface {
