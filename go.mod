@@ -1,4 +1,4 @@
-module github.com/n25a/crafting-table
+module github.com/snapp-incubator/crafting-table
 
 go 1.18
 
