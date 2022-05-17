@@ -6,8 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/n25a/crafting-table/internal/generator"
-	"github.com/n25a/crafting-table/internal/structure"
+	"github.com/snapp-incubator/crafting-table/internal/generator"
+	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
 var (

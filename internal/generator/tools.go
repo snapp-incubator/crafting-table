@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/n25a/crafting-table/internal/structure"
+	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
 func interfaceSyntaxCreator(structure *structure.Structure, functions []string) string {
