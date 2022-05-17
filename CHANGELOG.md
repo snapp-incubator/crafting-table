@@ -1,5 +1,9 @@
 # Crafting Table
 
+## UNRELEASED
+
+* Change go module path. (2022-05-17, @n25a, !10)
+
 ## v1.1.0 - May 15 2022
 
 * Update the gitignore file to include the `vendor` folder and `Project binary` file. (2022-05-15, @n25a, !3)
