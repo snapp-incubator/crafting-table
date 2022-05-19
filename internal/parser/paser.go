@@ -1,4 +1,4 @@
-package cmd
+package parser
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-func parseVariables(vars string) *[]structure.Variables {
+func ParseVariables(vars string) *[]structure.Variables {
 	// TODO : parse variables with regex
 
 	newVar := vars[1 : len(vars)-1] // remove "[" and "]"
@@ -60,7 +60,7 @@ func parseVariables(vars string) *[]structure.Variables {
 	return &result
 }
 
-func parseUpdateVariables(vars string) *[]structure.UpdateVariables {
+func ParseUpdateVariables(vars string) *[]structure.UpdateVariables {
 	cleanFlag := vars
 	for strings.Contains(cleanFlag, "  ") {
 		cleanFlag = strings.Replace(vars, "  ", " ", -1)

@@ -1,8 +1,8 @@
-package cmd
+package app
 
 import "fmt"
 
-func printAsciiArt() {
+func PrintAsciiArt() {
 	fmt.Print(`
  ██████ ██████   █████  ███████ ████████ ██ ███    ██  ██████      ████████  █████  ██████  ██      ███████ 
 ██      ██   ██ ██   ██ ██         ██    ██ ████   ██ ██              ██    ██   ██ ██   ██ ██      ██      

@@ -4,6 +4,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/snapp-incubator/crafting-table/internal/parser"
+
 	"github.com/spf13/cobra"
 
 	"github.com/snapp-incubator/crafting-table/internal/generator"
@@ -71,7 +73,7 @@ func generate(_ *cobra.Command, _ []string) {
 		if err := validateFlag(get); err != nil {
 			log.Fatal(err)
 		}
-		getVars = parseVariables(get)
+		getVars = parser.ParseVariables(get)
 	}
 
 	if update != "" {
@@ -82,7 +84,7 @@ func generate(_ *cobra.Command, _ []string) {
 		if err := validateUpdateFlag(update); err != nil {
 			log.Fatal(err)
 		}
-		updateVars = parseUpdateVariables(update)
+		updateVars = parser.ParseUpdateVariables(update)
 	}
 
 	if err := generator.GenerateRepository(source, destination, packageName, getVars, updateVars, create); err != nil {

@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/snapp-incubator/crafting-table/internal/assets"
+
 	"github.com/iancoleman/strcase"
 
-	"github.com/snapp-incubator/crafting-table/assets"
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 

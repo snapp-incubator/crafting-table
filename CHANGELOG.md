@@ -1,5 +1,9 @@
 # Crafting Table
 
+# UNRELEASED
+
+* Clean up packages. (2022-05-20, @n25a, !15)
+
 ## v1.1.1 - May 17 2022
 
 * Change go module path. (2022-05-17, @n25a, !10)

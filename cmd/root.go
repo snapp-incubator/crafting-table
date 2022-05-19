@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/snapp-incubator/crafting-table/internal/app"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +16,7 @@ var rootCMD = &cobra.Command{
 
 // Execute executes the root command.
 func Execute() {
-	printAsciiArt()
+	app.PrintAsciiArt()
 	if err := rootCMD.Execute(); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

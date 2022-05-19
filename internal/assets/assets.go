@@ -1,6 +1,8 @@
 package assets
 
-import "github.com/snapp-incubator/crafting-table/assets/sqlx"
+import (
+	"github.com/snapp-incubator/crafting-table/internal/assets/sqlx"
+)
 
 var A Assets
 
