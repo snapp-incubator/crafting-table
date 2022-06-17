@@ -1,4 +1,4 @@
-package cmd
+package parser
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func validateFlag(flag string) error {
+func ValidateGetFlag(flag string) error {
 	// TODO : change validation to regex
 
 	if string(flag[0]) != "[" && string(flag[len(flag)-1]) != "]" {
@@ -42,7 +42,7 @@ func validateFlag(flag string) error {
 	return nil
 }
 
-func validateUpdateFlag(flag string) error {
+func ValidateUpdateFlag(flag string) error {
 	cleanFlag := flag
 	for strings.Contains(cleanFlag, "  ") {
 		cleanFlag = strings.Replace(flag, "  ", " ", -1)
