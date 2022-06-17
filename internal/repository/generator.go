@@ -27,7 +27,7 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 		var signature string
 		createSyntax, signature, err = createFunction(s)
 		if err != nil {
-			err = errors.New(fmt.Sprintf("Error in createFunctionRepository: %s", err.Error()))
+			err = errors.New(fmt.Sprintf("Error in createFunction: %s", err.Error()))
 			return err
 		}
 		signatures = append(signatures, signature)
@@ -36,7 +36,7 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 	if getVars != nil {
 		getSyntax, signatureList, err = getFunction(s, getVars)
 		if err != nil {
-			err = errors.New(fmt.Sprintf("Error in getFunctionCreator: %s", err.Error()))
+			err = errors.New(fmt.Sprintf("Error in getFunction: %s", err.Error()))
 			return err
 		}
 		signatures = append(signatures, signatureList...)
@@ -45,7 +45,7 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 	if updateVars != nil {
 		updateSyntax, signatureList, err = updateFunction(s, updateVars)
 		if err != nil {
-			err = errors.New(fmt.Sprintf("Error in updateFunctionCreator: %s", err.Error()))
+			err = errors.New(fmt.Sprintf("Error in updateFunction: %s", err.Error()))
 			return err
 		}
 		signatures = append(signatures, signatureList...)
