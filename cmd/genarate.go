@@ -16,9 +16,7 @@ var (
 	source      string
 	destination string
 	packageName string
-	getVars     *[]structure.Variables
 	get         string
-	updateVars  *[]structure.UpdateVariables
 	update      string
 	create      bool
 )
@@ -35,12 +33,12 @@ func init() {
 
 	err := generateCMD.MarkFlagRequired("source")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = generateCMD.MarkFlagRequired("destination")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	// TODO: add flag for table name
@@ -62,9 +60,10 @@ func generate(_ *cobra.Command, _ []string) {
 	destination = strings.Replace(destination, " ", "", -1)
 
 	if get == "" && update == "" && !create {
-		log.Fatal("You must set at least one flag for get, update or create")
+		log.Fatal("you must set at least one flag for get, update or create")
 	}
 
+	var getVars *[]structure.Variables
 	if get != "" {
 		for strings.Contains(get, " ") {
 			get = strings.Replace(get, " ", "", -1)
@@ -76,6 +75,7 @@ func generate(_ *cobra.Command, _ []string) {
 		getVars = parser.ExtractGetVariables(get)
 	}
 
+	var updateVars *[]structure.UpdateVariables
 	if update != "" {
 		for strings.Contains(update, " ") {
 			update = strings.Replace(update, " ", "", -1)

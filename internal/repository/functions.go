@@ -61,40 +61,40 @@ func NewMySQL%s(db *sqlx.DB) %s {
 	return syntax
 }
 
-func createFunctionRepository(structure *structure.Structure) (syntax, funcDeclare string, err error) {
+func createFunction(structure *structure.Structure) (syntax, funcDeclare string, err error) {
 	syntax, funcDeclare = assets.A.Sqlx.Insert(structure)
 	return syntax, funcDeclare, nil
 }
 
-func getFunctionCreator(structure *structure.Structure, vars *[]structure.Variables) (syntax string, functions []string, err error) {
+func getFunction(structure *structure.Structure, vars *[]structure.Variables) (syntax string, functions []string, err error) {
 
-	body, header := assets.A.Sqlx.SelectAll(structure)
-
-	syntax += body
-	functions = append(functions, header)
-
-	body, headers := assets.A.Sqlx.SelectBy(structure, vars)
+	body, signature := assets.A.Sqlx.SelectAll(structure)
 
 	syntax += body
-	for _, header := range headers {
-		functions = append(functions, header)
+	functions = append(functions, signature)
+
+	body, signatures := assets.A.Sqlx.SelectBy(structure, vars)
+
+	syntax += body
+	for _, signature := range signatures {
+		functions = append(functions, signature)
 	}
 
 	return syntax, functions, nil
 }
 
-func updateFunctionCreator(structure *structure.Structure, updateVars *[]structure.UpdateVariables) (syntax string, functions []string, err error) {
+func updateFunction(structure *structure.Structure, updateVars *[]structure.UpdateVariables) (syntax string, functions []string, err error) {
 
-	body, header := assets.A.Sqlx.UpdateAll(structure)
-
-	syntax += body
-	functions = append(functions, header)
-
-	body, headers := assets.A.Sqlx.UpdateBy(structure, updateVars)
+	body, signature := assets.A.Sqlx.UpdateAll(structure)
 
 	syntax += body
-	for _, header := range headers {
-		functions = append(functions, header)
+	functions = append(functions, signature)
+
+	body, signatures := assets.A.Sqlx.UpdateBy(structure, updateVars)
+
+	syntax += body
+	for _, signature := range signatures {
+		functions = append(functions, signature)
 	}
 
 	return syntax, functions, nil

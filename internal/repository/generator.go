@@ -20,38 +20,38 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 		return err
 	}
 
-	var functions []string
-	var function []string
+	var signatures []string
+	var signatureList []string
 
 	if create {
-		var function string
-		createSyntax, function, err = createFunctionRepository(s)
+		var signature string
+		createSyntax, signature, err = createFunction(s)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in createFunctionRepository: %s", err.Error()))
 			return err
 		}
-		functions = append(functions, function)
+		signatures = append(signatures, signature)
 	}
 
 	if getVars != nil {
-		getSyntax, function, err = getFunctionCreator(s, getVars)
+		getSyntax, signatureList, err = getFunction(s, getVars)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in getFunctionCreator: %s", err.Error()))
 			return err
 		}
-		functions = append(functions, function...)
+		signatures = append(signatures, signatureList...)
 	}
 
 	if updateVars != nil {
-		updateSyntax, function, err = updateFunctionCreator(s, updateVars)
+		updateSyntax, signatureList, err = updateFunction(s, updateVars)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in updateFunctionCreator: %s", err.Error()))
 			return err
 		}
-		functions = append(functions, function...)
+		signatures = append(signatures, signatureList...)
 	}
 
-	interfaceSyntax := interfaceCreator(s, functions)
+	interfaceSyntax := interfaceCreator(s, signatures)
 
 	fileContent := createTemplate(s, packageName, interfaceSyntax,
 		createSyntax, updateSyntax, getSyntax)
@@ -71,14 +71,14 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 	return nil
 }
 
-func interfaceCreator(structure *structure.Structure, functions []string) string {
+func interfaceCreator(structure *structure.Structure, signatures []string) string {
 	syntax := fmt.Sprintf(
 		"type %s interface {",
 		structure.Name,
 	)
 
-	for _, function := range functions {
-		syntax += fmt.Sprintf("\n\t%s", function)
+	for _, signature := range signatures {
+		syntax += fmt.Sprintf("\n\t%s", signature)
 	}
 	syntax += "\n}"
 

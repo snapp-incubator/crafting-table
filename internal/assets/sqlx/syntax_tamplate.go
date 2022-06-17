@@ -2,6 +2,7 @@ package sqlx
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
@@ -21,16 +22,16 @@ type Sqlx interface {
 type FieldType interface{ structure.Field | string }
 
 type sqlx struct {
-	insertFuncHeader    string
-	insertFuncBody      string
-	selectAllFuncHeader string
-	selectAllFuncBody   string
-	selectFuncHeader    string
-	selectFuncBody      string
-	updateAllFuncHeader string
-	updateAllFuncBody   string
-	updateFuncHeader    string
-	updateFuncBody      string
+	insertFuncSignature    string
+	insertFuncBody         string
+	selectAllFuncSignature string
+	selectAllFuncBody      string
+	selectFuncSignature    string
+	selectFuncBody         string
+	updateAllFuncSignature string
+	updateAllFuncBody      string
+	updateFuncSignature    string
+	updateFuncBody         string
 }
 
 func NewSqlx() Sqlx {
@@ -52,7 +53,7 @@ func (r *mysql%s) Create(ctx context.Context, %s *%s.%s) error {
 }
 `
 
-	s.insertFuncHeader = `Create(ctx context.Context, %s *%s.%s) error`
+	s.insertFuncSignature = `Create(ctx context.Context, %s *%s.%s) error`
 
 	s.selectAllFuncBody = `
 func (r *mysql%s) Get%ss(ctx context.Context) (*[]%s.%s, error) {
@@ -70,7 +71,7 @@ func (r *mysql%s) Get%ss(ctx context.Context) (*[]%s.%s, error) {
 }
 `
 
-	s.selectAllFuncHeader = `Get%ss(ctx context.Context) (*[]%s.%s, error)`
+	s.selectAllFuncSignature = `Get%ss(ctx context.Context) (*[]%s.%s, error)`
 
 	s.selectFuncBody = `
 func (r *mysql%s) GetBy%s(ctx context.Context, %s) (*%s.%s, error) {
@@ -93,7 +94,7 @@ func (r *mysql%s) GetBy%s(ctx context.Context, %s) (*%s.%s, error) {
 }
 `
 
-	s.selectFuncHeader = `GetBy%s(ctx context.Context, %s) (*%s.%s, error)`
+	s.selectFuncSignature = `GetBy%s(ctx context.Context, %s) (*%s.%s, error)`
 
 	s.updateAllFuncBody = `
 func (r *mysql%s) Update(ctx context.Context, %s %s, %s %s.%s) (int64, error) {
@@ -114,7 +115,7 @@ func (r *mysql%s) Update(ctx context.Context, %s %s, %s %s.%s) (int64, error) {
 }
 `
 
-	s.updateAllFuncHeader = `Update(ctx context.Context, %s %s, %s %s.%s) (int64, error)`
+	s.updateAllFuncSignature = `Update(ctx context.Context, %s %s, %s %s.%s) (int64, error)`
 
 	s.updateFuncBody = `
 func (r *mysql%s) Update%s(ctx context.Context, %s, %s) (int64, error) {
@@ -132,12 +133,12 @@ func (r *mysql%s) Update%s(ctx context.Context, %s, %s) (int64, error) {
 }
 `
 
-	s.updateFuncHeader = `Update%s(ctx context.Context, %s, %s) (int64, error)`
+	s.updateFuncSignature = `Update%s(ctx context.Context, %s, %s) (int64, error)`
 
 	return s
 }
 
-func (s sqlx) Insert(structure *structure.Structure) (syntax string, header string) {
+func (s sqlx) Insert(structure *structure.Structure) (syntax string, signature string) {
 	fields := structure.GetDBFields(":")
 
 	syntax = fmt.Sprintf(
@@ -152,17 +153,17 @@ func (s sqlx) Insert(structure *structure.Structure) (syntax string, header stri
 		strcase.ToLowerCamel(structure.Name),
 	)
 
-	header = fmt.Sprintf(
-		s.insertFuncHeader,
+	signature = fmt.Sprintf(
+		s.insertFuncSignature,
 		strcase.ToLowerCamel(structure.Name),
 		structure.PackageName,
 		structure.Name,
 	)
 
-	return syntax, header
+	return syntax, signature
 }
 
-func (s sqlx) UpdateAll(structure *structure.Structure) (syntax string, header string) {
+func (s sqlx) UpdateAll(structure *structure.Structure) (syntax string, signature string) {
 	syntax = fmt.Sprintf(
 		s.updateAllFuncBody,
 		structure.Name,
@@ -182,8 +183,8 @@ func (s sqlx) UpdateAll(structure *structure.Structure) (syntax string, header s
 		strcase.ToLowerCamel(structure.Name),
 	)
 
-	header = fmt.Sprintf(
-		s.updateAllFuncHeader,
+	signature = fmt.Sprintf(
+		s.updateAllFuncSignature,
 		strcase.ToLowerCamel(structure.Fields[0].Name),
 		structure.Fields[0].Type,
 		strcase.ToLowerCamel(structure.Name),
@@ -191,10 +192,10 @@ func (s sqlx) UpdateAll(structure *structure.Structure) (syntax string, header s
 		structure.Name,
 	)
 
-	return syntax, header
+	return syntax, signature
 }
 
-func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string, headers []string) {
+func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string, signatures []string) {
 
 	for _, v := range *vars {
 		functionNameList := make([]string, 0)
@@ -207,29 +208,29 @@ func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateV
 			s.updateFuncBody,
 			structure.Name,
 			functionName,
-			headerVariables(v.By, structure),
-			headerVariables(v.Fields, structure),
+			inputFunctionVariables(v.By, structure),
+			inputFunctionVariables(v.Fields, structure),
 			structure.DBName,
 			contextKeys(v.Fields),
 			conditions(v.By, structure, true),
 			execContextVariables(v, structure),
 		)
 
-		headers = append(
-			headers,
+		signatures = append(
+			signatures,
 			fmt.Sprintf(
-				s.updateFuncHeader,
+				s.updateFuncSignature,
 				functionName,
-				headerVariables(v.By, structure),
-				headerVariables(v.Fields, structure),
+				inputFunctionVariables(v.By, structure),
+				inputFunctionVariables(v.Fields, structure),
 			),
 		)
 	}
 
-	return syntax, headers
+	return syntax, signatures
 }
 
-func (s sqlx) SelectAll(structure *structure.Structure) (syntax string, header string) {
+func (s sqlx) SelectAll(structure *structure.Structure) (syntax string, signature string) {
 
 	syntax = fmt.Sprintf(
 		s.selectAllFuncBody,
@@ -246,17 +247,17 @@ func (s sqlx) SelectAll(structure *structure.Structure) (syntax string, header s
 		strcase.ToLowerCamel(structure.Name),
 	)
 
-	header = fmt.Sprintf(
-		s.selectAllFuncHeader,
+	signature = fmt.Sprintf(
+		s.selectAllFuncSignature,
 		structure.Name,
 		structure.PackageName,
 		structure.Name,
 	)
 
-	return syntax, header
+	return syntax, signature
 }
 
-func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.Variables) (syntax string, headers []string) {
+func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.Variables) (syntax string, signatures []string) {
 
 	for _, v := range *vars {
 		functionNameList := make([]string, 0)
@@ -269,7 +270,7 @@ func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.Variabl
 			s.selectFuncBody,
 			structure.Name,
 			functionName,
-			headerVariables(v.Name, structure),
+			inputFunctionVariables(v.Name, structure),
 			structure.PackageName,
 			structure.Name,
 			strcase.ToLowerCamel(structure.Name),
@@ -283,19 +284,19 @@ func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.Variabl
 			strcase.ToLowerCamel(structure.Name),
 		)
 
-		headers = append(
-			headers,
+		signatures = append(
+			signatures,
 			fmt.Sprintf(
-				s.selectFuncHeader,
+				s.selectFuncSignature,
 				functionName,
-				headerVariables(v.Name, structure),
+				inputFunctionVariables(v.Name, structure),
 				structure.PackageName,
 				structure.Name,
 			),
 		)
 	}
 
-	return syntax, headers
+	return syntax, signatures
 }
 
 func contextKeys[T FieldType](fields []T) string {
@@ -330,7 +331,7 @@ func conditions(v []string, structure *structure.Structure, withQuestionMark boo
 	for _, value := range v {
 		res := structure.FieldDBNameToName[value]
 		if res == "" {
-			panic(fmt.Sprintf("%s is not valid db_field", value))
+			log.Fatalf("%s is not valid db_field", value)
 		}
 	}
 
@@ -344,11 +345,11 @@ func conditions(v []string, structure *structure.Structure, withQuestionMark boo
 	return "WHERE " + strings.Join(conditions, " AND ")
 }
 
-func headerVariables(v []string, structure *structure.Structure) string {
+func inputFunctionVariables(v []string, structure *structure.Structure) string {
 	for _, value := range v {
 		res := structure.FieldDBNameToName[value]
 		if res == "" {
-			panic(fmt.Sprintf("%s is not valid db_field", value))
+			log.Fatalf("%s is not valid db_field", value)
 		}
 	}
 
@@ -366,7 +367,7 @@ func contextVariables(v []string, structure *structure.Structure) string {
 	for _, value := range v {
 		res := structure.FieldDBNameToName[value]
 		if res == "" {
-			panic(fmt.Sprintf("%s is not valid db_field", value))
+			log.Fatalf("%s is not valid db_field", value)
 		}
 	}
 
