@@ -11,7 +11,7 @@ import (
 
 var rootCMD = &cobra.Command{
 	Use:   "crafting-table",
-	Short: "A generator for repository based struct",
+	Short: "A repository for repository based struct",
 }
 
 // Execute executes the root command.

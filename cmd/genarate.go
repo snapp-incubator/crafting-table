@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/snapp-incubator/crafting-table/internal/generator"
+	"github.com/snapp-incubator/crafting-table/internal/repository"
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
@@ -70,10 +70,10 @@ func generate(_ *cobra.Command, _ []string) {
 			get = strings.Replace(get, " ", "", -1)
 		}
 		get = strings.Replace(get, " ", "", -1)
-		if err := validateFlag(get); err != nil {
+		if err := parser.ValidateGetFlag(get); err != nil {
 			log.Fatal(err)
 		}
-		getVars = parser.ParseVariables(get)
+		getVars = parser.ExtractGetVariables(get)
 	}
 
 	if update != "" {
@@ -81,13 +81,13 @@ func generate(_ *cobra.Command, _ []string) {
 			update = strings.Replace(update, " ", "", -1)
 		}
 		update = strings.Replace(update, " ", "", -1)
-		if err := validateUpdateFlag(update); err != nil {
+		if err := parser.ValidateUpdateFlag(update); err != nil {
 			log.Fatal(err)
 		}
-		updateVars = parser.ParseUpdateVariables(update)
+		updateVars = parser.ExtractUpdateVariables(update)
 	}
 
-	if err := generator.GenerateRepository(source, destination, packageName, getVars, updateVars, create); err != nil {
+	if err := repository.Generate(source, destination, packageName, getVars, updateVars, create); err != nil {
 		log.Fatal(err)
 	}
 }
