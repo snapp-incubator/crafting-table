@@ -19,6 +19,7 @@ var (
 	get         string
 	update      string
 	create      bool
+	test        bool
 )
 
 var generateCMD = &cobra.Command{
@@ -47,6 +48,7 @@ func init() {
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
 	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
+	generateCMD.Flags().BoolVarP(&test, "test", "t", false, "generate automatically tests for created repository")
 }
 
 func generate(_ *cobra.Command, _ []string) {
@@ -87,7 +89,7 @@ func generate(_ *cobra.Command, _ []string) {
 		updateVars = parser.ExtractUpdateVariables(update)
 	}
 
-	if err := repository.Generate(source, destination, packageName, getVars, updateVars, create); err != nil {
+	if err := repository.Generate(source, destination, packageName, getVars, updateVars, create, test); err != nil {
 		log.Fatal(err)
 	}
 }

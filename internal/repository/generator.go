@@ -9,11 +9,20 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-var createSyntax = ""
-var updateSyntax = ""
-var getSyntax = ""
+func Generate(source, destination, packageName string, getVars *[]structure.Variables, updateVars *[]structure.UpdateVariables, create, test bool) error {
+	createSyntax := ""
+	updateSyntax := ""
+	getSyntax := ""
 
-func Generate(source, destination, packageName string, getVars *[]structure.Variables, updateVars *[]structure.UpdateVariables, create bool) error {
+	createTestSyntax := ""
+	updateTestSyntax := ""
+	getTestSyntax := ""
+
+	var testDestination string
+	if test {
+		testDestination = destination[:len(destination)-3] + "_test.go"
+	}
+
 	s, err := structure.BindStruct(source)
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Error in bindStruct: %s", err.Error()))
@@ -31,6 +40,14 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 			return err
 		}
 		signatures = append(signatures, signature)
+
+		if test {
+			createTestSyntax, err = createTestFunction(s)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("Error in createTestFunction: %s", err.Error()))
+				return err
+			}
+		}
 	}
 
 	if getVars != nil {
@@ -40,6 +57,14 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 			return err
 		}
 		signatures = append(signatures, signatureList...)
+
+		if test {
+			createTestSyntax, err = getTestFunction(s, getVars)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("Error in getTestFunction: %s", err.Error()))
+				return err
+			}
+		}
 	}
 
 	if updateVars != nil {
@@ -49,6 +74,14 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 			return err
 		}
 		signatures = append(signatures, signatureList...)
+
+		if test {
+			createTestSyntax, err = updateTestFunction(s, updateVars)
+			if err != nil {
+				err = errors.New(fmt.Sprintf("Error in updateTestFunction: %s", err.Error()))
+				return err
+			}
+		}
 	}
 
 	interfaceSyntax := interfaceCreator(s, signatures)
@@ -66,6 +99,22 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Error in linter: %s", err.Error()))
 		return err
+	}
+
+	if test {
+		testFileContent := createTestTemplate(s, packageName, createTestSyntax, updateTestSyntax, getTestSyntax)
+
+		err = exportTestRepository(testFileContent, testDestination)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in writeTestFile: %s", err.Error()))
+			return err
+		}
+
+		err = linter(testDestination)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in linter: %s", err.Error()))
+			return err
+		}
 	}
 
 	return nil

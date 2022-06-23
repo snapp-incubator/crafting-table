@@ -66,6 +66,10 @@ func createFunction(structure *structure.Structure) (syntax, funcDeclare string,
 	return syntax, funcDeclare, nil
 }
 
+func createTestFunction(structure *structure.Structure) (syntax string) {
+	return assets.A.SqlxTest.Insert(structure)
+}
+
 func getFunction(structure *structure.Structure, vars *[]structure.Variables) (syntax string, functions []string, err error) {
 
 	body, signature := assets.A.Sqlx.SelectAll(structure)
@@ -83,6 +87,15 @@ func getFunction(structure *structure.Structure, vars *[]structure.Variables) (s
 	return syntax, functions, nil
 }
 
+func getTestFunction(structure *structure.Structure, vars *[]structure.Variables) (syntax string) {
+	syntax = assets.A.SqlxTest.SelectAll(structure)
+	body := assets.A.SqlxTest.SelectBy(structure, vars)
+
+	syntax += "\n" + body
+
+	return syntax
+}
+
 func updateFunction(structure *structure.Structure, updateVars *[]structure.UpdateVariables) (syntax string, functions []string, err error) {
 
 	body, signature := assets.A.Sqlx.UpdateAll(structure)
@@ -98,4 +111,13 @@ func updateFunction(structure *structure.Structure, updateVars *[]structure.Upda
 	}
 
 	return syntax, functions, nil
+}
+
+func updateTestFunction(structure *structure.Structure, updateVars *[]structure.UpdateVariables) (syntax string) {
+	syntax = assets.A.SqlxTest.UpdateAll(structure)
+	body := assets.A.SqlxTest.UpdateBy(structure, updateVars)
+
+	syntax += "\n" + body
+
+	return syntax
 }

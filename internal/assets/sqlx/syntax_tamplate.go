@@ -38,7 +38,7 @@ func NewSqlx() Sqlx {
 	s := sqlx{}
 
 	s.insertFuncBody = `
-func (r *mysql%s) Create(ctx context.Context, %s *%s.%s) error {
+func (r *mysql%s) Insert(ctx context.Context, %s *%s.%s) error {
 	_, err := r.db.NamedExecContext(ctx, "INSERT INTO %s (" +
 	%s +
 	") VALUES (" +
@@ -53,7 +53,7 @@ func (r *mysql%s) Create(ctx context.Context, %s *%s.%s) error {
 }
 `
 
-	s.insertFuncSignature = `Create(ctx context.Context, %s *%s.%s) error`
+	s.insertFuncSignature = `Insert(ctx context.Context, %s *%s.%s) error`
 
 	s.selectAllFuncBody = `
 func (r *mysql%s) Get%ss(ctx context.Context) (*[]%s.%s, error) {
