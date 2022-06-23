@@ -123,7 +123,7 @@ func (s *Structure) GetDBFields(prefix string) string {
 	tmp := ""
 	for _, field := range s.Fields {
 		if len(tmp) > 80 {
-			result += tmp[:len(tmp)-2] + "\"+\n\t\""
+			result += tmp[:len(tmp)-2] + ", \"+\n\t\""
 			tmp = ""
 		}
 		tmp += prefix + field.DBName + ", "
