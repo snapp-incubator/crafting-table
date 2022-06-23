@@ -101,7 +101,7 @@ func (r *mysql%s) Update(ctx context.Context, %s %s, %s %s.%s) (int64, error) {
 	%s.%s = %s
 
 	result, err := r.db.NamedExecContext(ctx, "UPDATE %s "+
-		"SET"+
+		"SET "+
 		%s +
 		"%s",
 		%s,
@@ -304,7 +304,7 @@ func contextKeys[T FieldType](fields []T) string {
 	tmp := ""
 	for _, field := range fields {
 		if len(tmp) > 80 {
-			result += tmp[:len(tmp)-2] + "\"+\n\t\t\""
+			result += tmp[:len(tmp)-2] + ", \"+\n\t\t\""
 			tmp = ""
 		}
 
