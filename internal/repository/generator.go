@@ -42,11 +42,7 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 		signatures = append(signatures, signature)
 
 		if test {
-			createTestSyntax, err = createTestFunction(s)
-			if err != nil {
-				err = errors.New(fmt.Sprintf("Error in createTestFunction: %s", err.Error()))
-				return err
-			}
+			createTestSyntax = createTestFunction(s)
 		}
 	}
 
@@ -59,11 +55,7 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 		signatures = append(signatures, signatureList...)
 
 		if test {
-			createTestSyntax, err = getTestFunction(s, getVars)
-			if err != nil {
-				err = errors.New(fmt.Sprintf("Error in getTestFunction: %s", err.Error()))
-				return err
-			}
+			getTestSyntax = getTestFunction(s, getVars)
 		}
 	}
 
@@ -76,11 +68,8 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 		signatures = append(signatures, signatureList...)
 
 		if test {
-			createTestSyntax, err = updateTestFunction(s, updateVars)
-			if err != nil {
-				err = errors.New(fmt.Sprintf("Error in updateTestFunction: %s", err.Error()))
-				return err
-			}
+			updateTestSyntax = updateTestFunction(s, updateVars)
+
 		}
 	}
 
@@ -104,7 +93,7 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 	if test {
 		testFileContent := createTestTemplate(s, packageName, createTestSyntax, updateTestSyntax, getTestSyntax)
 
-		err = exportTestRepository(testFileContent, testDestination)
+		err = exportRepository(testFileContent, testDestination)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in writeTestFile: %s", err.Error()))
 			return err

@@ -135,3 +135,21 @@ func (s *Structure) GetDBFields(prefix string) string {
 
 	return result
 }
+
+func (s *Structure) GetDBFieldsInQuotation() string {
+	result := ""
+	for _, field := range s.Fields {
+		result += "\"" + field.DBName + "\",\n\t\t\t"
+	}
+
+	return result
+}
+
+func (s *Structure) GetVariableFields(prefix string) string {
+	result := ""
+	for _, field := range s.Fields {
+		result += prefix + field.Name + ",\n\t\t\t"
+	}
+
+	return result
+}
