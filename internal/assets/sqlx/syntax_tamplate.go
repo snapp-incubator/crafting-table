@@ -38,7 +38,7 @@ func NewSqlx() Sqlx {
 	s := sqlx{}
 
 	s.insertFuncBody = `
-func (r *mysql%s) Create(ctx context.Context, %s *%s.%s) error {
+func (r *mysql%s) Insert(ctx context.Context, %s *%s.%s) error {
 	_, err := r.db.NamedExecContext(ctx, "INSERT INTO %s (" +
 	%s +
 	") VALUES (" +
@@ -53,7 +53,7 @@ func (r *mysql%s) Create(ctx context.Context, %s *%s.%s) error {
 }
 `
 
-	s.insertFuncSignature = `Create(ctx context.Context, %s *%s.%s) error`
+	s.insertFuncSignature = `Insert(ctx context.Context, %s *%s.%s) error`
 
 	s.selectAllFuncBody = `
 func (r *mysql%s) Get%ss(ctx context.Context) (*[]%s.%s, error) {
@@ -213,7 +213,7 @@ func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateV
 			structure.DBName,
 			contextKeys(v.Fields),
 			conditions(v.By, structure, true),
-			execContextVariables(v, structure),
+			execContextVariables(v, structure, false),
 		)
 
 		signatures = append(
@@ -380,6 +380,9 @@ func contextVariables(v []string, structure *structure.Structure) string {
 	return res[:len(res)-2]
 }
 
-func execContextVariables(vars structure.UpdateVariables, structure *structure.Structure) string {
+func execContextVariables(vars structure.UpdateVariables, structure *structure.Structure, reverse bool) string {
+	if reverse {
+		return contextVariables(vars.By, structure) + ", " + contextVariables(vars.Fields, structure)
+	}
 	return contextVariables(vars.Fields, structure) + ", " + contextVariables(vars.By, structure)
 }

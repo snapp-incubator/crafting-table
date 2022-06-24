@@ -5,6 +5,7 @@
 * Clean up packages. (2022-05-20, @n25a, !15)
 * Issue #13: Renaming variables and packages. (2022-06-17, @n25a, !16)
 * Fix bug in query syntax for `sqlx`. (2022-06-24, @n25a, !17)
+* Create tests for generated repository. (2022-06-25, @n25a, !18)
 
 ## v1.1.1 - May 17 2022
 
