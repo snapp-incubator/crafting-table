@@ -1,6 +1,6 @@
 # Crafting Table
 
-# UNRELEASED
+# v1.2.0 - Jun 25 2022
 
 * Clean up packages. (2022-05-20, @n25a, !15)
 * Issue #13: Renaming variables and packages. (2022-06-17, @n25a, !16)
