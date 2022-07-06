@@ -55,7 +55,7 @@ In your pull request, we want you to describe what do you do in your pull reques
 
 
 
-## Contribute to Crafting Table In The Nutshell
+## Contributing to Crafting Table In The Nutshell
 You can do these steps in order to contribute to crafting-table:
 * Fork the repository.
 * Clone the repository.
