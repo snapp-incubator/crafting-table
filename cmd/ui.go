@@ -40,7 +40,7 @@ var text = tview.NewTextView().
 	SetTextColor(tcell.ColorGreen).
 	SetText("(a) to add a new contactq \n(q) to quit")
 
-func ui(cmd *cobra.Command, args []string) {
+func ui(_ *cobra.Command, _ []string) {
 	var uiApp = tview.NewApplication()
 
 	contactsList.SetSelectedFunc(func(index int, name string, second_name string, shortcut rune) {
