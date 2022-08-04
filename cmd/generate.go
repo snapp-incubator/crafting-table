@@ -2,7 +2,11 @@ package cmd
 
 import (
 	"log"
+	"os"
 	"strings"
+
+	"github.com/snapp-incubator/crafting-table/internal/app"
+	"gopkg.in/yaml.v3"
 
 	"github.com/snapp-incubator/crafting-table/internal/parser"
 
@@ -20,6 +24,7 @@ var (
 	update      string
 	create      bool
 	test        bool
+	ymlPath     string
 )
 
 var generateCMD = &cobra.Command{
@@ -32,64 +37,99 @@ func init() {
 	generateCMD.Flags().StringVarP(&source, "source", "s", "", "Path of struct file")
 	generateCMD.Flags().StringVarP(&destination, "destination", "d", "", "Path of destination to save repository file")
 
-	err := generateCMD.MarkFlagRequired("source")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = generateCMD.MarkFlagRequired("destination")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// TODO: add flag for table name
-
 	generateCMD.Flags().StringVarP(&packageName, "package", "p", "", "Name of repository package. default is 'repository'")
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
 	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
+	generateCMD.Flags().StringVarP(&ymlPath, "yml-path", "y", "", "generate automatically repositories from yml file")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
 	generateCMD.Flags().BoolVarP(&test, "test", "t", false, "generate automatically tests for created repository")
 }
 
 func generate(_ *cobra.Command, _ []string) {
-	if packageName == "" {
-		packageName = "repository"
+	var repositories app.Repositories
+	if ymlPath != "" {
+		file, err := os.Open(ymlPath)
+		if err != nil {
+			panic(err)
+		}
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				panic(err)
+			}
+		}(file)
+
+		d := yaml.NewDecoder(file)
+
+		if err := d.Decode(&repositories); err != nil {
+			panic(err)
+		}
 	} else {
-		packageName = strings.Replace(packageName, " ", "", -1)
+		if packageName == "" {
+			packageName = "repository"
+		} else {
+			packageName = strings.Replace(packageName, " ", "", -1)
+		}
+
+		repositories = app.Repositories{
+			Repositories: []app.Repository{
+				{
+					Source:      source,
+					Destination: destination,
+					PackageName: packageName,
+					Get:         get,
+					Update:      update,
+					Create:      create,
+					Test:        test,
+				},
+			},
+		}
 	}
 
-	source = strings.Replace(source, " ", "", -1)
-	destination = strings.Replace(destination, " ", "", -1)
+	for _, params := range repositories.Repositories {
+		generateRepository(params)
+	}
 
-	if get == "" && update == "" && !create {
+}
+
+func generateRepository(params app.Repository) {
+	if params.PackageName == "" {
+		packageName = "repository"
+	}
+
+	source = strings.Replace(params.Source, " ", "", -1)
+	destination = strings.Replace(params.Destination, " ", "", -1)
+
+	if params.Get == "" && params.Update == "" && !params.Create {
 		log.Fatal("you must set at least one flag for get, update or create")
 	}
 
 	var getVars *[]structure.Variables
-	if get != "" {
-		for strings.Contains(get, " ") {
-			get = strings.Replace(get, " ", "", -1)
+	if params.Get != "" {
+		for strings.Contains(params.Get, " ") {
+			params.Get = strings.Replace(params.Get, " ", "", -1)
 		}
-		get = strings.Replace(get, " ", "", -1)
-		if err := parser.ValidateGetFlag(get); err != nil {
+		params.Get = strings.Replace(params.Get, " ", "", -1)
+		if err := parser.ValidateGetFlag(params.Get); err != nil {
 			log.Fatal(err)
 		}
-		getVars = parser.ExtractGetVariables(get)
+		getVars = parser.ExtractGetVariables(params.Get)
 	}
 
 	var updateVars *[]structure.UpdateVariables
-	if update != "" {
-		for strings.Contains(update, " ") {
-			update = strings.Replace(update, " ", "", -1)
+	if params.Update != "" {
+		for strings.Contains(params.Update, " ") {
+			params.Update = strings.Replace(params.Update, " ", "", -1)
 		}
-		update = strings.Replace(update, " ", "", -1)
-		if err := parser.ValidateUpdateFlag(update); err != nil {
+		params.Update = strings.Replace(params.Update, " ", "", -1)
+		if err := parser.ValidateUpdateFlag(params.Update); err != nil {
 			log.Fatal(err)
 		}
-		updateVars = parser.ExtractUpdateVariables(update)
+		updateVars = parser.ExtractUpdateVariables(params.Update)
 	}
 
-	if err := repository.Generate(source, destination, packageName, getVars, updateVars, create, test); err != nil {
+	if err := repository.Generate(source, destination, packageName, getVars, updateVars, params.Create, params.Test); err != nil {
 		log.Fatal(err)
 	}
 }
