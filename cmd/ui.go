@@ -35,13 +35,13 @@ var contactText = tview.NewTextView()
 
 var form = tview.NewForm()
 var contactsList = tview.NewList().ShowSecondaryText(false)
-var flex = tview.NewFlex()
-var text = tview.NewTextView().
-	SetTextColor(tcell.ColorGreen).
-	SetText("(a) to add a new contactq \n(q) to quit")
 
 func ui(_ *cobra.Command, _ []string) {
 	var uiApp = tview.NewApplication()
+	var flex = tview.NewFlex()
+	var text = tview.NewTextView().
+		SetTextColor(tcell.ColorGreen).
+		SetText("(a) to add a new contactq \n(q) to quit")
 
 	contactsList.SetSelectedFunc(func(index int, name string, second_name string, shortcut rune) {
 		setConcatText(&contacts[index])
