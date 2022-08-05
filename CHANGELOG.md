@@ -1,5 +1,9 @@
 # Crafting Table
 
+# UNRELEASED
+
+* Support yaml file for creating multiple repositories. (2022-08-05, @n25a, !29)
+
 # v1.2.0 - Jun 25 2022
 
 * Clean up packages. (2022-05-20, @n25a, !15)
