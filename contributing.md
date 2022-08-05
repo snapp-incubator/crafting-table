@@ -1,4 +1,4 @@
- # Contributing to Crafting-Table
+# Contributing to Crafting-Table
 
 🫶🎁First, thank you for taking the time to contributing!🎁🫶
 
