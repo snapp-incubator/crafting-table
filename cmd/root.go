@@ -24,5 +24,5 @@ func Execute() {
 }
 
 func init() {
-	rootCMD.AddCommand(generateCMD)
+	rootCMD.AddCommand(generateCMD, uiCMD)
 }
