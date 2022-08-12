@@ -34,7 +34,7 @@ type Structure struct {
 	FieldNameToDBName map[string]string
 }
 
-func BindStruct(src string) (*Structure, error) {
+func BindStruct(src, structName string) (*Structure, error) {
 	f, err := os.Open(src)
 	if err != nil {
 		return nil, err
@@ -59,6 +59,9 @@ func BindStruct(src string) (*Structure, error) {
 		}
 
 		if strings.Contains(line, "type") && strings.Contains(line, "struct") {
+			if structName != "" && !strings.Contains(line, structName) {
+				continue
+			}
 			funcFound = true
 			tmp := strings.Split(line, " ")
 			structure.Name = tmp[1]
