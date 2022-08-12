@@ -20,6 +20,7 @@ var (
 	source      string
 	destination string
 	packageName string
+	structName  string
 	get         string
 	update      string
 	create      bool
@@ -42,6 +43,7 @@ func init() {
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
 	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
 	generateCMD.Flags().StringVarP(&ymlPath, "yml-path", "y", "", "generate automatically repositories from yml file")
+	generateCMD.Flags().StringVarP(&structName, "struct-name", "n", "", "find struct with struct name in source file")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
 	generateCMD.Flags().BoolVarP(&test, "test", "t", false, "generate automatically tests for created repository")
 }
@@ -78,6 +80,7 @@ func generate(_ *cobra.Command, _ []string) {
 					Source:      source,
 					Destination: destination,
 					PackageName: packageName,
+					StructName:  structName,
 					Get:         get,
 					Update:      update,
 					Create:      create,
@@ -129,7 +132,7 @@ func generateRepository(params app.Repository) {
 		updateVars = parser.ExtractUpdateVariables(params.Update)
 	}
 
-	if err := repository.Generate(source, destination, packageName, getVars, updateVars, params.Create, params.Test); err != nil {
+	if err := repository.Generate(source, destination, packageName, params.StructName, getVars, updateVars, params.Create, params.Test); err != nil {
 		log.Fatal(err)
 	}
 }

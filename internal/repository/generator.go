@@ -9,7 +9,7 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-func Generate(source, destination, packageName string, getVars *[]structure.Variables, updateVars *[]structure.UpdateVariables, create, test bool) error {
+func Generate(source, destination, packageName, structName string, getVars *[]structure.Variables, updateVars *[]structure.UpdateVariables, create, test bool) error {
 	createSyntax := ""
 	updateSyntax := ""
 	getSyntax := ""
@@ -23,7 +23,7 @@ func Generate(source, destination, packageName string, getVars *[]structure.Vari
 		testDestination = destination[:len(destination)-3] + "_test.go"
 	}
 
-	s, err := structure.BindStruct(source)
+	s, err := structure.BindStruct(source, structName)
 	if err != nil {
 		err = errors.New(fmt.Sprintf("Error in bindStruct: %s", err.Error()))
 		return err

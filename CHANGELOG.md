@@ -4,7 +4,8 @@
 
 * Support yaml file for creating multiple repositories. (2022-08-05, @n25a, !29)
 * Add simple terminal UI that can be used instead of CLI args. (2022-08-06, @anvari1313, !28)
-* Remove additional comments in created test file (2022-08-10, @n25a, !33) 
+* Remove additional comments in created test file. (2022-08-10, @n25a, !33) 
+* Add `struct name` flag for define which struct to use in source file. (2022-08-12, @n25a, !34)
 
 # v1.2.0 - Jun 25 2022
 

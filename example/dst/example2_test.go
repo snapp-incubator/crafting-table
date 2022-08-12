@@ -16,21 +16,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ExampleRepositoryTestSuite struct {
+type Example2RepositoryTestSuite struct {
 	suite.Suite
 	db   *sql.DB
 	mock sqlmock.Sqlmock
-	repo *mysqlExample
+	repo *mysqlExample2
 }
 
-func (suite *ExampleRepositoryTestSuite) SetupSuite() {
+func (suite *Example2RepositoryTestSuite) SetupSuite() {
 	require := suite.Require()
 	var err error
 
 	suite.db, suite.mock, err = sqlmock.New()
 	require.NoError(err)
 
-	suite.repo = &mysqlExample{
+	suite.repo = &mysqlExample2{
 		db: sqlx.NewDb(suite.db, "mysql"),
 	}
 }
@@ -39,68 +39,68 @@ func (suite *ExampleRepositoryTestSuite) SetupSuite() {
 //							INSERT
 //-----------------------------------------------------------------
 
-func (suite *ExampleRepositoryTestSuite) TestInsert_Success() {
+func (suite *Example2RepositoryTestSuite) TestInsert_Success() {
 	require := suite.Require()
 
 	expRowsAffected := int64(1)
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
 	sqlmock.NewRows([]string{
-		"var1",
-		"var2",
-		"var3",
-		"var4",
+		"var5",
+		"var6",
+		"var7",
+		"var8",
 	}).
 		AddRow(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
+			example2.Var5,
+			example2.Var6,
+			example2.Var7,
+			example2.Var8,
 		)
 
-	syntax := "INSERT INTO example .+"
+	syntax := "INSERT INTO example_2 .+"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
+			example2.Var5,
+			example2.Var6,
+			example2.Var7,
+			example2.Var8,
 		).
 		WillReturnResult(sqlmock.NewResult(int64(1), expRowsAffected))
 
 	err := suite.repo.Insert(
 		context.Background(),
-		&example,
+		&example2,
 	)
 	require.NoError(err)
 	require.NoError(suite.mock.ExpectationsWereMet())
 }
 
-func (suite *ExampleRepositoryTestSuite) TestInsert_Failure() {
+func (suite *Example2RepositoryTestSuite) TestInsert_Failure() {
 	require := suite.Require()
 
 	expectedError := errors.New("something went wrong")
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
-	syntax := "INSERT INTO example (.+) VALUES (.+)"
+	syntax := "INSERT INTO example_2 (.+) VALUES (.+)"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
+			example2.Var5,
+			example2.Var6,
+			example2.Var7,
+			example2.Var8,
 		).
 		WillReturnError(expectedError)
 
 	err := suite.repo.Insert(
 		context.Background(),
-		&example,
+		&example2,
 	)
 	require.Equal(expectedError, err)
 	require.NoError(suite.mock.ExpectationsWereMet())
@@ -110,138 +110,138 @@ func (suite *ExampleRepositoryTestSuite) TestInsert_Failure() {
 //							UPDATE
 //-----------------------------------------------------------------
 
-func (suite *ExampleRepositoryTestSuite) TestUpdate_Success() {
+func (suite *Example2RepositoryTestSuite) TestUpdate_Success() {
 	require := suite.Require()
 
 	expRowsAffected := int64(1)
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
 	sqlmock.NewRows([]string{
-		"var1",
-		"var2",
-		"var3",
-		"var4",
+		"var5",
+		"var6",
+		"var7",
+		"var8",
 	}).
 		AddRow(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
+			example2.Var5,
+			example2.Var6,
+			example2.Var7,
+			example2.Var8,
 		)
 
-	syntax := "UPDATE example SET .+"
+	syntax := "UPDATE example_2 SET .+"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
+			example2.Var5,
+			example2.Var6,
+			example2.Var7,
+			example2.Var8,
 		).
 		WillReturnResult(sqlmock.NewResult(int64(1), expRowsAffected))
 
-	rowsAffected, err := suite.repo.Update(context.Background(), example.Var1, example)
+	rowsAffected, err := suite.repo.Update(context.Background(), example2.Var5, example2)
 	require.NoError(err)
 	require.Equal(expRowsAffected, rowsAffected)
 	require.NoError(suite.mock.ExpectationsWereMet())
 }
 
-func (suite *ExampleRepositoryTestSuite) TestUpdate_Failure() {
+func (suite *Example2RepositoryTestSuite) TestUpdate_Failure() {
 	require := suite.Require()
 
 	expectedError := errors.New("something went wrong")
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
 	expectedRowsAffected := int64(0)
 
-	syntax := "UPDATE example SET .+"
+	syntax := "UPDATE example_2 SET .+"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
+			example2.Var5,
+			example2.Var6,
+			example2.Var7,
+			example2.Var8,
 		).
 		WillReturnError(expectedError)
 
-	rowsAffected, err := suite.repo.Update(context.Background(), example.Var1, example)
+	rowsAffected, err := suite.repo.Update(context.Background(), example2.Var5, example2)
 	require.EqualError(err, expectedError.Error())
 	require.Equal(expectedRowsAffected, rowsAffected)
 	require.NoError(suite.mock.ExpectationsWereMet())
 }
 
-func (suite *ExampleRepositoryTestSuite) TestUpdateVar2AndVar3_Success() {
+func (suite *Example2RepositoryTestSuite) TestUpdateVar5AndVar6_Success() {
 	require := suite.Require()
 
 	expRowsAffected := int64(1)
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
 	sqlmock.NewRows([]string{
-		"var1",
-		"var2",
-		"var3",
-		"var4",
+		"var5",
+		"var6",
+		"var7",
+		"var8",
 	}).
 		AddRow(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
+			example2.Var5,
+			example2.Var6,
+			example2.Var7,
+			example2.Var8,
 		)
 
-	syntax := "UPDATE example SET (.+) WHERE (.+)"
+	syntax := "UPDATE example_2 SET (.+) WHERE (.+)"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
-			example.Var3,
-			example.Var2,
-			example.Var3,
+			example2.Var8,
+			example2.Var5,
+			example2.Var6,
 		).
 		WillReturnResult(sqlmock.NewResult(int64(1), expRowsAffected))
 
-	rowsAffected, err := suite.repo.UpdateVar2AndVar3(
+	rowsAffected, err := suite.repo.UpdateVar5AndVar6(
 		context.Background(),
-		example.Var2,
-		example.Var3,
-		example.Var3,
+		example2.Var5,
+		example2.Var6,
+		example2.Var8,
 	)
 	require.NoError(err)
 	require.Equal(rowsAffected, expRowsAffected)
 	require.NoError(suite.mock.ExpectationsWereMet())
 }
 
-func (suite *ExampleRepositoryTestSuite) TestUpdateVar2AndVar3_Failure() {
+func (suite *Example2RepositoryTestSuite) TestUpdateVar5AndVar6_Failure() {
 	require := suite.Require()
 
 	expectedError := errors.New("something went wrong")
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
 	expRowsAffected := int64(0)
 
-	syntax := "UPDATE example SET (.+) WHERE (.+)"
+	syntax := "UPDATE example_2 SET (.+) WHERE (.+)"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
-			example.Var3,
-			example.Var2,
-			example.Var3,
+			example2.Var8,
+			example2.Var5,
+			example2.Var6,
 		).
 		WillReturnError(expectedError)
 
-	rowsAffected, err := suite.repo.UpdateVar2AndVar3(
+	rowsAffected, err := suite.repo.UpdateVar5AndVar6(
 		context.Background(),
-		example.Var2,
-		example.Var3,
-		example.Var3,
+		example2.Var5,
+		example2.Var6,
+		example2.Var8,
 	)
 	require.Equal(expectedError, err)
 	require.Equal(rowsAffected, expRowsAffected)
@@ -252,86 +252,86 @@ func (suite *ExampleRepositoryTestSuite) TestUpdateVar2AndVar3_Failure() {
 //							GET
 //-----------------------------------------------------------------
 
-func (suite *ExampleRepositoryTestSuite) TestGetByVar3_Success() {
+func (suite *Example2RepositoryTestSuite) TestGetByVar8_Success() {
 	require := suite.Require()
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
 	rows := sqlmock.NewRows([]string{
-		"var1",
-		"var2",
-		"var3",
-		"var4",
+		"var5",
+		"var6",
+		"var7",
+		"var8",
 	}).
 		AddRow(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
+			example2.Var5,
+			example2.Var6,
+			example2.Var7,
+			example2.Var8,
 		)
 
-	syntax := "SELECT .+ FROM example WHERE .+"
+	syntax := "SELECT .+ FROM example_2 WHERE .+"
 	suite.mock.ExpectQuery(syntax).
 		WithArgs(
-			example.Var3,
+			example2.Var8,
 		).
 		WillReturnRows(rows)
 
-	data, err := suite.repo.GetByVar3(
+	data, err := suite.repo.GetByVar8(
 		context.Background(),
-		example.Var3,
+		example2.Var8,
 	)
 	require.NoError(err)
-	require.Equal(example, data)
+	require.Equal(example2, data)
 	require.NoError(suite.mock.ExpectationsWereMet())
 }
 
-func (suite *ExampleRepositoryTestSuite) TestGetByVar3_NotFoundErr_Failure() {
+func (suite *Example2RepositoryTestSuite) TestGetByVar8_NotFoundErr_Failure() {
 	require := suite.Require()
 
-	expectedError := ErrExampleNotFound
+	expectedError := ErrExample2NotFound
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
-	syntax := "SELECT (.+) FROM example WHERE (.+) "
+	syntax := "SELECT (.+) FROM example_2 WHERE (.+) "
 	suite.mock.ExpectQuery(syntax).
 		WithArgs(
-			example.Var3,
+			example2.Var8,
 		).
 		WillReturnError(expectedError)
 
-	data, err := suite.repo.GetByVar3(
+	data, err := suite.repo.GetByVar8(
 		context.Background(),
-		example.Var3,
+		example2.Var8,
 	)
 	require.Equal(expectedError, err)
 	require.Nil(data)
 	require.NoError(suite.mock.ExpectationsWereMet())
 }
 
-func (suite *ExampleRepositoryTestSuite) TestGetByVar3_OtherErr_Failure() {
+func (suite *Example2RepositoryTestSuite) TestGetByVar8_OtherErr_Failure() {
 	require := suite.Require()
 
 	expectedError := errors.New("something went wrong")
 
-	var example src.Example
-	errFakeData := faker.FakeData(&example)
+	var example2 src.Example2
+	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
 
-	syntax := "SELECT (.+) FROM example WHERE (.+) "
+	syntax := "SELECT (.+) FROM example_2 WHERE (.+) "
 	suite.mock.ExpectQuery(syntax).
 		WithArgs(
-			example.Var3,
+			example2.Var8,
 		).
 		WillReturnError(expectedError)
 
-	data, err := suite.repo.GetByVar3(
+	data, err := suite.repo.GetByVar8(
 		context.Background(),
-		example.Var3,
+		example2.Var8,
 	)
 	require.Equal(expectedError, err)
 	require.Nil(data)
@@ -342,6 +342,6 @@ func (suite *ExampleRepositoryTestSuite) TestGetByVar3_OtherErr_Failure() {
 //						 RUN ALL TESTS
 //-----------------------------------------------------------------
 
-func TestExampleRepository(t *testing.T) {
-	suite.Run(t, new(ExampleRepositoryTestSuite))
+func TestExample2Repository(t *testing.T) {
+	suite.Run(t, new(Example2RepositoryTestSuite))
 }
