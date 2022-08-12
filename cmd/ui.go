@@ -25,6 +25,7 @@ func ui(_ *cobra.Command, _ []string) {
 	form.AddInputField("Source path", "", 500, nil, stringAssigner(&repo.Source))
 	form.AddInputField("Destination path", "", 500, nil, stringAssigner(&repo.Destination))
 	form.AddInputField("Package name", "", 50, nil, stringAssigner(&repo.PackageName))
+	form.AddInputField("Struct name", "", 50, nil, stringAssigner(&repo.StructName))
 	form.AddInputField("Field names for Get Seperated By Commas", "", 200, nil, stringAssigner(&repo.Get))
 	form.AddInputField("Field names for Update Seperated By Commas", "", 200, nil, stringAssigner(&repo.Update))
 	form.AddCheckbox("Generate Tests", false, boolAssigner(&repo.Test))
