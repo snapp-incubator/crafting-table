@@ -16,6 +16,8 @@ vendor/
 
 .idea/
 
+.vscode/
+
 .build/
 
 # Project Binary file
