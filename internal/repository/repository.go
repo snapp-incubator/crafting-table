@@ -1,4 +1,4 @@
-package app
+package repository
 
 type Repository struct {
 	Source      string `yaml:"source"`
