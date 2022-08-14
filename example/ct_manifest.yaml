@@ -1,0 +1,58 @@
+repositories:
+  - tag: "Example"
+    source: "./example/src/example.go"
+    destination: "./example/dst/example.go"
+    package_name: "repository"
+    struct_name: "Example"
+    table_name: "example"
+    db_library: "sqlx"
+    get:
+      - conds: ['var1', 'var2']
+        costum_fileds: []
+        costum_function_name: ""
+      - conds: ['var2', 'var4']
+        costum_fileds: []
+        costum_function_name: ""
+      - conds: ['var3']
+        costum_fileds: []
+        costum_function_name: ""
+    update:
+      - conds: ['var1', 'var2']
+        fields: ['var3']
+        costum_function_name: ""
+      - cond: ['var3']
+        fields: ['var2', 'var3']
+        costum_function_name: ""
+    create:
+      enable: true
+      costum_function_name: ""
+    test: true
+
+  - tag: "Example2"
+    source: "./example/src/example.go"
+    destination: "./example/dst/example2.go"
+    package_name: "test_repository"
+    struct_name: "Example2"
+    table_name: "second_example"
+    db_library: "sqlx"
+    get:
+      - conds: ['var5', 'var6']
+        costum_fileds: []
+        costum_function_name: ""
+      - conds: ['var5', 'var7', 'var8']
+        costum_fileds: []
+        costum_function_name: ""
+      - conds: ['var8']
+        costum_fileds: []
+        costum_function_name: ""
+    update:
+      - conds: ['var5', 'var7']
+        fields: ['var6']
+        costum_function_name: ""
+      - conds: ['var8']
+        fields: ['var5', 'var6']
+        costum_function_name: ""
+    create:
+      enable: false
+      costum_function_name: ""
+    test: true
