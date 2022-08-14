@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"github.com/snapp-incubator/crafting-table/internal/repository"
+
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
-
-	"github.com/snapp-incubator/crafting-table/internal/app"
 )
 
 var uiCMD = &cobra.Command{
@@ -20,7 +20,7 @@ func ui(_ *cobra.Command, _ []string) {
 
 	pages.AddPage("Repository information", form, true, true)
 
-	repo := app.Repository{}
+	repo := repository.Repository{}
 
 	form.AddInputField("Source path", "", 500, nil, stringAssigner(&repo.Source))
 	form.AddInputField("Destination path", "", 500, nil, stringAssigner(&repo.Destination))
@@ -28,8 +28,8 @@ func ui(_ *cobra.Command, _ []string) {
 	form.AddInputField("Struct name", "", 50, nil, stringAssigner(&repo.StructName))
 	form.AddInputField("Field names for Get Seperated By Commas", "", 200, nil, stringAssigner(&repo.Get))
 	form.AddInputField("Field names for Update Seperated By Commas", "", 200, nil, stringAssigner(&repo.Update))
-	form.AddCheckbox("Generate Tests", false, boolAssigner(&repo.Test))
 	form.AddCheckbox("Have Create Method", false, boolAssigner(&repo.Create))
+	form.AddCheckbox("Generate Tests", false, boolAssigner(&repo.Test))
 
 	form.AddButton("Done", func() {
 		generateRepository(repo)
