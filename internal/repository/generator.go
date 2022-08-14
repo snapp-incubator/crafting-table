@@ -13,10 +13,12 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 	createSyntax := ""
 	updateSyntax := ""
 	getSyntax := ""
+	joinSyntax := ""
 
 	createTestSyntax := ""
 	updateTestSyntax := ""
 	getTestSyntax := ""
+	joinTestSyntax := ""
 
 	var testDestination string
 	if test {
@@ -73,10 +75,31 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		}
 	}
 
+	if joinVars != nil {
+		sJoin, err := structure.BindStruct(joinVars.Source, joinVars.StructName)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in bindStruct for join struct: %s", err.Error()))
+			return err
+		}
+
+		var signature string
+		joinSyntax, signature, err = joinFunction(s)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in joinFunction: %s", err.Error()))
+			return err
+		}
+		signatures = append(signatures, signature)
+
+		if test {
+			joinTestSyntax = joinTestFunction(s)
+		}
+
+	}
+
 	interfaceSyntax := interfaceCreator(s, signatures)
 
 	fileContent := createTemplate(s, packageName, interfaceSyntax,
-		createSyntax, updateSyntax, getSyntax)
+		createSyntax, updateSyntax, getSyntax, joinSyntax)
 
 	err = exportRepository(fileContent, destination)
 	if err != nil {
@@ -91,7 +114,8 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 	}
 
 	if test {
-		testFileContent := createTestTemplate(s, packageName, createTestSyntax, updateTestSyntax, getTestSyntax)
+		testFileContent := createTestTemplate(s, packageName, createTestSyntax, updateTestSyntax,
+			getTestSyntax, joinTestSyntax)
 
 		err = exportRepository(testFileContent, testDestination)
 		if err != nil {

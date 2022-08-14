@@ -23,6 +23,7 @@ var (
 	structName  string
 	get         string
 	update      string
+	join        string
 	create      bool
 	test        bool
 	ymlPath     string
@@ -41,7 +42,9 @@ func init() {
 	// TODO: add flag for table name
 	generateCMD.Flags().StringVarP(&packageName, "package", "p", "", "Name of repository package. default is 'repository'")
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
-	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
+	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -u [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
+	generateCMD.Flags().StringVarP(&join, "join", "j", "", "Get variables for JOIN functions in repository.  ex: -j "+
+		"[ [(source_path, struct_name, variable_name_in_first_struct), (source_path, struct_name, variable_name_in_first_struct)], ... ]")
 	generateCMD.Flags().StringVarP(&ymlPath, "yml-path", "y", "", "generate automatically repositories from yml file")
 	generateCMD.Flags().StringVarP(&structName, "struct-name", "n", "", "find struct with struct name in source file")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
@@ -83,6 +86,7 @@ func generate(_ *cobra.Command, _ []string) {
 					StructName:  structName,
 					Get:         get,
 					Update:      update,
+					Join:        join,
 					Create:      create,
 					Test:        test,
 				},
@@ -132,7 +136,18 @@ func generateRepository(params app.Repository) {
 		updateVars = parser.ExtractUpdateVariables(params.Update)
 	}
 
-	if err := repository.Generate(source, destination, packageName, params.StructName, getVars, updateVars, params.Create, params.Test); err != nil {
+	if params.Join != "" {
+		for strings.Contains(params.Join, " ") {
+			params.Join = strings.Replace(params.Join, " ", "", -1)
+		}
+		params.Join = strings.Replace(params.Join, " ", "", -1)
+		if err := parser.ValidateJoinFlag(params.Join); err != nil {
+			log.Fatal(err)
+		}
+		joinVars = parser.ExtractJoinVariables(params.Join)
+	}
+
+	if err := repository.Generate(source, destination, packageName, params.StructName, getVars, updateVars, joinVars, params.Create, params.Test); err != nil {
 		log.Fatal(err)
 	}
 }

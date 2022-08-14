@@ -7,6 +7,7 @@ type Repository struct {
 	StructName  string `yaml:"struct_name"`
 	Get         string `yaml:"get"`
 	Update      string `yaml:"update"`
+	Join        string `yaml:"join"`
 	Create      bool   `yaml:"create"`
 	Test        bool   `yaml:"test"`
 }
