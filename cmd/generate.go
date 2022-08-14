@@ -5,15 +5,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/snapp-incubator/crafting-table/internal/app"
-	"gopkg.in/yaml.v3"
-
 	"github.com/snapp-incubator/crafting-table/internal/parser"
-
-	"github.com/spf13/cobra"
-
 	"github.com/snapp-incubator/crafting-table/internal/repository"
 	"github.com/snapp-incubator/crafting-table/internal/structure"
+	"gopkg.in/yaml.v3"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -41,7 +38,7 @@ func init() {
 	// TODO: add flag for table name
 	generateCMD.Flags().StringVarP(&packageName, "package", "p", "", "Name of repository package. default is 'repository'")
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
-	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
+	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -u [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
 	generateCMD.Flags().StringVarP(&ymlPath, "yml-path", "y", "", "generate automatically repositories from yml file")
 	generateCMD.Flags().StringVarP(&structName, "struct-name", "n", "", "find struct with struct name in source file")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
@@ -49,7 +46,8 @@ func init() {
 }
 
 func generate(_ *cobra.Command, _ []string) {
-	var repositories app.Repositories
+	var repositories repository.Repositories
+
 	if ymlPath != "" {
 		file, err := os.Open(ymlPath)
 		if err != nil {
@@ -74,8 +72,8 @@ func generate(_ *cobra.Command, _ []string) {
 			packageName = strings.Replace(packageName, " ", "", -1)
 		}
 
-		repositories = app.Repositories{
-			Repositories: []app.Repository{
+		repositories = repository.Repositories{
+			Repositories: []repository.Repository{
 				{
 					Source:      source,
 					Destination: destination,
@@ -93,10 +91,9 @@ func generate(_ *cobra.Command, _ []string) {
 	for _, params := range repositories.Repositories {
 		generateRepository(params)
 	}
-
 }
 
-func generateRepository(params app.Repository) {
+func generateRepository(params repository.Repository) {
 	if params.PackageName == "" {
 		packageName = "repository"
 	}
