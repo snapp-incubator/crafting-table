@@ -3,7 +3,7 @@ package app
 import "github.com/snapp-incubator/crafting-table/internal/structure"
 
 type Repo struct {
-	Tag         string                      `json:"tag"`
+	Tag         string                      `yaml:"tag"`
 	Source      string                      `yaml:"source"`
 	Destination string                      `yaml:"destination"`
 	PackageName string                      `yaml:"package_name"`
@@ -17,5 +17,5 @@ type Repo struct {
 }
 
 type Manifest struct {
-	Repos []Repo `yml:"repositories"`
+	Repos []Repo `yaml:"repositories"`
 }

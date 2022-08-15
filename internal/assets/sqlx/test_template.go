@@ -416,10 +416,10 @@ func (s *sqlxTest) UpdateBy(structure *structure.Structure, vars *[]structure.Up
 			structure.GetVariableFields(strcase.ToLowerCamel(structure.Name)+"."),
 
 			strcase.ToSnake(structure.Name),
-			s.addPrefix(execContextVariables(v, structure, true), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
 
 			functionName,
-			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(execContextVariables(v, structure, true), strcase.ToLowerCamel(structure.Name)+"."),
 		)
 
 		syntax += fmt.Sprintf(
@@ -433,10 +433,10 @@ func (s *sqlxTest) UpdateBy(structure *structure.Structure, vars *[]structure.Up
 			strcase.ToLowerCamel(structure.Name),
 
 			strcase.ToSnake(structure.Name),
-			s.addPrefix(execContextVariables(v, structure, true), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
 			functionName,
 
-			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(execContextVariables(v, structure, true), strcase.ToLowerCamel(structure.Name)+"."),
 		)
 	}
 
