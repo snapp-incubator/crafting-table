@@ -9,7 +9,7 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-func Generate(source, destination, packageName, structName string, getVars *[]structure.Variables, updateVars *[]structure.UpdateVariables, create, test bool) error {
+func Generate(source, destination, packageName, structName string, getVars *[]structure.GetVariable, updateVars *[]structure.UpdateVariables, create, test bool) error {
 	createSyntax := ""
 	updateSyntax := ""
 	getSyntax := ""
