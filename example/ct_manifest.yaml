@@ -7,17 +7,17 @@ repositories:
     table_name: "example"
     db_library: "sqlx"
     get:
-      - conds: ['var1', 'var2']
+      - conditions: ['var1', 'var2']
         costum_fileds: []
         costum_function_name: ""
-      - conds: ['var2', 'var4']
+      - conditions: ['var2', 'var4']
         costum_fileds: []
         costum_function_name: ""
-      - conds: ['var3']
+      - conditions: ['var3']
         costum_fileds: []
         costum_function_name: ""
     update:
-      - conds: ['var1', 'var2']
+      - conditions: ['var1', 'var2']
         fields: ['var3']
         costum_function_name: ""
       - cond: ['var3']
@@ -36,20 +36,20 @@ repositories:
     table_name: "second_example"
     db_library: "sqlx"
     get:
-      - conds: ['var5', 'var6']
+      - conditions: ['var5', 'var6']
         costum_fileds: []
         costum_function_name: ""
-      - conds: ['var5', 'var7', 'var8']
+      - conditions: ['var5', 'var7', 'var8']
         costum_fileds: []
         costum_function_name: ""
-      - conds: ['var8']
+      - conditions: ['var8']
         costum_fileds: []
         costum_function_name: ""
     update:
-      - conds: ['var5', 'var7']
+      - conditions: ['var5', 'var7']
         fields: ['var6']
         costum_function_name: ""
-      - conds: ['var8']
+      - conditions: ['var8']
         fields: ['var5', 'var6']
         costum_function_name: ""
     create:
