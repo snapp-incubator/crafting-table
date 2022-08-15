@@ -17,15 +17,15 @@ import (
 )
 
 var (
-	source      string
-	destination string
-	packageName string
-	structName  string
-	get         string
-	update      string
-	create      bool
-	test        bool
-	ymlPath     string
+	source       string
+	destination  string
+	packageName  string
+	structName   string
+	get          string
+	update       string
+	create       bool
+	test         bool
+	manifestFlag string
 )
 
 var generateCMD = &cobra.Command{
@@ -42,16 +42,17 @@ func init() {
 	generateCMD.Flags().StringVarP(&packageName, "package", "p", "", "Name of repository package. default is 'repository'")
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
 	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
-	generateCMD.Flags().StringVarP(&ymlPath, "yml-path", "y", "", "generate automatically repositories from yml file")
+	generateCMD.Flags().StringVarP(&manifestFlag, "manifest", "m", "", "generate automatically repositories from ct-manifest file")
 	generateCMD.Flags().StringVarP(&structName, "struct-name", "n", "", "find struct with struct name in source file")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
 	generateCMD.Flags().BoolVarP(&test, "test", "t", false, "generate automatically tests for created repository")
 }
 
 func generate(_ *cobra.Command, _ []string) {
-	var repositories app.Repositories
-	if ymlPath != "" {
-		file, err := os.Open(ymlPath)
+	// generate repository from ct-manifest file
+	if manifestFlag != "" {
+		var manifest app.Manifest
+		file, err := os.Open(manifestFlag)
 		if err != nil {
 			panic(err)
 		}
@@ -63,76 +64,58 @@ func generate(_ *cobra.Command, _ []string) {
 		}(file)
 
 		d := yaml.NewDecoder(file)
-
-		if err := d.Decode(&repositories); err != nil {
+		if err := d.Decode(&manifest); err != nil {
 			panic(err)
 		}
-	} else {
-		if packageName == "" {
-			packageName = "repository"
-		} else {
-			packageName = strings.Replace(packageName, " ", "", -1)
+
+		for _, repo := range manifest.Repos {
+			if err := repository.Generate(repo.Source, repo.Destination, repo.PackageName, repo.StructName, &repo.Get, &repo.Update, repo.Create.Enable, repo.Test); err != nil {
+				log.Fatal(err)
+			}
 		}
 
-		repositories = app.Repositories{
-			Repositories: []app.Repository{
-				{
-					Source:      source,
-					Destination: destination,
-					PackageName: packageName,
-					StructName:  structName,
-					Get:         get,
-					Update:      update,
-					Create:      create,
-					Test:        test,
-				},
-			},
-		}
+		return
 	}
 
-	for _, params := range repositories.Repositories {
-		generateRepository(params)
-	}
-
-}
-
-func generateRepository(params app.Repository) {
-	if params.PackageName == "" {
+	// generate repository with cli
+	if packageName == "" {
 		packageName = "repository"
+	} else {
+		packageName = strings.Replace(packageName, " ", "", -1)
 	}
 
-	source = strings.Replace(params.Source, " ", "", -1)
-	destination = strings.Replace(params.Destination, " ", "", -1)
+	source = strings.Replace(source, " ", "", -1)
+	destination = strings.Replace(destination, " ", "", -1)
 
-	if params.Get == "" && params.Update == "" && !params.Create {
+	if get == "" && update == "" && !create {
 		log.Fatal("you must set at least one flag for get, update or create")
 	}
 
-	var getVars *[]structure.Variables
-	if params.Get != "" {
-		for strings.Contains(params.Get, " ") {
-			params.Get = strings.Replace(params.Get, " ", "", -1)
+	var getVars *[]structure.GetVariable
+	if get != "" {
+		for strings.Contains(get, " ") {
+			get = strings.Replace(get, " ", "", -1)
 		}
-		params.Get = strings.Replace(params.Get, " ", "", -1)
-		if err := parser.ValidateGetFlag(params.Get); err != nil {
+		get = strings.Replace(get, " ", "", -1)
+		if err := parser.ValidateGetFlag(get); err != nil {
 			log.Fatal(err)
 		}
-		getVars = parser.ExtractGetVariables(params.Get)
+		getVars = parser.ExtractGetVariables(get)
 	}
 
 	var updateVars *[]structure.UpdateVariables
-	if params.Update != "" {
-		for strings.Contains(params.Update, " ") {
-			params.Update = strings.Replace(params.Update, " ", "", -1)
+	if update != "" {
+		for strings.Contains(update, " ") {
+			update = strings.Replace(update, " ", "", -1)
 		}
-		params.Update = strings.Replace(params.Update, " ", "", -1)
-		if err := parser.ValidateUpdateFlag(params.Update); err != nil {
+		update = strings.Replace(update, " ", "", -1)
+		if err := parser.ValidateUpdateFlag(update); err != nil {
 			log.Fatal(err)
 		}
-		updateVars = parser.ExtractUpdateVariables(params.Update)
+		updateVars = parser.ExtractUpdateVariables(update)
 	}
 
-	if err := repository.Generate(source, destination, packageName, params.StructName, getVars, updateVars, params.Create, params.Test); err != nil {
+	if err := repository.Generate(source, destination, packageName, structName, getVars, updateVars, create, test); err != nil {
 		log.Fatal(err)
 	}
 }
