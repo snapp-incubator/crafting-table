@@ -19,3 +19,12 @@ type Repo struct {
 type Manifest struct {
 	Repos []Repo `yaml:"repositories"`
 }
+
+func (m *Repo) EqualTag(tags []string) bool {
+	for _, tag := range tags {
+		if m.Tag == tag {
+			return true
+		}
+	}
+	return false
+}
