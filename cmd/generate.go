@@ -2,11 +2,7 @@ package cmd
 
 import (
 	"log"
-	"os"
 	"strings"
-
-	"github.com/snapp-incubator/crafting-table/internal/app"
-	"gopkg.in/yaml.v3"
 
 	"github.com/snapp-incubator/crafting-table/internal/parser"
 
@@ -17,15 +13,14 @@ import (
 )
 
 var (
-	source       string
-	destination  string
-	packageName  string
-	structName   string
-	get          string
-	update       string
-	create       bool
-	test         bool
-	manifestFlag string
+	source      string
+	destination string
+	packageName string
+	structName  string
+	get         string
+	update      string
+	create      bool
+	test        bool
 )
 
 var generateCMD = &cobra.Command{
@@ -42,41 +37,12 @@ func init() {
 	generateCMD.Flags().StringVarP(&packageName, "package", "p", "", "Name of repository package. default is 'repository'")
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
 	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -g [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
-	generateCMD.Flags().StringVarP(&manifestFlag, "manifest", "m", "", "generate automatically repositories from ct-manifest file")
 	generateCMD.Flags().StringVarP(&structName, "struct-name", "n", "", "find struct with struct name in source file")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
 	generateCMD.Flags().BoolVarP(&test, "test", "t", false, "generate automatically tests for created repository")
 }
 
 func generate(_ *cobra.Command, _ []string) {
-	// generate repository from ct-manifest file
-	if manifestFlag != "" {
-		var manifest app.Manifest
-		file, err := os.Open(manifestFlag)
-		if err != nil {
-			panic(err)
-		}
-		defer func(file *os.File) {
-			err := file.Close()
-			if err != nil {
-				panic(err)
-			}
-		}(file)
-
-		d := yaml.NewDecoder(file)
-		if err := d.Decode(&manifest); err != nil {
-			panic(err)
-		}
-
-		for _, repo := range manifest.Repos {
-			if err := repository.Generate(repo.Source, repo.Destination, repo.PackageName, repo.StructName, &repo.Get, &repo.Update, repo.Create.Enable, repo.Test); err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		return
-	}
-
 	// generate repository with cli
 	if packageName == "" {
 		packageName = "repository"
