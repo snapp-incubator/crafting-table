@@ -8,6 +8,7 @@
 * Add `struct name` flag for define which struct to use in source file. (2022-08-12, @n25a, !34)
 * Add manifest file for generate repositories and fix bugs in generating update tests. (2022-08-16, @n25a, !36)
 * Add manifest command for generate repositories. (2022-08-16, @n25a, !37)
+* Add `tags` flag to manifest command for selecting which tags to generate. (2022-08-16, @n25a, !38) 
 
 # v1.2.0 - Jun 25 2022
 
