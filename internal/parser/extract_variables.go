@@ -101,3 +101,12 @@ func ExtractUpdateVariables(vars string) *[]structure.UpdateVariables {
 
 	return &result
 }
+
+func ExtractManifestTags(tags string) []string {
+	for strings.Contains(tags, "  ") {
+		tags = strings.Replace(tags, "  ", " ", -1)
+	}
+	tags = strings.Replace(tags, " ", "", -1)
+
+	return strings.Split(tags, ",")
+}
