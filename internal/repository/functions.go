@@ -171,7 +171,7 @@ func createTestFunction(structure *structure.Structure) (syntax string) {
 	return assets.A.SqlxTest.Insert(structure)
 }
 
-func getFunction(structure *structure.Structure, vars *[]structure.Variables) (syntax string, functions []string, err error) {
+func getFunction(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string, functions []string, err error) {
 
 	body, signature := assets.A.Sqlx.SelectAll(structure)
 
@@ -188,7 +188,7 @@ func getFunction(structure *structure.Structure, vars *[]structure.Variables) (s
 	return syntax, functions, nil
 }
 
-func getTestFunction(structure *structure.Structure, vars *[]structure.Variables) (syntax string) {
+func getTestFunction(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string) {
 	//syntax = assets.A.SqlxTest.SelectAll(structure)
 	body := assets.A.SqlxTest.SelectBy(structure, vars)
 

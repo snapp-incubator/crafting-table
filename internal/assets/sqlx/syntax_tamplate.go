@@ -16,7 +16,7 @@ type Sqlx interface {
 	UpdateAll(structure *structure.Structure) (syntax string, header string)
 	UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string, header []string)
 	SelectAll(structure *structure.Structure) (syntax string, header string)
-	SelectBy(structure *structure.Structure, vars *[]structure.Variables) (syntax string, header []string)
+	SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string, header []string)
 }
 
 type FieldType interface{ structure.Field | string }
@@ -175,10 +175,10 @@ func (s sqlx) UpdateAll(structure *structure.Structure) (syntax string, signatur
 		strcase.ToLowerCamel(structure.Name),
 		structure.Fields[0].Name,
 		strcase.ToLowerCamel(structure.Fields[0].Name),
-		structure.DBName,
+		structure.TableName,
 		contextKeys(structure.Fields),
 		conditions([]string{
-			structure.FieldNameToDBName[structure.Fields[0].Name],
+			structure.FieldMapNameToDBFlag[structure.Fields[0].Name],
 		}, structure, false),
 		strcase.ToLowerCamel(structure.Name),
 	)
@@ -200,7 +200,7 @@ func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateV
 	for _, v := range *vars {
 		functionNameList := make([]string, 0)
 		for _, name := range v.Fields {
-			functionNameList = append(functionNameList, structure.FieldDBNameToName[name])
+			functionNameList = append(functionNameList, structure.FieldMapDBFlagToName[name])
 		}
 		functionName := strings.Join(functionNameList, "And")
 
@@ -208,11 +208,11 @@ func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateV
 			s.updateFuncBody,
 			structure.Name,
 			functionName,
-			inputFunctionVariables(v.By, structure),
+			inputFunctionVariables(v.Conditions, structure),
 			inputFunctionVariables(v.Fields, structure),
-			structure.DBName,
+			structure.TableName,
 			contextKeys(v.Fields),
-			conditions(v.By, structure, true),
+			conditions(v.Conditions, structure, true),
 			execContextVariables(v, structure, false),
 		)
 
@@ -221,7 +221,7 @@ func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateV
 			fmt.Sprintf(
 				s.updateFuncSignature,
 				functionName,
-				inputFunctionVariables(v.By, structure),
+				inputFunctionVariables(v.Conditions, structure),
 				inputFunctionVariables(v.Fields, structure),
 			),
 		)
@@ -238,11 +238,11 @@ func (s sqlx) SelectAll(structure *structure.Structure) (syntax string, signatur
 		structure.Name,
 		structure.PackageName,
 		structure.Name,
-		strcase.ToLowerCamel(structure.DBName),
+		strcase.ToLowerCamel(structure.TableName),
 		structure.PackageName,
 		structure.Name,
 		strcase.ToLowerCamel(structure.Name),
-		structure.DBName,
+		structure.TableName,
 		structure.Name,
 		strcase.ToLowerCamel(structure.Name),
 	)
@@ -257,12 +257,12 @@ func (s sqlx) SelectAll(structure *structure.Structure) (syntax string, signatur
 	return syntax, signature
 }
 
-func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.Variables) (syntax string, signatures []string) {
+func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string, signatures []string) {
 
 	for _, v := range *vars {
 		functionNameList := make([]string, 0)
-		for _, name := range v.Name {
-			functionNameList = append(functionNameList, structure.FieldDBNameToName[name])
+		for _, condition := range v.Conditions {
+			functionNameList = append(functionNameList, structure.FieldMapDBFlagToName[condition])
 		}
 		functionName := strings.Join(functionNameList, "And")
 
@@ -270,16 +270,16 @@ func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.Variabl
 			s.selectFuncBody,
 			structure.Name,
 			functionName,
-			inputFunctionVariables(v.Name, structure),
+			inputFunctionVariables(v.Conditions, structure),
 			structure.PackageName,
 			structure.Name,
 			strcase.ToLowerCamel(structure.Name),
 			structure.PackageName,
 			structure.Name,
 			strcase.ToLowerCamel(structure.Name),
-			structure.DBName,
-			conditions(v.Name, structure, true),
-			contextVariables(v.Name, structure),
+			structure.TableName,
+			conditions(v.Conditions, structure, true),
+			contextVariables(v.Conditions, structure),
 			structure.Name,
 			strcase.ToLowerCamel(structure.Name),
 		)
@@ -289,7 +289,7 @@ func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.Variabl
 			fmt.Sprintf(
 				s.selectFuncSignature,
 				functionName,
-				inputFunctionVariables(v.Name, structure),
+				inputFunctionVariables(v.Conditions, structure),
 				structure.PackageName,
 				structure.Name,
 			),
@@ -310,9 +310,9 @@ func contextKeys[T FieldType](fields []T) string {
 
 		switch reflect.TypeOf(field).String() {
 		case "structure.Field":
-			tmp += interface{}(field).(structure.Field).DBName +
+			tmp += interface{}(field).(structure.Field).DBFlag +
 				" = :" +
-				interface{}(field).(structure.Field).DBName + ", "
+				interface{}(field).(structure.Field).DBFlag + ", "
 		case "string":
 			tmp += interface{}(field).(string) + " = ?, "
 		}
@@ -329,7 +329,7 @@ func conditions(v []string, structure *structure.Structure, withQuestionMark boo
 	var conditions []string
 
 	for _, value := range v {
-		res := structure.FieldDBNameToName[value]
+		res := structure.FieldMapDBFlagToName[value]
 		if res == "" {
 			log.Fatalf("%s is not valid db_field", value)
 		}
@@ -347,7 +347,7 @@ func conditions(v []string, structure *structure.Structure, withQuestionMark boo
 
 func inputFunctionVariables(v []string, structure *structure.Structure) string {
 	for _, value := range v {
-		res := structure.FieldDBNameToName[value]
+		res := structure.FieldMapDBFlagToName[value]
 		if res == "" {
 			log.Fatalf("%s is not valid db_field", value)
 		}
@@ -356,8 +356,8 @@ func inputFunctionVariables(v []string, structure *structure.Structure) string {
 	res := ""
 	for _, value := range v {
 		res += fmt.Sprintf("%s %s, ",
-			strcase.ToLowerCamel(structure.FieldDBNameToName[value]),
-			structure.FieldNameToType[structure.FieldDBNameToName[value]])
+			strcase.ToLowerCamel(structure.FieldMapDBFlagToName[value]),
+			structure.FieldMapNameToType[structure.FieldMapDBFlagToName[value]])
 	}
 
 	return res[:len(res)-2]
@@ -365,7 +365,7 @@ func inputFunctionVariables(v []string, structure *structure.Structure) string {
 
 func contextVariables(v []string, structure *structure.Structure) string {
 	for _, value := range v {
-		res := structure.FieldDBNameToName[value]
+		res := structure.FieldMapDBFlagToName[value]
 		if res == "" {
 			log.Fatalf("%s is not valid db_field", value)
 		}
@@ -374,7 +374,7 @@ func contextVariables(v []string, structure *structure.Structure) string {
 	res := ""
 	for _, value := range v {
 		res += fmt.Sprintf("%s, ",
-			strcase.ToLowerCamel(structure.FieldDBNameToName[value]))
+			strcase.ToLowerCamel(structure.FieldMapDBFlagToName[value]))
 	}
 
 	return res[:len(res)-2]
@@ -382,7 +382,7 @@ func contextVariables(v []string, structure *structure.Structure) string {
 
 func execContextVariables(vars structure.UpdateVariables, structure *structure.Structure, reverse bool) string {
 	if reverse {
-		return contextVariables(vars.By, structure) + ", " + contextVariables(vars.Fields, structure)
+		return contextVariables(vars.Conditions, structure) + ", " + contextVariables(vars.Fields, structure)
 	}
-	return contextVariables(vars.Fields, structure) + ", " + contextVariables(vars.By, structure)
+	return contextVariables(vars.Fields, structure) + ", " + contextVariables(vars.Conditions, structure)
 }

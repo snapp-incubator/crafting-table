@@ -12,7 +12,7 @@ type SqlxTest interface {
 	Insert(structure *structure.Structure) (syntax string)
 	UpdateAll(structure *structure.Structure) (syntax string)
 	UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string)
-	SelectBy(structure *structure.Structure, vars *[]structure.Variables) (syntax string)
+	SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string)
 	//SelectAll(structure *structure.Structure) (syntax string)
 }
 
@@ -398,7 +398,7 @@ func (s *sqlxTest) UpdateBy(structure *structure.Structure, vars *[]structure.Up
 	for _, v := range *vars {
 		functionNameList := make([]string, 0)
 		for _, name := range v.Fields {
-			functionNameList = append(functionNameList, structure.FieldDBNameToName[name])
+			functionNameList = append(functionNameList, structure.FieldMapDBFlagToName[name])
 		}
 		functionName := strings.Join(functionNameList, "And")
 
@@ -416,10 +416,10 @@ func (s *sqlxTest) UpdateBy(structure *structure.Structure, vars *[]structure.Up
 			structure.GetVariableFields(strcase.ToLowerCamel(structure.Name)+"."),
 
 			strcase.ToSnake(structure.Name),
-			s.addPrefix(execContextVariables(v, structure, true), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
 
 			functionName,
-			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(execContextVariables(v, structure, true), strcase.ToLowerCamel(structure.Name)+"."),
 		)
 
 		syntax += fmt.Sprintf(
@@ -433,22 +433,22 @@ func (s *sqlxTest) UpdateBy(structure *structure.Structure, vars *[]structure.Up
 			strcase.ToLowerCamel(structure.Name),
 
 			strcase.ToSnake(structure.Name),
-			s.addPrefix(execContextVariables(v, structure, true), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
 			functionName,
 
-			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(execContextVariables(v, structure, true), strcase.ToLowerCamel(structure.Name)+"."),
 		)
 	}
 
 	return syntax
 }
 
-func (s *sqlxTest) SelectBy(structure *structure.Structure, vars *[]structure.Variables) (syntax string) {
+func (s *sqlxTest) SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string) {
 
 	for _, v := range *vars {
 		functionNameList := make([]string, 0)
-		for _, name := range v.Name {
-			functionNameList = append(functionNameList, structure.FieldDBNameToName[name])
+		for _, conditions := range v.Conditions {
+			functionNameList = append(functionNameList, structure.FieldMapDBFlagToName[conditions])
 		}
 		functionName := strings.Join(functionNameList, "And")
 
@@ -466,10 +466,10 @@ func (s *sqlxTest) SelectBy(structure *structure.Structure, vars *[]structure.Va
 			structure.GetVariableFields(strcase.ToLowerCamel(structure.Name)+"."),
 
 			strcase.ToSnake(structure.Name),
-			s.addPrefix(contextVariables(v.Name, structure), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
 
 			functionName,
-			s.addPrefix(contextVariables(v.Name, structure), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
 			strcase.ToLowerCamel(structure.Name),
 		)
 
@@ -485,10 +485,10 @@ func (s *sqlxTest) SelectBy(structure *structure.Structure, vars *[]structure.Va
 			strcase.ToLowerCamel(structure.Name),
 
 			strcase.ToSnake(structure.Name),
-			s.addPrefix(contextVariables(v.Name, structure), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
 
 			functionName,
-			s.addPrefix(contextVariables(v.Name, structure), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
 		)
 
 		syntax += fmt.Sprintf(
@@ -502,10 +502,10 @@ func (s *sqlxTest) SelectBy(structure *structure.Structure, vars *[]structure.Va
 			strcase.ToLowerCamel(structure.Name),
 
 			strcase.ToSnake(structure.Name),
-			s.addPrefix(contextVariables(v.Name, structure), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
 
 			functionName,
-			s.addPrefix(contextVariables(v.Name, structure), strcase.ToLowerCamel(structure.Name)+"."),
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
 		)
 	}
 

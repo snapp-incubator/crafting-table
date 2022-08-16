@@ -8,7 +8,7 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-func ExtractGetVariables(vars string) *[]structure.Variables {
+func ExtractGetVariables(vars string) *[]structure.GetVariable {
 	// TODO : parse variables with regex
 
 	newVar := vars[1 : len(vars)-1] // remove "[" and "]"
@@ -46,15 +46,15 @@ func ExtractGetVariables(vars string) *[]structure.Variables {
 		varSlice = append(varSlice, temp)
 	}
 
-	result := make([]structure.Variables, 0)
+	result := make([]structure.GetVariable, 0)
 	for _, varTmp := range varSlice {
 		if strings.Contains(varTmp, ",") {
 			varSliceTmp := strings.Split(varTmp, ",")
-			result = append(result, structure.Variables{Name: varSliceTmp})
+			result = append(result, structure.GetVariable{Conditions: varSliceTmp})
 			continue
 		}
 
-		result = append(result, structure.Variables{Name: []string{varTmp}})
+		result = append(result, structure.GetVariable{Conditions: []string{varTmp}})
 	}
 
 	return &result
@@ -92,8 +92,8 @@ func ExtractUpdateVariables(vars string) *[]structure.UpdateVariables {
 		filedVariables := strings.Split(strings.Replace(temp[1], ")", "", -1), ",")
 
 		itemUpdateVariables := structure.UpdateVariables{
-			By:     byVariables,
-			Fields: filedVariables,
+			Conditions: byVariables,
+			Fields:     filedVariables,
 		}
 		_ = fmt.Sprintf("%+v", itemUpdateVariables)
 		result = append(result, itemUpdateVariables)
