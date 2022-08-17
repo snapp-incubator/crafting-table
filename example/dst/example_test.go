@@ -200,16 +200,16 @@ func (suite *ExampleRepositoryTestSuite) TestUpdateVar2AndVar3_Success() {
 	syntax := "UPDATE example SET (.+) WHERE (.+)"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
-			example.Var3,
 			example.Var2,
 			example.Var3,
+			example.Var4,
 		).
 		WillReturnResult(sqlmock.NewResult(int64(1), expRowsAffected))
 
 	rowsAffected, err := suite.repo.UpdateVar2AndVar3(
 		context.Background(),
+		example.Var4,
 		example.Var2,
-		example.Var3,
 		example.Var3,
 	)
 	require.NoError(err)
@@ -231,16 +231,16 @@ func (suite *ExampleRepositoryTestSuite) TestUpdateVar2AndVar3_Failure() {
 	syntax := "UPDATE example SET (.+) WHERE (.+)"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
-			example.Var3,
 			example.Var2,
 			example.Var3,
+			example.Var4,
 		).
 		WillReturnError(expectedError)
 
 	rowsAffected, err := suite.repo.UpdateVar2AndVar3(
 		context.Background(),
+		example.Var4,
 		example.Var2,
-		example.Var3,
 		example.Var3,
 	)
 	require.Equal(expectedError, err)

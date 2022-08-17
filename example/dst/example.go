@@ -20,7 +20,7 @@ type Example interface {
 	GetByVar3(ctx context.Context, var3 bool) (*src.Example, error)
 	Update(ctx context.Context, var1 int, example src.Example) (int64, error)
 	UpdateVar3(ctx context.Context, var1 int, var2 string, var3 bool) (int64, error)
-	UpdateVar2AndVar3(ctx context.Context, var3 bool, var2 string, var3 bool) (int64, error)
+	UpdateVar2AndVar3(ctx context.Context, var4 bool, var2 string, var3 bool) (int64, error)
 }
 
 var ErrExampleNotFound = errors.New("example not found")
@@ -78,12 +78,12 @@ func (r *mysqlExample) UpdateVar3(ctx context.Context, var1 int, var2 string, va
 	return result.RowsAffected()
 }
 
-func (r *mysqlExample) UpdateVar2AndVar3(ctx context.Context, var3 bool, var2 string, var3 bool) (int64, error) {
+func (r *mysqlExample) UpdateVar2AndVar3(ctx context.Context, var4 bool, var2 string, var3 bool) (int64, error) {
 	query := "UPDATE example SET " +
 		"var2 = ?, var3 = ? " +
-		"WHERE var3 = ?;"
+		"WHERE var4 = ?;"
 
-	result, err := r.db.ExecContext(ctx, query, var2, var3, var3)
+	result, err := r.db.ExecContext(ctx, query, var2, var3, var4)
 
 	if err != nil {
 		return 0, err

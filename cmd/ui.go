@@ -3,8 +3,6 @@ package cmd
 import (
 	"github.com/rivo/tview"
 	"github.com/spf13/cobra"
-
-	"github.com/snapp-incubator/crafting-table/internal/app"
 )
 
 var uiCMD = &cobra.Command{
@@ -13,26 +11,24 @@ var uiCMD = &cobra.Command{
 	Run:   ui,
 }
 
-func ui(_ *cobra.Command, _ []string) {
+func ui(cmd *cobra.Command, args []string) {
 	var uiApp = tview.NewApplication()
 	var pages = tview.NewPages()
 	var form = tview.NewForm()
 
 	pages.AddPage("Repository information", form, true, true)
 
-	repo := app.Repository{}
-
-	form.AddInputField("Source path", "", 500, nil, stringAssigner(&repo.Source))
-	form.AddInputField("Destination path", "", 500, nil, stringAssigner(&repo.Destination))
-	form.AddInputField("Package name", "", 50, nil, stringAssigner(&repo.PackageName))
-	form.AddInputField("Struct name", "", 50, nil, stringAssigner(&repo.StructName))
-	form.AddInputField("Field names for Get Seperated By Commas", "", 200, nil, stringAssigner(&repo.Get))
-	form.AddInputField("Field names for Update Seperated By Commas", "", 200, nil, stringAssigner(&repo.Update))
-	form.AddCheckbox("Generate Tests", false, boolAssigner(&repo.Test))
-	form.AddCheckbox("Have Create Method", false, boolAssigner(&repo.Create))
+	form.AddInputField("Source path", "", 500, nil, stringAssigner(&source))
+	form.AddInputField("Destination path", "", 500, nil, stringAssigner(&destination))
+	form.AddInputField("Package name", "", 50, nil, stringAssigner(&packageName))
+	form.AddInputField("Struct name", "", 50, nil, stringAssigner(&structName))
+	form.AddInputField("Field names for Get Seperated By Commas", "", 200, nil, stringAssigner(&get))
+	form.AddInputField("Field names for Update Seperated By Commas", "", 200, nil, stringAssigner(&update))
+	form.AddCheckbox("Generate Tests", false, boolAssigner(&test))
+	form.AddCheckbox("Have Create Method", false, boolAssigner(&create))
 
 	form.AddButton("Done", func() {
-		generateRepository(repo)
+		generate(cmd, args)
 		uiApp.Stop()
 	})
 
