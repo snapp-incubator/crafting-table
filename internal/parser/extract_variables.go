@@ -8,7 +8,7 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-func ExtractGetVariables(vars string) *[]structure.Variables {
+func ExtractGetVariables(vars string) *[]structure.GetVariable {
 	// TODO : parse variables with regex
 
 	newVar := vars[1 : len(vars)-1] // remove "[" and "]"
@@ -46,15 +46,15 @@ func ExtractGetVariables(vars string) *[]structure.Variables {
 		varSlice = append(varSlice, temp)
 	}
 
-	result := make([]structure.Variables, 0)
+	result := make([]structure.GetVariable, 0)
 	for _, varTmp := range varSlice {
 		if strings.Contains(varTmp, ",") {
 			varSliceTmp := strings.Split(varTmp, ",")
-			result = append(result, structure.Variables{Name: varSliceTmp})
+			result = append(result, structure.GetVariable{Conditions: varSliceTmp})
 			continue
 		}
 
-		result = append(result, structure.Variables{Name: []string{varTmp}})
+		result = append(result, structure.GetVariable{Conditions: []string{varTmp}})
 	}
 
 	return &result
@@ -92,12 +92,66 @@ func ExtractUpdateVariables(vars string) *[]structure.UpdateVariables {
 		filedVariables := strings.Split(strings.Replace(temp[1], ")", "", -1), ",")
 
 		itemUpdateVariables := structure.UpdateVariables{
-			By:     byVariables,
-			Fields: filedVariables,
+			Conditions: byVariables,
+			Fields:     filedVariables,
 		}
 		_ = fmt.Sprintf("%+v", itemUpdateVariables)
 		result = append(result, itemUpdateVariables)
 	}
 
 	return &result
+}
+
+func ExtractManifestTags(tags string) []string {
+	for strings.Contains(tags, "  ") {
+		tags = strings.Replace(tags, "  ", " ", -1)
+	}
+	tags = strings.Replace(tags, " ", "", -1)
+
+	return strings.Split(tags, ",")
+}
+
+func ExtractJoinVariables(join string) *[][]structure.JoinVariables {
+	var joinVar [][]structure.JoinVariables
+
+	openParentheses := false
+	openBrackets := false
+	for index, char := range join {
+		//if openBrackets && char == '[' {
+		//	return errors.New("open bracket are not closed")
+		//}
+		//if !openBrackets && char == ']' {
+		//	return errors.New("close bracket are not opened")
+		//}
+		//if !openBrackets && char == '(' {
+		//	return errors.New("open parentheses without opening bracket")
+		//}
+		//
+		//if openParentheses && char == '(' {
+		//	return errors.New("open parentheses are not closed")
+		//}
+		//if !openParentheses && char == ')' {
+		//	return errors.New("close parentheses are not opened")
+		//}
+		//if openParentheses && char == ')' && flag[index-1] == ',' {
+		//	return errors.New("close parentheses must not be followed by comma")
+		//}
+		//if openParentheses && char == ')' && flag[index+1] != ']' && flag[index+1] != ',' {
+		//	return errors.New("close parentheses must be followed by comma or closed bracket")
+		//}
+
+		if char == '(' {
+			openParentheses = true
+		}
+		if char == ')' {
+			openParentheses = false
+		}
+
+		if char == '[' {
+			openBrackets = true
+		}
+		if char == ']' {
+			openBrackets = false
+		}
+	}
 }

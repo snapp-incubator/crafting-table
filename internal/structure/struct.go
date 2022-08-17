@@ -9,29 +9,45 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-type Variables struct {
-	Name []string
+type CreateVariables struct {
+	Enable              bool   `yaml:"enable"`
+	CostumeFunctionName string `yaml:"costume_function_name"`
+}
+
+type GetVariable struct {
+	Conditions          []string `yaml:"conditions"`
+	CostumeFields       []string `yaml:"costume_fields"`
+	CostumeFunctionName string   `yaml:"costume_function_name"`
 }
 
 type UpdateVariables struct {
-	By     []string
-	Fields []string
+	Conditions          []string `yaml:"conditions"`
+	Fields              []string `yaml:"fields"`
+	CostumeFunctionName string   `yaml:"costume_function_name"`
+}
+
+type JoinVariables struct {
+	JoinStructPath      string `yaml:"join_struct_path"`
+	JoinStructName      string `yaml:"join_struct_name"`
+	JoinTableName       string `yaml:"join_table_name"`
+	JoinFieldAs         string `yaml:"join_field_as"`
+	CostumeFunctionName string `yaml:"costume_function_name"`
 }
 
 type Field struct {
 	Name   string
 	Type   string
-	DBName string
+	DBFlag string
 }
 
 type Structure struct {
-	PackageName       string
-	DBName            string
-	Name              string
-	Fields            []Field
-	FieldNameToType   map[string]string
-	FieldDBNameToName map[string]string
-	FieldNameToDBName map[string]string
+	PackageName          string
+	TableName            string
+	Name                 string
+	Fields               []Field
+	FieldMapNameToType   map[string]string
+	FieldMapDBFlagToName map[string]string
+	FieldMapNameToDBFlag map[string]string
 }
 
 func BindStruct(src, structName string) (*Structure, error) {
@@ -65,7 +81,7 @@ func BindStruct(src, structName string) (*Structure, error) {
 			funcFound = true
 			tmp := strings.Split(line, " ")
 			structure.Name = tmp[1]
-			structure.DBName = strcase.ToSnake(tmp[1])
+			structure.TableName = strcase.ToSnake(tmp[1])
 			continue
 		}
 
@@ -95,22 +111,22 @@ func BindStruct(src, structName string) (*Structure, error) {
 				return nil, errors.New("db tag is not valid for filed " + structField.Name)
 			}
 
-			structField.DBName = tmp[2][index+2 : len(tmp[2])-2]
+			structField.DBFlag = tmp[2][index+2 : len(tmp[2])-2]
 			structure.Fields = append(structure.Fields, structField)
 
-			if structure.FieldDBNameToName == nil {
-				structure.FieldDBNameToName = make(map[string]string)
+			if structure.FieldMapDBFlagToName == nil {
+				structure.FieldMapDBFlagToName = make(map[string]string)
 			}
-			if structure.FieldNameToDBName == nil {
-				structure.FieldNameToDBName = make(map[string]string)
+			if structure.FieldMapNameToDBFlag == nil {
+				structure.FieldMapNameToDBFlag = make(map[string]string)
 			}
-			if structure.FieldNameToType == nil {
-				structure.FieldNameToType = make(map[string]string)
+			if structure.FieldMapNameToType == nil {
+				structure.FieldMapNameToType = make(map[string]string)
 			}
 
-			structure.FieldDBNameToName[structField.DBName] = structField.Name
-			structure.FieldNameToDBName[structField.Name] = structField.DBName
-			structure.FieldNameToType[structField.Name] = structField.Type
+			structure.FieldMapDBFlagToName[structField.DBFlag] = structField.Name
+			structure.FieldMapNameToDBFlag[structField.Name] = structField.DBFlag
+			structure.FieldMapNameToType[structField.Name] = structField.Type
 		}
 	}
 
@@ -129,7 +145,7 @@ func (s *Structure) GetDBFields(prefix string) string {
 			result += tmp[:len(tmp)-2] + ", \"+\n\t\""
 			tmp = ""
 		}
-		tmp += prefix + field.DBName + ", "
+		tmp += prefix + field.DBFlag + ", "
 	}
 
 	if tmp != "" {
@@ -142,7 +158,7 @@ func (s *Structure) GetDBFields(prefix string) string {
 func (s *Structure) GetDBFieldsInQuotation() string {
 	result := ""
 	for _, field := range s.Fields {
-		result += "\"" + field.DBName + "\",\n\t\t\t"
+		result += "\"" + field.DBFlag + "\",\n\t\t\t"
 	}
 
 	return result

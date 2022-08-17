@@ -9,7 +9,8 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-func Generate(source, destination, packageName, structName string, getVars *[]structure.Variables, updateVars *[]structure.UpdateVariables, create, test bool) error {
+func Generate(source, destination, packageName, structName string, getVars *[]structure.GetVariable,
+	updateVars *[]structure.UpdateVariables, joinVars [][]structure.JoinVariables, create, test bool) error {
 	createSyntax := ""
 	updateSyntax := ""
 	getSyntax := ""
@@ -82,13 +83,12 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 			return err
 		}
 
-		var signature string
-		joinSyntax, signature, err = joinFunction(s)
+		joinSyntax, signatureList, err = joinFunction(s)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in joinFunction: %s", err.Error()))
 			return err
 		}
-		signatures = append(signatures, signature)
+		signatures = append(signatures, signatureList...)
 
 		if test {
 			joinTestSyntax = joinTestFunction(s)
