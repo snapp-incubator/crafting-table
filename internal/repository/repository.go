@@ -1,4 +1,4 @@
-package app
+package repository
 
 import "github.com/snapp-incubator/crafting-table/internal/structure"
 

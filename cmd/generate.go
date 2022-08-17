@@ -5,11 +5,10 @@ import (
 	"strings"
 
 	"github.com/snapp-incubator/crafting-table/internal/parser"
-
-	"github.com/spf13/cobra"
-
 	"github.com/snapp-incubator/crafting-table/internal/repository"
 	"github.com/snapp-incubator/crafting-table/internal/structure"
+
+	"github.com/spf13/cobra"
 )
 
 var (
