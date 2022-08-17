@@ -5,11 +5,10 @@ import (
 	"os"
 
 	"github.com/snapp-incubator/crafting-table/internal/parser"
-
-	"github.com/snapp-incubator/crafting-table/internal/app"
 	"github.com/snapp-incubator/crafting-table/internal/repository"
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -43,7 +42,7 @@ func apply(_ *cobra.Command, _ []string) {
 		selectedTags = parser.ExtractManifestTags(tags)
 	}
 
-	var manifest app.Manifest
+	var manifest repository.Manifest
 	file, err := os.Open(manifestPath)
 	if err != nil {
 		panic(err)
