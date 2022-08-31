@@ -38,7 +38,7 @@ func init() {
 	generateCMD.Flags().StringVarP(&get, "get", "g", "", "Get variables for GET functions in repository. ex: -g [ (var1,var2), (var2,var4), var3 ]")
 	generateCMD.Flags().StringVarP(&update, "update", "u", "", "Get variables for UPDATE functions in repository.  ex: -u [ [(byPar1,byPar2,...), (field1, field2)], ... ]")
 	generateCMD.Flags().StringVarP(&join, "join", "j", "", "Get variables for JOIN functions in repository.  ex: -j "+
-		"[ [(source_path, struct_name, variable_name_in_first_struct), (source_path, struct_name, variable_name_in_first_struct)], ... ]")
+		"[ [(source_path, struct_name, variable_name_in_first_struct, join_on, join_type), (source_path, struct_name, variable_name_in_first_struct, join_on, join_type)], ... ]")
 	generateCMD.Flags().StringVarP(&structName, "struct-name", "n", "", "find struct with struct name in source file")
 	generateCMD.Flags().BoolVarP(&create, "create", "c", false, "Set to create CREATE function in repository")
 	generateCMD.Flags().BoolVarP(&test, "test", "t", false, "generate automatically tests for created repository")
@@ -83,6 +83,7 @@ func generate(_ *cobra.Command, _ []string) {
 		updateVars = parser.ExtractUpdateVariables(update)
 	}
 
+	var joinVars *[]structure.JoinVariables
 	if join != "" {
 		for strings.Contains(join, " ") {
 			join = strings.Replace(join, " ", "", -1)
