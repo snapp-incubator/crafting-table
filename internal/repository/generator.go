@@ -10,7 +10,7 @@ import (
 )
 
 func Generate(source, destination, packageName, structName string, getVars *[]structure.GetVariable,
-	updateVars *[]structure.UpdateVariables, joinVars [][]structure.JoinVariables, create, test bool) error {
+	updateVars *[]structure.UpdateVariables, joinVars *[]structure.JoinVariables, create, test bool) error {
 	createSyntax := ""
 	updateSyntax := ""
 	getSyntax := ""
@@ -49,7 +49,7 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		}
 	}
 
-	if getVars != nil {
+	if getVars != nil && len(*getVars) > 0 {
 		getSyntax, signatureList, err = getFunction(s, getVars)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in getFunction: %s", err.Error()))
@@ -62,7 +62,7 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		}
 	}
 
-	if updateVars != nil {
+	if updateVars != nil && len(*updateVars) > 0 {
 		updateSyntax, signatureList, err = updateFunction(s, updateVars)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in updateFunction: %s", err.Error()))
@@ -77,23 +77,18 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 	}
 
 	if joinVars != nil {
-		sJoin, err := structure.BindStruct(joinVars.Source, joinVars.StructName)
-		if err != nil {
-			err = errors.New(fmt.Sprintf("Error in bindStruct for join struct: %s", err.Error()))
-			return err
-		}
-
-		joinSyntax, signatureList, err = joinFunction(s)
+		syntax, signatureList, err := joinFunction(s, joinVars)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in joinFunction: %s", err.Error()))
 			return err
 		}
+
+		joinSyntax += syntax
 		signatures = append(signatures, signatureList...)
 
-		if test {
-			joinTestSyntax = joinTestFunction(s)
-		}
-
+		//if test {
+		//	joinTestSyntax += joinTestFunction(s, joinVar)
+		//}
 	}
 
 	interfaceSyntax := interfaceCreator(s, signatures)
