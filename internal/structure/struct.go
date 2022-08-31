@@ -26,12 +26,18 @@ type UpdateVariables struct {
 	CostumeFunctionName string   `yaml:"costume_function_name"`
 }
 
+type JoinField struct {
+	JoinStructPath string `yaml:"join_struct_path"`
+	JoinStructName string `yaml:"join_struct_name"`
+	JoinTableName  string `yaml:"join_table_name"`
+	JoinFieldAs    string `yaml:"join_field_as"`
+	JoinOn         string `yaml:"join_on"`
+	JoinType       string `yaml:"join_type"`
+}
+
 type JoinVariables struct {
-	JoinStructPath      string `yaml:"join_struct_path"`
-	JoinStructName      string `yaml:"join_struct_name"`
-	JoinTableName       string `yaml:"join_table_name"`
-	JoinFieldAs         string `yaml:"join_field_as"`
-	CostumeFunctionName string `yaml:"costume_function_name"`
+	Fields              []JoinField `yaml:"fields"`
+	CostumeFunctionName string      `yaml:"costume_function_name"`
 }
 
 type Field struct {
