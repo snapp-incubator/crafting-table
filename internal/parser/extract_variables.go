@@ -111,47 +111,39 @@ func ExtractManifestTags(tags string) []string {
 	return strings.Split(tags, ",")
 }
 
-func ExtractJoinVariables(join string) *[][]structure.JoinVariables {
-	var joinVar [][]structure.JoinVariables
-
-	openParentheses := false
-	openBrackets := false
-	for index, char := range join {
-		//if openBrackets && char == '[' {
-		//	return errors.New("open bracket are not closed")
-		//}
-		//if !openBrackets && char == ']' {
-		//	return errors.New("close bracket are not opened")
-		//}
-		//if !openBrackets && char == '(' {
-		//	return errors.New("open parentheses without opening bracket")
-		//}
-		//
-		//if openParentheses && char == '(' {
-		//	return errors.New("open parentheses are not closed")
-		//}
-		//if !openParentheses && char == ')' {
-		//	return errors.New("close parentheses are not opened")
-		//}
-		//if openParentheses && char == ')' && flag[index-1] == ',' {
-		//	return errors.New("close parentheses must not be followed by comma")
-		//}
-		//if openParentheses && char == ')' && flag[index+1] != ']' && flag[index+1] != ',' {
-		//	return errors.New("close parentheses must be followed by comma or closed bracket")
-		//}
-
-		if char == '(' {
-			openParentheses = true
-		}
-		if char == ')' {
-			openParentheses = false
-		}
-
-		if char == '[' {
-			openBrackets = true
-		}
-		if char == ']' {
-			openBrackets = false
-		}
+func ExtractJoinVariables(join string) *[]structure.JoinVariables {
+	cleanFlag := join
+	// remove spaces
+	for strings.Contains(cleanFlag, "  ") {
+		cleanFlag = strings.Replace(join, "  ", " ", -1)
 	}
+	cleanFlag = strings.Replace(join, " ", "", -1)
+	cleanFlag = cleanFlag[1 : len(cleanFlag)-1] // remove brackets
+
+	tmps := strings.Split(cleanFlag, "],[")
+	for i, tmp := range tmps {
+		tmps[i] = strings.Replace(tmp, "[", "", -1)
+	}
+
+	results := make([]structure.JoinVariables, 0)
+	for _, tmp := range tmps {
+		parenthesis := strings.Split(tmp, "),(")
+		joinList := &structure.JoinVariables{}
+		for i, parenthesisTmp := range parenthesis {
+			parenthesis[i] = strings.Replace(parenthesisTmp, "(", "", -1)
+			parenthesis[i] = strings.Replace(parenthesisTmp, ")", "", -1)
+			vars := strings.Split(parenthesis[i], ",")
+			joinList.Fields = append(joinList.Fields, structure.JoinField{
+				JoinStructPath: vars[0],
+				JoinStructName: vars[1],
+				JoinFieldAs:    vars[2],
+				JoinOn:         vars[3],
+				JoinType:       vars[4],
+			})
+		}
+
+		results = append(results, *joinList)
+	}
+
+	return &results
 }
