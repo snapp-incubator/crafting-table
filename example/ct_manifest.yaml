@@ -58,21 +58,19 @@ repositories:
     test: true
 
   - tag: "Example-join"
-      source: "./example/src/example.go"
-      destination: "./example/dst/example_join.go"
-      package_name: "repository"
-      struct_name: "ExampleJoin"
-      table_name: "join_example"
-      db_library: "sqlx"
-      join:
-        - - join_struct_path: "./example/src/example.go"
-            join_struct_name: "Example"
-            join_table_name: "example"
-            join_field_as: "var13"
-            costum_function_name: ""
+    source: "./example/src/example.go"
+    destination: "./example/dst/example_join.go"
+    package_name: "repository"
+    struct_name: "ExampleJoin"
+    table_name: "join_example"
+    db_library: "sqlx"
+    join:
+      - costum_function_name: ""
+        fields:
           - join_struct_path: "./example/src/example.go"
             join_struct_name: "Example"
             join_table_name: "example"
-            join_field_as: "var14"
-            costum_function_name: ""
-      test: true
+            join_field_as: "var13"
+            join_on: "var1"
+            join_type: "LEFT OUTER"
+    test: false
