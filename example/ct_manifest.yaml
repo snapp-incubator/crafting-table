@@ -61,7 +61,7 @@ repositories:
     source: "./example/src/example.go"
     destination: "./example/dst/example_join.go"
     package_name: "repository"
-    struct_name: "ExampleJoin"
+    struct_name: "JoinExample"
     table_name: "join_example"
     db_library: "sqlx"
     join:

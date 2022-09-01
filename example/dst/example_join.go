@@ -12,46 +12,46 @@ import (
 	"github.com/snapp-incubator/crafting-table/example/src"
 )
 
-type ExampleJoin interface {
-	GetJoinedExampleJoin(ctx context.Context, limit uint) ([]src.ExampleJoin, error)
+type JoinExample interface {
+	GetJoinedJoinExample(ctx context.Context, limit uint) ([]src.JoinExample, error)
 }
 
-var ErrExampleJoinNotFound = errors.New("example join not found")
+var ErrJoinExampleNotFound = errors.New("join example not found")
 
-type mysqlExampleJoin struct {
+type mysqlJoinExample struct {
 	db *sqlx.DB
 }
 
-func NewMySQLExampleJoin(db *sqlx.DB) ExampleJoin {
-	return &mysqlExampleJoin{db: db}
+func NewMySQLJoinExample(db *sqlx.DB) JoinExample {
+	return &mysqlJoinExample{db: db}
 }
 
-func (r *mysqlExampleJoin) GetJoinedExampleJoin(ctx context.Context, limit uint) ([]src.ExampleJoin, error) {
+func (r *mysqlJoinExample) GetJoinedJoinExample(ctx context.Context, limit uint) ([]src.JoinExample, error) {
 	query := "SELECT " +
-		"e.var9 AS var9, " +
-		"e.var10 AS var10, " +
-		"e.var11 AS var11, " +
-		"e.var12 AS var12, " +
-		"e.var13 AS var13, " +
-		"e.var1 AS var1, " +
+		"j.var1 AS var1, " +
+		"j.var9 AS var9, " +
+		"j.var10 AS var10, " +
+		"j.var11 AS var11, " +
+		"j.var12 AS var12, " +
+		"j.var13 AS var13, " +
 		"e.var1 AS \"var13.var1\", " +
 		"e.var2 AS \"var13.var2\", " +
 		"e.var3 AS \"var13.var3\", " +
 		"e.var4 AS \"var13.var4\" " +
-		"FROM example_join AS e " +
-		"LEFT OUTER JOIN example AS e ON e.var1 = e.var1 " +
+		"FROM join_example AS j " +
+		"LEFT OUTER JOIN example AS e ON j.var1 = e.var1 " +
 		"LIMIT ?"
 
-	var exampleJoin []src.ExampleJoin
-	err := r.db.SelectContext(ctx, &exampleJoin, query, limit)
+	var joinExample []src.JoinExample
+	err := r.db.SelectContext(ctx, &joinExample, query, limit)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrExampleJoinNotFound
+			return nil, ErrJoinExampleNotFound
 		}
 
 		return nil, err
 	}
 
-	return exampleJoin, nil
+	return joinExample, nil
 }

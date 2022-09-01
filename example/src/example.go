@@ -14,7 +14,7 @@ type Example2 struct {
 	Var8 bool   `db:"var8"`
 }
 
-type ExampleJoin struct {
+type JoinExample struct {
 	Var1  int     `db:"var1"`
 	Var9  int     `db:"var9"`
 	Var10 string  `db:"var10"`

@@ -16,21 +16,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type ExampleJoinRepositoryTestSuite struct {
+type JoinExampleRepositoryTestSuite struct {
 	suite.Suite
 	db   *sql.DB
 	mock sqlmock.Sqlmock
-	repo *mysqlExampleJoin
+	repo *mysqlJoinExample
 }
 
-func (suite *ExampleJoinRepositoryTestSuite) SetupSuite() {
+func (suite *JoinExampleRepositoryTestSuite) SetupSuite() {
 	require := suite.Require()
 	var err error
 
 	suite.db, suite.mock, err = sqlmock.New()
 	require.NoError(err)
 
-	suite.repo = &mysqlExampleJoin{
+	suite.repo = &mysqlJoinExample{
 		db: sqlx.NewDb(suite.db, "mysql"),
 	}
 }
@@ -39,87 +39,87 @@ func (suite *ExampleJoinRepositoryTestSuite) SetupSuite() {
 //							JOIN
 //-----------------------------------------------------------------
 
-func (suite *ExampleJoinRepositoryTestSuite) TestGetJoinedExampleJoin_Success() {
+func (suite *JoinExampleRepositoryTestSuite) TestGetJoinedJoinExample_Success() {
 	require := suite.Require()
 	limit := uint(1)
 
-	var exampleJoin src.ExampleJoin
-	errFakeData := faker.FakeData(&exampleJoin)
+	var joinExample src.JoinExample
+	errFakeData := faker.FakeData(&joinExample)
 	require.NoError(errFakeData)
 
 	rows := sqlmock.NewRows([]string{
+		"var10",
 		"var11",
 		"var12",
 		"var1",
 		"var9",
-		"var10",
-		"var13.var3",
-		"var13.var4",
 		"var13.var1",
 		"var13.var2",
+		"var13.var3",
+		"var13.var4",
 	}).
 		AddRow(
-			"exampleJoin.var1",
-			"exampleJoin.var9",
-			"exampleJoin.var10",
-			"exampleJoin.var11",
-			"exampleJoin.var12",
-			"exampleJoin.Var13.var1",
-			"exampleJoin.Var13.var2",
-			"exampleJoin.Var13.var3",
-			"exampleJoin.Var13.var4",
+			"joinExample.var9",
+			"joinExample.var10",
+			"joinExample.var11",
+			"joinExample.var12",
+			"joinExample.var1",
+			"joinExample.Var13.var2",
+			"joinExample.Var13.var3",
+			"joinExample.Var13.var4",
+			"joinExample.Var13.var1",
 		)
 
 	query := "SELECT " +
-		"e.var10 AS var10, " +
-		"e.var11 AS var11, " +
-		"e.var12 AS var12, " +
-		"e.var13 AS var13, " +
-		"e.var1 AS var1, " +
-		"e.var9 AS var9, " +
+		"j.var11 AS var11, " +
+		"j.var12 AS var12, " +
+		"j.var13 AS var13, " +
+		"j.var1 AS var1, " +
+		"j.var9 AS var9, " +
+		"j.var10 AS var10, " +
 		"e.var1 AS \"var13.var1\", " +
 		"e.var2 AS \"var13.var2\", " +
 		"e.var3 AS \"var13.var3\", " +
 		"e.var4 AS \"var13.var4\" " +
-		"FROM example_join AS e " +
-		"LEFT OUTER JOIN example AS e ON e.var1 = e.var1 " +
+		"FROM join_example AS j " +
+		"LEFT OUTER JOIN example AS e ON j.var1 = e.var1 " +
 		"LIMIT ?"
 
 	suite.mock.ExpectQuery(query).
 		WithArgs(limit).
 		WillReturnRows(rows)
 
-	data, err := suite.repo.GetJoinedExampleJoin(context.Background(), limit)
+	data, err := suite.repo.GetJoinedJoinExample(context.Background(), limit)
 	require.NoError(err)
-	require.Equal(&exampleJoin, data)
+	require.Equal(&joinExample, data)
 	require.NoError(suite.mock.ExpectationsWereMet())
 }
 
-func (suite *ExampleJoinRepositoryTestSuite) TestGetJoinedExampleJoin_Failure() {
+func (suite *JoinExampleRepositoryTestSuite) TestGetJoinedJoinExample_Failure() {
 	require := suite.Require()
 	limit := uint(1)
 	expectedError := errors.New("something went wrong")
 
 	query := "SELECT " +
-		"e.var12 AS var12, " +
-		"e.var13 AS var13, " +
-		"e.var1 AS var1, " +
-		"e.var9 AS var9, " +
-		"e.var10 AS var10, " +
-		"e.var11 AS var11, " +
-		"e.var3 AS \"var13.var3\", " +
-		"e.var4 AS \"var13.var4\", " +
+		"j.var10 AS var10, " +
+		"j.var11 AS var11, " +
+		"j.var12 AS var12, " +
+		"j.var13 AS var13, " +
+		"j.var1 AS var1, " +
+		"j.var9 AS var9, " +
 		"e.var1 AS \"var13.var1\", " +
-		"e.var2 AS \"var13.var2\" " +
-		"FROM example_join AS e " +
-		"LEFT OUTER JOIN example AS e ON e.var1 = e.var1 " +
+		"e.var2 AS \"var13.var2\", " +
+		"e.var3 AS \"var13.var3\", " +
+		"e.var4 AS \"var13.var4\" " +
+		"FROM join_example AS j " +
+		"LEFT OUTER JOIN example AS e ON j.var1 = e.var1 " +
 		"LIMIT ?"
 
 	suite.mock.ExpectQuery(query).
 		WithArgs(limit).
 		WillReturnError(expectedError)
 
-	data, err := suite.repo.GetJoinedExampleJoin(context.Background(), limit)
+	data, err := suite.repo.GetJoinedJoinExample(context.Background(), limit)
 	require.Equal(expectedError, err)
 	require.Nil(data)
 	require.NoError(suite.mock.ExpectationsWereMet())
@@ -129,6 +129,6 @@ func (suite *ExampleJoinRepositoryTestSuite) TestGetJoinedExampleJoin_Failure() 
 //						 RUN ALL TESTS
 //-----------------------------------------------------------------
 
-func TestExampleJoinRepository(t *testing.T) {
-	suite.Run(t, new(ExampleJoinRepositoryTestSuite))
+func TestJoinExampleRepository(t *testing.T) {
+	suite.Run(t, new(JoinExampleRepositoryTestSuite))
 }
