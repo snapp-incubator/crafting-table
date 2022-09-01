@@ -55,7 +55,7 @@ func generate(_ *cobra.Command, _ []string) {
 	source = strings.Replace(source, " ", "", -1)
 	destination = strings.Replace(destination, " ", "", -1)
 
-	if get == "" && update == "" && !create {
+	if get == "" && update == "" && !create && join == "" {
 		log.Fatal("you must set at least one flag for get, update or create")
 	}
 
