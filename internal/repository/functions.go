@@ -253,3 +253,15 @@ func joinFunction(structure *structure.Structure,
 
 	return syntax, signatures, nil
 }
+
+func joinTestFunction(structure *structure.Structure,
+	vars *[]structure.JoinVariables) (syntax string) {
+
+	for _, joinVariables := range *vars {
+		body := assets.A.SqlxTest.Join(structure, &joinVariables)
+
+		syntax += "\n" + body
+	}
+
+	return syntax
+}

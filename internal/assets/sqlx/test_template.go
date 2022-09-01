@@ -1,6 +1,7 @@
 package sqlx
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -13,6 +14,7 @@ type SqlxTest interface {
 	UpdateAll(structure *structure.Structure) (syntax string)
 	UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string)
 	SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string)
+	Join(structure *structure.Structure, vars *structure.JoinVariables) (syntax string)
 	//SelectAll(structure *structure.Structure) (syntax string)
 }
 
@@ -33,6 +35,9 @@ type sqlxTest struct {
 
 	updateByTestSuccess string
 	updateByTestFailure string
+
+	joinTestSuccess string
+	joinTestFailure string
 }
 
 func NewSqlxTest() SqlxTest {
@@ -313,6 +318,63 @@ func (suite *%sRepositoryTestSuite) TestUpdate%s_Failure() {
 
 `
 
+	s.joinTestSuccess = `
+func (suite *%sRepositoryTestSuite) TestGetJoined%s_Success() {
+	require := suite.Require()
+	limit := uint(1)	
+
+	var %s %s.%s
+	errFakeData := faker.FakeData(&%s)
+	require.NoError(errFakeData)
+
+	rows := sqlmock.NewRows([]string{
+		%s
+	}).
+		AddRow(
+			%s
+		)
+
+	query := "SELECT " +
+		%s
+		"FROM %s AS %s " +
+		%s +
+		"LIMIT ?"
+
+	suite.mock.ExpectQuery(query).
+		WithArgs(limit).
+		WillReturnRows(rows)
+
+	data, err := suite.repo.GetJoined%s(context.Background(), limit)
+	require.NoError(err)
+	require.Equal(&%s, data)
+	require.NoError(suite.mock.ExpectationsWereMet())
+}
+
+`
+	s.joinTestFailure = `
+func (suite *%sRepositoryTestSuite) TestGetJoined%s_Failure() {
+	require := suite.Require()
+	limit := uint(1)	
+	expectedError := errors.New("something went wrong")
+
+	query := "SELECT " +
+		%s
+		"FROM %s AS %s " +
+		%s +
+		"LIMIT ?"
+
+	suite.mock.ExpectQuery(query).
+		WithArgs(limit).
+		WillReturnError(expectedError)
+
+	data, err := suite.repo.GetJoined%s(context.Background(), limit)
+	require.Equal(expectedError, err)
+	require.Nil(data)
+	require.NoError(suite.mock.ExpectationsWereMet())
+}
+
+`
+
 	return &s
 }
 
@@ -510,6 +572,126 @@ func (s *sqlxTest) SelectBy(structure *structure.Structure, vars *[]structure.Ge
 	}
 
 	return syntax
+}
+
+func (s *sqlxTest) Join(structure *structure.Structure, joinVariables *structure.JoinVariables) (syntax string) {
+
+	syntax += fmt.Sprintf(
+		s.joinTestSuccess,
+		structure.Name,
+		structure.Name,
+		strcase.ToLowerCamel(structure.Name),
+		structure.PackageName,
+		structure.Name,
+		strcase.ToLowerCamel(structure.Name),
+
+		joinedStringRows(structure, joinVariables),
+		joinedVariablesRows(structure, joinVariables),
+
+		joinField(structure, joinVariables),
+
+		structure.TableName,
+		string(structure.TableName[0]),
+
+		joins(structure, joinVariables),
+
+		structure.Name,
+		strcase.ToLowerCamel(structure.Name),
+	)
+
+	syntax += fmt.Sprintf(
+		s.joinTestFailure,
+		structure.Name,
+		structure.Name,
+
+		joinField(structure, joinVariables),
+
+		structure.TableName,
+		string(structure.TableName[0]),
+
+		joins(structure, joinVariables),
+
+		structure.Name,
+	)
+	return syntax
+}
+
+func joinedStringRows(s *structure.Structure, joinVariables *structure.JoinVariables) (fields string) {
+	// add first struct fields
+	for dbName, _ := range s.FieldMapDBFlagToName {
+		isEqual := false
+		for _, joinVariable := range joinVariables.Fields {
+			if dbName == joinVariable.JoinFieldAs {
+				isEqual = true
+				break
+			}
+		}
+		if isEqual {
+			continue
+		}
+		fields += fmt.Sprintf("\"%s\", \n\t\t", dbName)
+	}
+
+	// add join fields
+	for _, joinVariable := range joinVariables.Fields {
+		source := strings.Replace(joinVariable.JoinStructPath, " ", "", -1)
+
+		ss, err := structure.BindStruct(source, joinVariable.JoinStructName)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in bindStruct: %s", err.Error()))
+			panic(err)
+		}
+
+		for dbName, _ := range ss.FieldMapDBFlagToName {
+			fields += fmt.Sprintf("\"%s.%s\", \n\t\t ",
+				joinVariable.JoinFieldAs, dbName)
+		}
+
+		fields = strings.TrimSuffix(fields, "\n\t\t")
+	}
+
+	return fields
+}
+
+func joinedVariablesRows(s *structure.Structure, joinVariables *structure.JoinVariables) (fields string) {
+	// add first struct fields
+	for dbName, _ := range s.FieldMapDBFlagToName {
+		isEqual := false
+		for _, joinVariable := range joinVariables.Fields {
+			if dbName == joinVariable.JoinFieldAs {
+				isEqual = true
+				break
+			}
+		}
+		if isEqual {
+			continue
+		}
+		fields += fmt.Sprintf("\"%s.%s\", \n\t\t",
+			strcase.ToLowerCamel(s.Name), dbName)
+	}
+
+	// add join fields
+	for _, joinVariable := range joinVariables.Fields {
+		source := strings.Replace(joinVariable.JoinStructPath, " ", "", -1)
+
+		ss, err := structure.BindStruct(source, joinVariable.JoinStructName)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in bindStruct: %s", err.Error()))
+			panic(err)
+		}
+
+		for dbName, _ := range ss.FieldMapDBFlagToName {
+			fields += fmt.Sprintf("\"%s.%s.%s\", \n\t\t ",
+				strcase.ToLowerCamel(s.Name),
+				strcase.ToCamel(joinVariable.JoinFieldAs),
+				dbName,
+			)
+		}
+
+		fields = strings.TrimSuffix(fields, "\n\t\t ")
+	}
+
+	return fields
 }
 
 func (s *sqlxTest) addPrefix(str, prefix string) string {

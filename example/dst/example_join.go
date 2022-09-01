@@ -28,12 +28,12 @@ func NewMySQLExampleJoin(db *sqlx.DB) ExampleJoin {
 
 func (r *mysqlExampleJoin) GetJoinedExampleJoin(ctx context.Context, limit uint) ([]src.ExampleJoin, error) {
 	query := "SELECT " +
-		"e.var1 AS var1, " +
 		"e.var9 AS var9, " +
 		"e.var10 AS var10, " +
 		"e.var11 AS var11, " +
 		"e.var12 AS var12, " +
 		"e.var13 AS var13, " +
+		"e.var1 AS var1, " +
 		"e.var1 AS \"var13.var1\", " +
 		"e.var2 AS \"var13.var2\", " +
 		"e.var3 AS \"var13.var3\", " +

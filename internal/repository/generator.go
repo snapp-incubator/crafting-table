@@ -86,9 +86,9 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		joinSyntax += syntax
 		signatures = append(signatures, signatureList...)
 
-		//if test {
-		//	joinTestSyntax += joinTestFunction(s, joinVar)
-		//}
+		if test {
+			joinTestSyntax += joinTestFunction(s, joinVars)
+		}
 	}
 
 	interfaceSyntax := interfaceCreator(s, signatures)
