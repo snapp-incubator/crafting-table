@@ -9,14 +9,17 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-func Generate(source, destination, packageName, structName string, getVars *[]structure.GetVariable, updateVars *[]structure.UpdateVariables, create, test bool) error {
+func Generate(source, destination, packageName, structName string, getVars *[]structure.GetVariable,
+	updateVars *[]structure.UpdateVariables, joinVars *[]structure.JoinVariables, create, test bool) error {
 	createSyntax := ""
 	updateSyntax := ""
 	getSyntax := ""
+	joinSyntax := ""
 
 	createTestSyntax := ""
 	updateTestSyntax := ""
 	getTestSyntax := ""
+	joinTestSyntax := ""
 
 	var testDestination string
 	if test {
@@ -46,7 +49,7 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		}
 	}
 
-	if getVars != nil {
+	if getVars != nil && len(*getVars) > 0 {
 		getSyntax, signatureList, err = getFunction(s, getVars)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in getFunction: %s", err.Error()))
@@ -59,7 +62,7 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		}
 	}
 
-	if updateVars != nil {
+	if updateVars != nil && len(*updateVars) > 0 {
 		updateSyntax, signatureList, err = updateFunction(s, updateVars)
 		if err != nil {
 			err = errors.New(fmt.Sprintf("Error in updateFunction: %s", err.Error()))
@@ -73,10 +76,25 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		}
 	}
 
+	if joinVars != nil {
+		syntax, signatureList, err := joinFunction(s, joinVars)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in joinFunction: %s", err.Error()))
+			return err
+		}
+
+		joinSyntax += syntax
+		signatures = append(signatures, signatureList...)
+
+		if test {
+			joinTestSyntax += joinTestFunction(s, joinVars)
+		}
+	}
+
 	interfaceSyntax := interfaceCreator(s, signatures)
 
 	fileContent := createTemplate(s, packageName, interfaceSyntax,
-		createSyntax, updateSyntax, getSyntax)
+		createSyntax, updateSyntax, getSyntax, joinSyntax)
 
 	err = exportRepository(fileContent, destination)
 	if err != nil {
@@ -91,7 +109,8 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 	}
 
 	if test {
-		testFileContent := createTestTemplate(s, packageName, createTestSyntax, updateTestSyntax, getTestSyntax)
+		testFileContent := createTestTemplate(s, packageName, createTestSyntax, updateTestSyntax,
+			getTestSyntax, joinTestSyntax)
 
 		err = exportRepository(testFileContent, testDestination)
 		if err != nil {

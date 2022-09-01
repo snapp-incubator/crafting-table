@@ -1,6 +1,8 @@
 package repository
 
-import "github.com/snapp-incubator/crafting-table/internal/structure"
+import (
+	"github.com/snapp-incubator/crafting-table/internal/structure"
+)
 
 type Repo struct {
 	Tag         string                      `yaml:"tag"`
@@ -10,6 +12,7 @@ type Repo struct {
 	StructName  string                      `yaml:"struct_name"`
 	TableName   string                      `yaml:"table_name"`
 	DBLibrary   string                      `yaml:"db_library"`
+	Join        []structure.JoinVariables   `yaml:"join"`
 	Get         []structure.GetVariable     `yaml:"get"`
 	Update      []structure.UpdateVariables `yaml:"update"`
 	Create      structure.CreateVariables   `yaml:"create"`

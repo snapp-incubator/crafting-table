@@ -64,7 +64,8 @@ func apply(_ *cobra.Command, _ []string) {
 			continue
 		}
 
-		if err := repository.Generate(repo.Source, repo.Destination, repo.PackageName, repo.StructName, &repo.Get, &repo.Update, repo.Create.Enable, repo.Test); err != nil {
+		if err := repository.Generate(repo.Source, repo.Destination, repo.PackageName, repo.StructName, &repo.Get,
+			&repo.Update, &repo.Join, repo.Create.Enable, repo.Test); err != nil {
 			log.Fatal(err)
 		}
 	}

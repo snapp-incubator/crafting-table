@@ -110,3 +110,40 @@ func ExtractManifestTags(tags string) []string {
 
 	return strings.Split(tags, ",")
 }
+
+func ExtractJoinVariables(join string) *[]structure.JoinVariables {
+	cleanFlag := join
+	// remove spaces
+	for strings.Contains(cleanFlag, "  ") {
+		cleanFlag = strings.Replace(join, "  ", " ", -1)
+	}
+	cleanFlag = strings.Replace(join, " ", "", -1)
+	cleanFlag = cleanFlag[1 : len(cleanFlag)-1] // remove brackets
+
+	tmps := strings.Split(cleanFlag, "],[")
+	for i, tmp := range tmps {
+		tmps[i] = strings.Replace(tmp, "[", "", -1)
+	}
+
+	results := make([]structure.JoinVariables, 0)
+	for _, tmp := range tmps {
+		parenthesis := strings.Split(tmp, "),(")
+		joinList := &structure.JoinVariables{}
+		for i, parenthesisTmp := range parenthesis {
+			parenthesis[i] = strings.Replace(parenthesisTmp, "(", "", -1)
+			parenthesis[i] = strings.Replace(parenthesisTmp, ")", "", -1)
+			vars := strings.Split(parenthesis[i], ",")
+			joinList.Fields = append(joinList.Fields, structure.JoinField{
+				JoinStructPath: vars[0],
+				JoinStructName: vars[1],
+				JoinFieldAs:    vars[2],
+				JoinOn:         vars[3],
+				JoinType:       vars[4],
+			})
+		}
+
+		results = append(results, *joinList)
+	}
+
+	return &results
+}

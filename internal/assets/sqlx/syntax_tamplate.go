@@ -1,6 +1,7 @@
 package sqlx
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -17,6 +18,7 @@ type Sqlx interface {
 	UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string, header []string)
 	SelectAll(structure *structure.Structure) (syntax string, header string)
 	SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string, header []string)
+	Join(structure *structure.Structure, joinVariables *structure.JoinVariables) (syntax string, header string)
 }
 
 type FieldType interface{ structure.Field | string }
@@ -32,6 +34,8 @@ type sqlx struct {
 	updateAllFuncBody      string
 	updateFuncSignature    string
 	updateFuncBody         string
+	joinFuncBody           string
+	joinFuncSignature      string
 }
 
 func NewSqlx() Sqlx {
@@ -134,6 +138,31 @@ func (r *mysql%s) Update%s(ctx context.Context, %s, %s) (int64, error) {
 `
 
 	s.updateFuncSignature = `Update%s(ctx context.Context, %s, %s) (int64, error)`
+
+	s.joinFuncBody = `
+func (r *mysql%s) GetJoined%s(ctx context.Context, limit uint) ([]%s.%s, error) {
+	query := "SELECT " +
+		%s
+		"FROM %s AS %s " +
+		%s +
+		"LIMIT ?"
+
+	var %s []%s.%s
+	err := r.db.SelectContext(ctx, &%s, query, limit)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, %s
+		}
+
+		return nil, err
+	}
+
+	return %s, nil
+}
+`
+
+	s.joinFuncSignature = `GetJoined%s(ctx context.Context, limit uint) ([]%s.%s, error)`
 
 	return s
 }
@@ -297,6 +326,88 @@ func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.GetVari
 	}
 
 	return syntax, signatures
+}
+
+func (s sqlx) Join(structure *structure.Structure, joinVariables *structure.JoinVariables) (syntax string, header string) {
+
+	syntax = fmt.Sprintf(
+		s.joinFuncBody,
+		structure.Name,
+		structure.Name,
+		structure.PackageName,
+		structure.Name,
+
+		joinField(structure, joinVariables),
+
+		structure.TableName,
+		string(structure.TableName[0]),
+
+		joins(structure, joinVariables),
+
+		strcase.ToLowerCamel(structure.Name),
+		structure.PackageName,
+		structure.Name,
+		strcase.ToLowerCamel(structure.Name),
+
+		"Err"+structure.Name+"NotFound",
+
+		strcase.ToLowerCamel(structure.Name),
+	)
+
+	header = fmt.Sprintf(
+		s.joinFuncSignature,
+		structure.Name,
+		structure.PackageName,
+		structure.Name,
+	)
+
+	return syntax, header
+}
+
+func joinField(s *structure.Structure, joinVariables *structure.JoinVariables) string {
+	fields := ""
+
+	// add first struct fields
+	firstCharOfStruct := string(s.TableName[0])
+	for dbName, _ := range s.FieldMapDBFlagToName {
+		fields += fmt.Sprintf("\"%s.%s AS %s, \" + \n\t\t", firstCharOfStruct, dbName, dbName)
+	}
+
+	// add join fields
+	for _, joinVariable := range joinVariables.Fields {
+		source := strings.Replace(joinVariable.JoinStructPath, " ", "", -1)
+
+		ss, err := structure.BindStruct(source, joinVariable.JoinStructName)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in bindStruct: %s", err.Error()))
+			panic(err)
+		}
+
+		firstCharOfStruct := string(ss.TableName[0])
+		for dbName, _ := range ss.FieldMapDBFlagToName {
+			fields += fmt.Sprintf("\"%s.%s AS \\\"%s.%s\\\", \" + \n\t\t ",
+				firstCharOfStruct, dbName, joinVariable.JoinFieldAs, dbName)
+		}
+
+		fields = strings.TrimSuffix(fields, ", \" + \n\t\t ") + " \" +"
+	}
+
+	return fields
+}
+
+func joins(structure *structure.Structure, vars *structure.JoinVariables) string {
+	var syntax string
+	for _, v := range vars.Fields {
+		syntax += fmt.Sprintf(
+			"\"%s JOIN %s AS %s ON %s = %s \"",
+			v.JoinType,
+			strcase.ToSnake(v.JoinStructName),
+			string(strcase.ToSnake(v.JoinStructName)[0]),
+			string(structure.TableName[0])+"."+v.JoinOn,
+			string(strcase.ToSnake(v.JoinStructName)[0])+"."+v.JoinOn,
+		)
+	}
+	return syntax
 }
 
 func contextKeys[T FieldType](fields []T) string {

@@ -9,7 +9,8 @@
 * Add manifest file for generate repositories and fix bugs in generating update tests. (2022-08-16, @n25a, !36)
 * Add manifest command for generate repositories. (2022-08-16, @n25a, !37)
 * Add `tags` flag to manifest command for selecting which tags to generate. (2022-08-16, @n25a, !38) 
-* Remove `app` package (2022-08-16, @nemati21, !35)
+* Remove `app` package. (2022-08-16, @nemati21, !35)
+* Add `Join` function for generating join query with tests. (2022-09-01, @n25a, !44)
 
 # v1.2.0 - Jun 25 2022
 
