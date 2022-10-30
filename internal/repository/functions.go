@@ -139,7 +139,7 @@ type %sRepositoryTestSuite struct {
 	repo *mysql%s
 }
 
-func (suite *%sRepositoryTestSuite) SetupSuite() {
+func (suite *%sRepositoryTestSuite) SetupTest() {
 	require := suite.Require()
 	var err error
 
