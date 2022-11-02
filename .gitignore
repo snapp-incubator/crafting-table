@@ -22,3 +22,7 @@ vendor/
 
 # Project Binary file
 crafting-table
+
+
+# Generated example files
+*_gen*
