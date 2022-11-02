@@ -1,3 +1,4 @@
+//go:generate crafting-table gogen $GOFILE
 package cmd
 
 // ct: model

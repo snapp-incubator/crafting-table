@@ -19,3 +19,7 @@ build: format vendor
 
 it: build
 	- sh integration_test.sh $(ROOT)
+
+
+querybuilder-example:
+	- go run main.go gogen example/annotation_based.go

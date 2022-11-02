@@ -146,7 +146,6 @@ type __{{ .ModelName }}SQLQueryBuilder struct {
 	set __{{ .ModelName }}Set
 	orderby string
 	groupby string
-	args []interface{}
 	table string
 	projected []string
 }
@@ -158,52 +157,74 @@ func {{.ModelName}}QueryBuilder() *__{{ .ModelName }}SQLQueryBuilder {
 
 {{ range $field, $type := .Fields }}
 func (q *__{{ $.ModelName}}SQLQueryBuilder) Select{{$field}}() *__{{ $.ModelName }}SQLQueryBuilder {
-	q.projected = append(q.projected, "{{ $field }}")
+	q.projected = append(q.projected, strcase.ToSnake("{{ $field }}"))
 	return q
 }
 {{ end }}
 
-func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() (string, []interface{}) {
+func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
 	base := fmt.Sprintf("SELECT %s FROM %s", strings.Join(q.projected, ", "), q.table)
 
 	var wheres []string 
 	{{ range $field, $type := .Fields }}
 	if q.where.{{$field}}.operator != "" {
-		wheres = append(wheres, fmt.Sprintf("%s %s %s", "{{$field}}", q.where.{{$field}}.operator, q.where.{{$field}}.argument))
+		wheres = append(wheres, fmt.Sprintf("%s %s %s", strcase.ToSnake("{{ $field }}"), q.where.{{$field}}.operator, fmt.Sprint(q.where.{{$field}}.argument)))
 	}
 	{{ end }}
 	if len(wheres) > 0 {
 		base += "WHERE " + strings.Join(wheres, " AND ")
 	}
-	return base, args
+	return base
 }
-func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() (string, []interface{}) {
-	base := fmt.Sprintf("UPDATE %s SET %s", q.table)
+func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() string {
+	base := fmt.Sprintf("UPDATE %s", q.table)
+
+	var wheres []string 
+    var sets []string 
+
+    {{ range $field, $type := .Fields }}
+	if q.where.{{$field}}.operator != "" {
+		wheres = append(wheres, fmt.Sprintf("%s %s %s", strcase.ToSnake("{{ $field }}"), q.where.{{$field}}.operator, fmt.Sprint(q.where.{{$field}}.argument)))
+	}
+	if q.set.{{$field}} != nil {
+		sets = append(sets, fmt.Sprintf("%s = %s", strcase.ToSnake("{{ $field }}"), fmt.Sprint(q.set.{{$field}})))
+	}
+    {{ end }}
+
+
+	if len(wheres) > 0 {
+		base += " WHERE " + strings.Join(wheres, " AND ")
+	}
+
+	if len(sets) > 0 {
+		base += " SET " + strings.Join(sets, " , ")
+	}
+
+	return base
+}
+func (q *__{{ .ModelName}}SQLQueryBuilder) sqlDelete() string {
+    base := fmt.Sprintf("DELETE FROM %s", q.table)
 
 	var wheres []string 
 	{{ range $field, $type := .Fields }}
 	if q.where.{{$field}}.operator != "" {
-		wheres = append(wheres, fmt.Sprintf("%s %s %s", "{{$field}}", q.where.{{$field}}.operator, q.where.{{$field}}.argument))
+		wheres = append(wheres, fmt.Sprintf("%s %s %s", strcase.ToSnake("{{ $field }}"), q.where.{{$field}}.operator, fmt.Sprint(q.where.{{$field}}.argument)))
 	}
 	{{ end }}
 	if len(wheres) > 0 {
-		base += "WHERE " + strings.Join(wheres, " AND ")
+		base += " WHERE " + strings.Join(wheres, " AND ")
 	}
 
-
-	return base, args
-}
-func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() (string, []interface{}) {
-
+	return base
 
 }
 
-func (q *__{{ .ModelName }}SQLQueryBuilder) SQL() (string, []interface{}) {
-	if mode == "select" {
+func (q *__{{ .ModelName }}SQLQueryBuilder) SQL() string {
+	if q.mode == "select" {
 		return q.sqlSelect()
-	} else if mode == "update" {
+	} else if q.mode == "update" {
 		return q.sqlUpdate()
-	} else if mode == "delete" {
+	} else if q.mode == "delete" {
 		return q.sqlDelete()
 	} else {
 		panic("unsupported query mode")
@@ -298,5 +319,7 @@ package {{ .Pkg }}
 import (
     "fmt"
     "strings"
+
+    "github.com/iancoleman/strcase"
 )
 `
