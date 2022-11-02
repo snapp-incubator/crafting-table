@@ -53,13 +53,6 @@ func (suite *%sRepositoryTestSuite) TestInsert_Success() {
 	errFakeData := faker.FakeData(&%s)
 	require.NoError(errFakeData)
 
-	sqlmock.NewRows([]string{
-		%s
-	}).
-		AddRow(
-			%s
-		)
-
 	syntax := "INSERT INTO %s .+"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
@@ -204,13 +197,6 @@ func (suite *%sRepositoryTestSuite) TestUpdate_Success() {
 	errFakeData := faker.FakeData(&%s)
 	require.NoError(errFakeData)
 
-	sqlmock.NewRows([]string{
-		%s		
-	}).
-		AddRow(
-			%s
-		)
-
 	syntax := "UPDATE %s SET .+"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
@@ -262,13 +248,6 @@ func (suite *%sRepositoryTestSuite) TestUpdate%s_Success() {
 	var %s %s.%s
 	errFakeData := faker.FakeData(&%s)
 	require.NoError(errFakeData)
-
-	sqlmock.NewRows([]string{
-		%s
-	}).
-		AddRow(
-			%s
-		)
 
 	syntax := "UPDATE %s SET (.+) WHERE (.+)"
 	suite.mock.ExpectExec(syntax).
@@ -388,9 +367,6 @@ func (s *sqlxTest) Insert(structure *structure.Structure) (syntax string) {
 		structure.Name,
 		strcase.ToLowerCamel(structure.Name),
 
-		structure.GetDBFieldsInQuotation(),
-		structure.GetVariableFields(strcase.ToLowerCamel(structure.Name)+"."),
-
 		strcase.ToSnake(structure.Name),
 		structure.GetVariableFields(strcase.ToLowerCamel(structure.Name)+"."),
 
@@ -424,9 +400,6 @@ func (s *sqlxTest) UpdateAll(structure *structure.Structure) (syntax string) {
 		structure.PackageName,
 		structure.Name,
 		strcase.ToLowerCamel(structure.Name),
-
-		structure.GetDBFieldsInQuotation(),
-		structure.GetVariableFields(strcase.ToLowerCamel(structure.Name)+"."),
 
 		strcase.ToSnake(structure.Name),
 		structure.GetVariableFields(strcase.ToLowerCamel(structure.Name)+"."),
@@ -473,9 +446,6 @@ func (s *sqlxTest) UpdateBy(structure *structure.Structure, vars *[]structure.Up
 			structure.PackageName,
 			structure.Name,
 			strcase.ToLowerCamel(structure.Name),
-
-			structure.GetDBFieldsInQuotation(),
-			structure.GetVariableFields(strcase.ToLowerCamel(structure.Name)+"."),
 
 			strcase.ToSnake(structure.Name),
 			s.addPrefix(execContextVariables(v, structure, false), strcase.ToLowerCamel(structure.Name)+"."),
