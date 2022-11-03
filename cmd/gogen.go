@@ -162,6 +162,11 @@ func (q *__{{ $.ModelName}}SQLQueryBuilder) Select{{$field}}() *__{{ $.ModelName
 }
 {{ end }}
 
+func (q *__{{ $.ModelName}}SQLQueryBuilder) SelectAll() *__{{ $.ModelName }}SQLQueryBuilder {
+	q.projected = append(q.projected, "*")
+	return q
+}
+
 func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
 	base := fmt.Sprintf("SELECT %s FROM %s", strings.Join(q.projected, ", "), q.table)
 
