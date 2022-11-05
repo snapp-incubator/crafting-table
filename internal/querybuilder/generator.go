@@ -88,6 +88,11 @@ func Generate(pkg string, typeName string, fields map[string]string, tags []stri
 	if err != nil {
 		panic(err)
 	}
+	err = placeholderGeneratorTemplate.Execute(&buff, td)
+	if err != nil {
+		panic(err)
+	}
+	
 
 	err = finishersTemplate.Execute(&buff, td)
 	if err != nil {

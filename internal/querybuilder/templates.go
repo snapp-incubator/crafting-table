@@ -26,6 +26,7 @@ var (
 	fromRowsTemplate              = template.Must(template.New("ct-from-rows").Funcs(funcMap).Parse(fromRows))
 	toRowsTemplate                = template.Must(template.New("ct-to-rows").Funcs(funcMap).Parse(toRows))
 	finishersTemplate             = template.Must(template.New("ct-finishers").Funcs(funcMap).Parse(finishers))
+	placeholderGeneratorTemplate  = template.Must(template.New("ct-placeholder").Funcs(funcMap).Parse(placeholderGenerator))
 	orderByTemplate               = template.Must(template.New("ct-orderby").Funcs(funcMap).Parse(orderby))
 	queryBuilderInterfaceTemplate = template.Must(template.New("ct-interface").Funcs(funcMap).Parse(queryBuilderInterface))
 )
@@ -54,6 +55,8 @@ type {{.ModelName}}SQLQueryBuilder interface{
 	Limit(int) {{$.ModelName}}SQLQueryBuilder
 	Offset(int) {{$.ModelName}}SQLQueryBuilder
 	SelectAll() {{$.ModelName}}SQLQueryBuilder
+
+    getPlaceholder() string
 	
 	// finishers
 	First(db *sql.DB) ({{ .ModelName }}, error)
@@ -61,6 +64,16 @@ type {{.ModelName}}SQLQueryBuilder interface{
 	Update(db *sql.DB) (sql.Result, error)
 	Delete(db *sql.DB) (sql.Result, error)
 	Fetch(db *sql.DB) ([]{{ .ModelName }}, error)
+
+
+}
+`
+
+const placeholderGenerator = `
+func (q *__{{ .ModelName }}SQLQueryBuilder) getPlaceholder() string {
+     if q.dialect == "mysql" { return "?" }
+     else if q.dialect == "postgres" { return fmt.Sprintf("$", len(q.args) + 1) }
+     else { log.Fatalf("dialect %s not supported\n", q.dialect) }
 }
 `
 
@@ -170,6 +183,8 @@ const queryBuilder = `
 type __{{ .ModelName }}SQLQueryBuilder struct {
 	mode string
 
+    dialect string
+
     where __{{ .ModelName }}Where
 
 	set __{{ .ModelName }}Set
@@ -184,7 +199,8 @@ type __{{ .ModelName }}SQLQueryBuilder struct {
 	limit int
 	offset int
 
-	args []interface{}
+	whereArgs []interface{}
+    setArgs []interface{}
 }
 
 func {{.ModelName}}QueryBuilder() {{ .ModelName }}SQLQueryBuilder {
@@ -310,26 +326,26 @@ const scalarWhere = `
 {{ range $field, $type := .Fields }}
 {{ if eq $type "int" "int8" "int16" "int32" "int64" "uint8" "uint16" "uint32" "uint64" "uint" "float32" "float64"  }}
 func (m *__{{$.ModelName}}SQLQueryBuilder) Where{{$field}}GE({{$field}} {{$type}}) {{$.ModelName}}SQLQueryBuilder {
-	m.mode = "select"
-	m.where.{{$field}}.argument = {{$field}}
+    m.whereArgs = append(m.whereArgs, {{$field}})
+    m.where.{{$field}}.argument = m.getPlaceholder()
     m.where.{{$field}}.operator = ">="
 	return m
 }
 func (m *__{{$.ModelName}}SQLQueryBuilder) Where{{$field}}GT({{$field}} {{$type}}) {{$.ModelName}}SQLQueryBuilder {
-	m.mode = "select"
-    m.where.{{$field}}.argument = {{$field}}
+    m.whereArgs = append(m.whereArgs, {{$field}})
+    m.where.{{$field}}.argument = m.getPlaceholder()
     m.where.{{$field}}.operator = ">="
 	return m
 }
 func (m *__{{$.ModelName}}SQLQueryBuilder) Where{{$field}}LE({{$field}} {{$type}}) {{$.ModelName}}SQLQueryBuilder {
-	m.mode = "select"
-    m.where.{{$field}}.argument = {{$field}}
+    m.whereArgs = append(m.whereArgs, {{$field}})
+    m.where.{{$field}}.argument = m.getPlaceholder()
     m.where.{{$field}}.operator = "<="
 	return m
 }
 func (m *__{{$.ModelName}}SQLQueryBuilder) Where{{$field}}LT({{$field}} {{$type}}) {{$.ModelName}}SQLQueryBuilder {
-	m.mode = "select"
-    m.where.{{$field}}.argument = {{$field}}
+    m.whereArgs = append(m.whereArgs, {{$field}})
+    m.where.{{$field}}.argument = m.getPlaceholder()
     m.where.{{$field}}.operator = "<="
 	return m
 }
@@ -348,8 +364,8 @@ type __{{ .ModelName }}Where struct {
 }
 {{ range $field, $type := .Fields }}
 func (m *__{{ $.ModelName }}SQLQueryBuilder) Where{{$field}}Eq({{ $field }} {{ $type }}) {{ $.ModelName }}SQLQueryBuilder {
-	m.mode = "select"
-	m.where.{{$field}}.argument = {{$field}}
+    m.whereArgs = append(m.whereArgs, {{$field}})
+    m.where.{{$field}}.argument = m.getPlaceholder()
     m.where.{{$field}}.operator = "="
 	return m
 }
@@ -379,5 +395,6 @@ import (
     "fmt"
     "strings"
     "database/sql"
+    "log"
 )
 `
