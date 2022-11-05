@@ -26,6 +26,7 @@ var (
 	fromRowsTemplate              = template.Must(template.New("ct-from-rows").Funcs(funcMap).Parse(fromRows))
 	toRowsTemplate                = template.Must(template.New("ct-to-rows").Funcs(funcMap).Parse(toRows))
 	finishersTemplate             = template.Must(template.New("ct-finishers").Funcs(funcMap).Parse(finishers))
+	orderByTemplate               = template.Must(template.New("ct-orderby").Funcs(funcMap).Parse(orderby))
 	queryBuilderInterfaceTemplate = template.Must(template.New("ct-interface").Funcs(funcMap).Parse(queryBuilderInterface))
 )
 
@@ -45,6 +46,8 @@ type {{.ModelName}}SQLQueryBuilder interface{
 	Where{{$field}}LT({{ $type }}) {{$.ModelName}}SQLQueryBuilder
 	Where{{$field}}LE({{ $type }}) {{$.ModelName}}SQLQueryBuilder
 	{{ end }}
+	OrderBy{{$field}}Asc() {{$.ModelName}}SQLQueryBuilder
+	OrderBy{{$field}}Desc() {{$.ModelName}}SQLQueryBuilder
 	Select{{$field}}() {{$.ModelName}}SQLQueryBuilder
 	Set{{$field}}({{$type}}) {{$.ModelName}}SQLQueryBuilder
 	{{ end }}
@@ -141,7 +144,7 @@ func (q *__{{ .ModelName }}SQLQueryBuilder) Fetch(db *sql.DB) ([]{{ .ModelName }
 
 func (q *__{{ .ModelName }}SQLQueryBuilder) First(db *sql.DB) ({{ .ModelName }}, error) {
 	q.mode = "select"
-	q.orderby = "ORDER BY ID ASC"
+	q.orderby = []string{"ORDER BY ID ASC"}
 	q.Limit(1)
 	row := db.QueryRow(q.SQL(), q.args...)
 	if row.Err() != nil {
@@ -153,7 +156,7 @@ func (q *__{{ .ModelName }}SQLQueryBuilder) First(db *sql.DB) ({{ .ModelName }},
 
 func (q *__{{ .ModelName }}SQLQueryBuilder) Last(db *sql.DB) ({{ .ModelName }}, error) {
 	q.mode = "select"
-	q.orderby = "ORDER BY ID DESC"
+	q.orderby = []string{"ORDER BY ID DESC"}
 	q.Limit(1)
 	row := db.QueryRow(q.SQL(), q.args...)
 	if row.Err() != nil {
@@ -171,7 +174,7 @@ type __{{ .ModelName }}SQLQueryBuilder struct {
 
 	set __{{ .ModelName }}Set
 
-	orderby string
+	orderby []string
 	groupby string
 
 	table string
@@ -218,6 +221,19 @@ func (q *__{{ $.ModelName}}SQLQueryBuilder) SelectAll() {{ $.ModelName }}SQLQuer
 }
 `
 
+const orderby = `
+{{ range $field, $type := .Fields }}
+func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderBy{{$field}}Asc() {{ $.ModelName }}SQLQueryBuilder {
+	q.orderby = append(q.orderby, "{{ toSnakeCase $field }} ASC")
+	return q
+}
+func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderBy{{$field}}Desc() {{ $.ModelName }}SQLQueryBuilder {
+	q.orderby = append(q.orderby, "{{ toSnakeCase $field }} DESC")
+	return q
+}
+{{ end }}
+`
+
 const selectQueryBuilder = `
 func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
 	if q.projected == nil {
@@ -233,6 +249,10 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
 	{{ end }}
 	if len(wheres) > 0 {
 		base += "WHERE " + strings.Join(wheres, " AND ")
+	}
+
+	if len(q.orderby) > 0 {
+		base += fmt.Sprintf(" ORDER BY %s", strings.Join(q.orderby, ", "))
 	}
 	return base
 }
@@ -250,7 +270,7 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() string {
 		wheres = append(wheres, fmt.Sprintf("%s %s %s", "{{ toSnakeCase $field }}", q.where.{{$field}}.operator, fmt.Sprint(q.where.{{$field}}.argument)))
 	}
 	if q.set.{{$field}} != nil {
-		sets = append(sets, fmt.Sprintf("%s = %s", "{{ toSnakeCase $field }}"), fmt.Sprint(q.set.{{$field}}))
+		sets = append(sets, fmt.Sprintf("%s = %s", "{{ toSnakeCase $field }}", fmt.Sprint(q.set.{{$field}})))
 	}
     {{ end }}
 
@@ -274,7 +294,7 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlDelete() string {
 	var wheres []string 
 	{{ range $field, $type := .Fields }}
 	if q.where.{{$field}}.operator != "" {
-		wheres = append(wheres, fmt.Sprintf("%s %s %s", "{{ toSnakeCase $field }}"), q.where.{{$field}}.operator, fmt.Sprint(q.where.{{$field}}.argument))
+		wheres = append(wheres, fmt.Sprintf("%s %s %s", "{{ toSnakeCase $field }}", q.where.{{$field}}.operator, fmt.Sprint(q.where.{{$field}}.argument)))
 	}
 	{{ end }}
 	if len(wheres) > 0 {
