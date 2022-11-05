@@ -1,4 +1,4 @@
-//go:generate crafting-table gogen $GOFILE
+//go:generate crafting-table qb $GOFILE
 package cmd
 
 // ct: model
@@ -6,9 +6,4 @@ type User struct {
 	ID   int
 	Name string
 	Age  int
-}
-
-func some() {
-
-	UserQueryBuilder().OrderByNameAsc()
 }
