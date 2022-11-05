@@ -13,6 +13,7 @@ var (
 	updateQueryBuilderTemplate = template.Must(template.New("ct-update-builder").Parse(updateQueryBuilder))
 	deleteQueryBuilderTemplate = template.Must(template.New("ct-delete-builder").Parse(deleteQueryBuilder))
 	fromRowsTemplate           = template.Must(template.New("ct-from-rows").Parse(fromRows))
+	toRowsTemplate             = template.Must(template.New("ct-to-rows").Parse(toRows))
 )
 
 type templateData struct {
@@ -20,6 +21,16 @@ type templateData struct {
 	ModelName string
 	Fields    map[string]string
 }
+
+const toRows = `
+func (m {{ .ModelName }}) Values() []interface{} {
+    var values []interface{}
+	{{ range $field, $type := .Fields }}
+	values = append(values, &m.{{ $field }})
+	{{ end }}
+    return values
+}
+`
 
 const fromRows = `
 func {{ .ModelName }}sFromRows(rows *sql.Rows) ([]*{{.ModelName}}, error) {

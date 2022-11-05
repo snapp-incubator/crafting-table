@@ -7,6 +7,3 @@ type User struct {
 	Name string
 	Age  int
 }
-
-func some() {
-}
