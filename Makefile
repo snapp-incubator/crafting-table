@@ -22,4 +22,4 @@ it: build
 
 
 querybuilder-example:
-	- go run main.go gogen example/annotation_based.go
+	- go run main.go qb example/querybuilder.go

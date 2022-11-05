@@ -1,143 +1,60 @@
-package cmd
+package querybuilder
 
-import (
-	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"html/template"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
-
-	"github.com/spf13/cobra"
-)
-
-var goGenCmd = &cobra.Command{
-	Use: "gogen",
-	Run: func(cmd *cobra.Command, args []string) {
-		run(args)
-	},
-}
-
-const modelAnnotation = "ct: model"
-const repoAnnotation = "ct: repo"
-
-func generateQueryBuilder(pkg string, typeName string, fields map[string]string, tags []string, args map[string]string) string {
-	// base file
-	// query builder
-	// eq where
-	// scalar where for each field
-	// sets
-	var buff strings.Builder
-	err := baseOutputFileTemplate.Execute(&buff, baseOutputFileTemplateData{
-		Pkg: pkg,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	err = queryBuilderTemplate.Execute(&buff, queryBuilderTemplateData{
-		ModelName: typeName,
-		Fields:    fields,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	err = eqWhereTemplate.Execute(&buff, eqWhereTemplateData{
-		ModelName: typeName,
-		Fields:    fields,
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = scalarWhereTemplate.Execute(&buff, scalarWhereTemplateData{
-		ModelName: typeName,
-		Fields:    fields,
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = setsTemplate.Execute(&buff, setsTemplateData{
-		ModelName: typeName,
-		Fields:    fields,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return buff.String()
-}
-
-func run(args []string) {
-	if len(args) < 1 {
-		log.Fatalln("needs a filename")
-	}
-	filename := args[0]
-
-	inputFilePath, err := filepath.Abs(filename)
-	if err != nil {
-		panic(err)
-	}
-	pathList := filepath.SplitList(inputFilePath)
-	pathList = pathList[:len(pathList)-1]
-	dir := filepath.Join(pathList...)
-	fset := token.NewFileSet()
-	fast, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
-
-	if err != nil {
-		panic(err)
-	}
-	actualName := strings.TrimSuffix(filename, filepath.Ext(filename))
-	outputFilePath := filepath.Join(dir, fmt.Sprintf("%s_sqlgen_gen.go", actualName))
-	outputFile, err := os.Create(outputFilePath)
-	if err != nil {
-		panic(err)
-	}
-	defer outputFile.Close()
-	for _, decl := range fast.Decls {
-		if _, ok := decl.(*ast.GenDecl); ok {
-			declComment := decl.(*ast.GenDecl).Doc.Text()
-			if len(declComment) > 0 && declComment[:len(modelAnnotation)] == modelAnnotation {
-				name := decl.(*ast.GenDecl).Specs[0].(*ast.TypeSpec).Name.String()
-				// arguments := strings.Split(strings.Trim(declComment[len(annotation)+1:], " \n\t\r"), " ")
-				fields := make(map[string]string)
-				for _, field := range decl.(*ast.GenDecl).Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List {
-					for _, name := range field.Names {
-						fields[name.String()] = fmt.Sprint(field.Type)
-					}
-				}
-				args := make(map[string]string)
-				// for _, argkv := range arguments {
-				// 	splitted := strings.Split(argkv, "=")
-				// 	args[splitted[0]] = splitted[1]
-				// }
-				output := generateQueryBuilder(fast.Name.String(), name, fields, nil, args)
-				fmt.Fprint(outputFile, output)
-			}
-		}
-
-	}
-
-}
+import "text/template"
 
 var (
-	baseOutputFileTemplate = template.Must(template.New("sqlgen-base").Parse(baseOutputFile))
-	setsTemplate           = template.Must(template.New("sqlgen-sets").Parse(sets))
-	eqWhereTemplate        = template.Must(template.New("sqlgen-eq-where").Parse(eqWhere))
-	scalarWhereTemplate    = template.Must(template.New("sqlgen-scalar-where").Parse(scalarWhere))
-	queryBuilderTemplate   = template.Must(template.New("sqlgen-query-builder").Parse(queryBuilder))
+	baseOutputFileTemplate     = template.Must(template.New("ct-base").Parse(baseOutputFile))
+	setsTemplate               = template.Must(template.New("ct-sets").Parse(sets))
+	eqWhereTemplate            = template.Must(template.New("ct-eq-where").Parse(eqWhere))
+	scalarWhereTemplate        = template.Must(template.New("ct-scalar-where").Parse(scalarWhere))
+	queryBuilderTemplate       = template.Must(template.New("ct-query-builder").Parse(queryBuilder))
+	selectsTemplate            = template.Must(template.New("ct-selects").Parse(selects))
+	selectQueryBuilderTemplate = template.Must(template.New("ct-select-builder").Parse(selectQueryBuilder))
+	updateQueryBuilderTemplate = template.Must(template.New("ct-update-builder").Parse(updateQueryBuilder))
+	deleteQueryBuilderTemplate = template.Must(template.New("ct-delete-builder").Parse(deleteQueryBuilder))
+	fromRowsTemplate           = template.Must(template.New("ct-from-rows").Parse(fromRows))
 )
 
-type queryBuilderTemplateData struct {
+type templateData struct {
+	Pkg       string
 	ModelName string
 	Fields    map[string]string
 }
+
+const fromRows = `
+func {{ .ModelName }}sFromRows(rows *sql.Rows) ([]*{{.ModelName}}, error) {
+    var {{.ModelName}}s []*{{.ModelName}}
+    for rows.Next() {
+        var m {{ .ModelName }}
+        err := rows.Scan(
+            {{ range $field, $type := .Fields }}
+            &m.{{ $field }},
+            {{ end }}
+        )
+        if err != nil {
+            return nil, err
+        }
+        {{.ModelName}}s = append({{.ModelName}}s, &m)
+    }
+    return {{.ModelName}}s, nil
+}
+
+func {{ .ModelName }}FromRow(row *sql.Row) ({{.ModelName}}, error) {
+    if row.Err() != nil {
+        return {{.ModelName}}{}, row.Err()
+    }
+    var m {{ .ModelName }}
+    err := row.Scan(
+        {{ range $field, $type := .Fields }}
+        &m.{{ $field }},
+        {{ end }}
+    )
+    if err != nil {
+        return {{.ModelName}}{}, err
+    }
+    return m, nil
+}
+`
 
 const queryBuilder = `
 type __{{ .ModelName }}SQLQueryBuilder struct {
@@ -154,7 +71,21 @@ func {{.ModelName}}QueryBuilder() *__{{ .ModelName }}SQLQueryBuilder {
 	return &__{{ .ModelName }}SQLQueryBuilder{}
 }
 
+func (q *__{{ .ModelName }}SQLQueryBuilder) SQL() string {
+	if q.mode == "select" {
+		return q.sqlSelect()
+	} else if q.mode == "update" {
+		return q.sqlUpdate()
+	} else if q.mode == "delete" {
+		return q.sqlDelete()
+	} else {
+		panic("unsupported query mode")
+	}
+}
 
+`
+
+const selects = `
 {{ range $field, $type := .Fields }}
 func (q *__{{ $.ModelName}}SQLQueryBuilder) Select{{$field}}() *__{{ $.ModelName }}SQLQueryBuilder {
 	q.projected = append(q.projected, strcase.ToSnake("{{ $field }}"))
@@ -166,7 +97,9 @@ func (q *__{{ $.ModelName}}SQLQueryBuilder) SelectAll() *__{{ $.ModelName }}SQLQ
 	q.projected = append(q.projected, "*")
 	return q
 }
+`
 
+const selectQueryBuilder = `
 func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
 	base := fmt.Sprintf("SELECT %s FROM %s", strings.Join(q.projected, ", "), q.table)
 
@@ -181,6 +114,9 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
 	}
 	return base
 }
+`
+
+var updateQueryBuilder = `
 func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() string {
 	base := fmt.Sprintf("UPDATE %s", q.table)
 
@@ -207,6 +143,9 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() string {
 
 	return base
 }
+`
+
+const deleteQueryBuilder = `
 func (q *__{{ .ModelName}}SQLQueryBuilder) sqlDelete() string {
     base := fmt.Sprintf("DELETE FROM %s", q.table)
 
@@ -223,25 +162,7 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlDelete() string {
 	return base
 
 }
-
-func (q *__{{ .ModelName }}SQLQueryBuilder) SQL() string {
-	if q.mode == "select" {
-		return q.sqlSelect()
-	} else if q.mode == "update" {
-		return q.sqlUpdate()
-	} else if q.mode == "delete" {
-		return q.sqlDelete()
-	} else {
-		panic("unsupported query mode")
-	}
-}
-
 `
-
-type scalarWhereTemplateData struct {
-	ModelName string
-	Fields    map[string]string
-}
 
 const scalarWhere = `
 {{ range $field, $type := .Fields }}
@@ -270,11 +191,6 @@ func (m *__{{$.ModelName}}SQLQueryBuilder) Where{{$field}}LT({{$field}} {{$type}
 {{ end }}
 `
 
-type eqWhereTemplateData struct {
-	ModelName string
-	Fields    map[string]string
-}
-
 const eqWhere = `
 type __{{ .ModelName }}Where struct {
 	{{ range $field, $type := .Fields }}
@@ -293,11 +209,6 @@ func (m *__{{ $.ModelName }}SQLQueryBuilder) Where{{$field}}Eq({{ $field }} {{ $
 {{ end }}
 `
 
-type setsTemplateData struct {
-	ModelName string
-	Fields    map[string]string
-}
-
 const sets = `
 type __{{ .ModelName }}Set struct {
 	{{ range $field, $type := .Fields }}
@@ -312,18 +223,15 @@ func (m *__{{ $.ModelName }}SQLQueryBuilder) Set{{ $field }}({{ $field }} {{ $ty
 {{ end }}
 `
 
-type baseOutputFileTemplateData struct {
-	Pkg string
-}
-
 const baseOutputFile = `
-// Code generated by Crafting-Table.
+// Code generated by Crafting-Table. DO NOT EDIT
 // Source code: https://github.com/snapp-incubator/crafting-table
 package {{ .Pkg }}
 
 import (
     "fmt"
     "strings"
+    "database/sql"
 
     "github.com/iancoleman/strcase"
 )
