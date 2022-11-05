@@ -18,6 +18,11 @@ func Generate(pkg string, typeName string, fields map[string]string, tags []stri
 		panic(err)
 	}
 
+	err = queryBuilderInterfaceTemplate.Execute(&buff, td)
+	if err != nil {
+		panic(err)
+	}
+
 	err = queryBuilderTemplate.Execute(&buff, td)
 	if err != nil {
 		panic(err)
@@ -30,6 +35,12 @@ func Generate(pkg string, typeName string, fields map[string]string, tags []stri
 	}
 
 	err = selectQueryBuilderTemplate.Execute(&buff, td)
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = limitOffsetTemplate.Execute(&buff, td)
 
 	if err != nil {
 		panic(err)
@@ -70,6 +81,11 @@ func Generate(pkg string, typeName string, fields map[string]string, tags []stri
 	}
 
 	err = toRowsTemplate.Execute(&buff, td)
+	if err != nil {
+		panic(err)
+	}
+
+	err = finishersTemplate.Execute(&buff, td)
 	if err != nil {
 		panic(err)
 	}
