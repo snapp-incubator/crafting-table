@@ -20,6 +20,35 @@ func (s structField) String() string {
 	return s.Name
 }
 
+func isComparable(typeExpr ast.Expr) bool {
+	switch t := typeExpr.(type) {
+	case *ast.Ident:
+		if t.Obj == nil {
+			// it's a primitive go type
+			if t.Name == "int" ||
+				t.Name == "int8" ||
+				t.Name == "int16" ||
+				t.Name == "int32" ||
+				t.Name == "int64" ||
+				t.Name == "uint" ||
+				t.Name == "uint8" ||
+				t.Name == "uint16" ||
+				t.Name == "uint32" ||
+				t.Name == "uint64" ||
+				t.Name == "float32" ||
+				t.Name == "float64" {
+				return true
+			}
+			return false
+		}
+	}
+	return false
+}
+
+func isNullable(typeExpr ast.Expr) bool {
+	return false
+}
+
 func resolveTypes(structDecl *ast.GenDecl) []structField {
 	var fields []structField
 	for _, field := range structDecl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List {
@@ -27,8 +56,8 @@ func resolveTypes(structDecl *ast.GenDecl) []structField {
 			sf := structField{
 				Name:         name.Name,
 				Type:         fmt.Sprint(field.Type),
-				IsComparable: false,
-				IsNullable:   false,
+				IsComparable: isComparable(field.Type),
+				IsNullable:   isNullable(field.Type),
 			}
 			if field.Tag != nil {
 				sf.Tag = field.Tag.Value

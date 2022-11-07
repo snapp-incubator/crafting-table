@@ -41,7 +41,7 @@ const queryBuilderInterface = `
 type {{.ModelName}}SQLQueryBuilder interface{
 	{{ range .Fields }}
 	Where{{.Name}}Eq({{.Type}}) {{$.ModelName}}SQLQueryBuilder
-	{{ if eq .Type "int" "int8" "int16" "int32" "int64" "uint8" "uint16" "uint32" "uint64" "uint" "float32" "float64"  }}
+	{{ if .IsComparable  }}
 	Where{{.Name}}GT({{ .Type }}) {{$.ModelName}}SQLQueryBuilder
 	Where{{.Name}}GE({{ .Type }}) {{$.ModelName}}SQLQueryBuilder
 	Where{{.Name}}LT({{ .Type }}) {{$.ModelName}}SQLQueryBuilder
@@ -324,7 +324,7 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlDelete() string {
 
 const scalarWhere = `
 {{ range .Fields }}
-{{ if eq .Type "int" "int8" "int16" "int32" "int64" "uint8" "uint16" "uint32" "uint64" "uint" "float32" "float64"  }}
+{{ if .IsComparable  }}
 func (m *__{{$.ModelName}}SQLQueryBuilder) Where{{.Name}}GE({{.Name }} {{.Type}}) {{$.ModelName}}SQLQueryBuilder {
     m.whereArgs = append(m.whereArgs, {{.Name }})
     m.where.{{.Name }}.argument = m.getPlaceholder()
