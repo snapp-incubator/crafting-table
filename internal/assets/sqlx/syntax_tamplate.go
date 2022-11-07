@@ -413,11 +413,9 @@ func (s sqlx) Aggregate(structure *structure.Structure, vars *[]structure.Aggreg
 		signatures = append(
 			signatures,
 			fmt.Sprintf(
-				s.selectFuncSignature,
+				s.aggregateFuncSignature,
 				functionName,
 				inputFunctionVariables(v.Conditions, structure),
-				structure.PackageName,
-				structure.Name,
 			),
 		)
 	}
@@ -434,7 +432,8 @@ func groupBy(v structure.AggregateField) string {
 }
 
 func aggregateSyntax(v structure.AggregateField) string {
-	function, ok := structure.AggregateMap[v.Function]
+	fmt.Println(v.Function)
+	function, ok := structure.AggregateMap[strings.ToLower(v.Function)]
 	if !ok {
 		panic("aggregate function not found")
 	}

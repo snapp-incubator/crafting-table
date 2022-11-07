@@ -101,6 +101,7 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 			return err
 		}
 		signatures = append(signatures, signatureList...)
+		fmt.Println(aggregateSyntax)
 
 		//if test {
 		//	aggregateTestSyntax = aggregateTestFunction(s, getVars)
@@ -110,7 +111,7 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 	interfaceSyntax := interfaceCreator(s, signatures)
 
 	fileContent := createTemplate(s, packageName, interfaceSyntax,
-		createSyntax, updateSyntax, getSyntax, joinSyntax)
+		createSyntax, updateSyntax, getSyntax, joinSyntax, aggregateSyntax)
 
 	err = exportRepository(fileContent, destination)
 	if err != nil {
@@ -126,7 +127,7 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 
 	if test {
 		testFileContent := createTestTemplate(s, packageName, createTestSyntax, updateTestSyntax,
-			getTestSyntax, joinTestSyntax, aggregateSyntax)
+			getTestSyntax, joinTestSyntax, aggregateTestSyntax)
 
 		err = exportRepository(testFileContent, testDestination)
 		if err != nil {
