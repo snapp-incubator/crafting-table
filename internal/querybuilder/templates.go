@@ -71,9 +71,12 @@ type {{.ModelName}}SQLQueryBuilder interface{
 
 const placeholderGenerator = `
 func (q *__{{ .ModelName }}SQLQueryBuilder) getPlaceholder() string {
-     if q.dialect == "mysql" { return "?" }
-     else if q.dialect == "postgres" { return fmt.Sprintf("$", len(q.args) + 1) }
-     else { log.Fatalf("dialect %s not supported\n", q.dialect) }
+    if q.dialect == "mysql" { 
+		return "?" 
+	} else if q.dialect == "postgres" { 
+		return fmt.Sprintf("$", len(q.whereArgs) + len(q.setArgs) + 1) 
+	}
+	panic(fmt.Sprintf("dialect %s not supported\n", q.dialect))
 }
 `
 
@@ -138,17 +141,18 @@ func {{ .ModelName }}FromRow(row *sql.Row) ({{.ModelName}}, error) {
 const finishers = `
 func (q *__{{ .ModelName }}SQLQueryBuilder) Update(db *sql.DB) (sql.Result, error) {
 	q.mode = "update"
-	return db.Exec(q.SQL(), q.args...)
+	args := append(q.setArgs, q.whereArgs...)
+	return db.Exec(q.SQL(), args...)
 }
 
 func (q *__{{ .ModelName }}SQLQueryBuilder) Delete(db *sql.DB) (sql.Result, error) {
 	q.mode = "delete"
-	return db.Exec(q.SQL(), q.args...)
+	return db.Exec(q.SQL(), q.whereArgs...)
 }
 
 func (q *__{{ .ModelName }}SQLQueryBuilder) Fetch(db *sql.DB) ([]{{ .ModelName }}, error) {
 	q.mode = "select"
-	rows, err := db.Query(q.SQL(), q.args...)
+	rows, err := db.Query(q.SQL(), q.whereArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +163,7 @@ func (q *__{{ .ModelName }}SQLQueryBuilder) First(db *sql.DB) ({{ .ModelName }},
 	q.mode = "select"
 	q.orderby = []string{"ORDER BY ID ASC"}
 	q.Limit(1)
-	row := db.QueryRow(q.SQL(), q.args...)
+	row := db.QueryRow(q.SQL(), q.whereArgs...)
 	if row.Err() != nil {
 		return {{ .ModelName }} {}, row.Err()
 	}
@@ -171,7 +175,7 @@ func (q *__{{ .ModelName }}SQLQueryBuilder) Last(db *sql.DB) ({{ .ModelName }}, 
 	q.mode = "select"
 	q.orderby = []string{"ORDER BY ID DESC"}
 	q.Limit(1)
-	row := db.QueryRow(q.SQL(), q.args...)
+	row := db.QueryRow(q.SQL(), q.whereArgs...)
 	if row.Err() != nil {
 		return {{ .ModelName}} {}, row.Err()
 	}
@@ -290,14 +294,15 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() string {
 	}
     {{ end }}
 
+	if len(sets) > 0 {
+		base += " SET " + strings.Join(sets, " , ")
+	}
 
 	if len(wheres) > 0 {
 		base += " WHERE " + strings.Join(wheres, " AND ")
 	}
 
-	if len(sets) > 0 {
-		base += " SET " + strings.Join(sets, " , ")
-	}
+	
 
 	return base
 }
@@ -357,7 +362,7 @@ const eqWhere = `
 type __{{ .ModelName }}Where struct {
 	{{ range .Fields }}
 	{{.Name}} struct {
-        argument {{.Type}}
+        argument interface{}
         operator string
     }
 	{{ end }}
@@ -395,6 +400,5 @@ import (
     "fmt"
     "strings"
     "database/sql"
-    "log"
 )
 `
