@@ -1,12 +1,47 @@
 package querybuilder
 
 import (
+	"fmt"
+	"go/ast"
 	"strings"
 )
 
 const ModelAnnotation = "ct: model"
 
-func Generate(pkg string, typeName string, fields map[string]string, tags []string, args map[string]string, dialect string) string {
+type structField struct {
+	Name         string
+	Type         string
+	IsComparable bool
+	IsNullable   bool
+	Tag          string
+}
+
+func (s structField) String() string {
+	return s.Name
+}
+
+func resolveTypes(structDecl *ast.GenDecl) []structField {
+	var fields []structField
+	for _, field := range structDecl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List {
+		for _, name := range field.Names {
+			sf := structField{
+				Name:         name.Name,
+				Type:         fmt.Sprint(field.Type),
+				IsComparable: false,
+				IsNullable:   false,
+			}
+			if field.Tag != nil {
+				sf.Tag = field.Tag.Value
+			}
+			fields = append(fields, sf)
+		}
+	}
+	return fields
+}
+
+func Generate(pkg string, structDecl *ast.GenDecl, args map[string]string, dialect string) string {
+	fields := resolveTypes(structDecl)
+	typeName := structDecl.Specs[0].(*ast.TypeSpec).Name.String()
 	var buff strings.Builder
 	td := templateData{
 		ModelName: typeName,
@@ -92,7 +127,6 @@ func Generate(pkg string, typeName string, fields map[string]string, tags []stri
 	if err != nil {
 		panic(err)
 	}
-	
 
 	err = finishersTemplate.Execute(&buff, td)
 	if err != nil {

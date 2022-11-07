@@ -49,20 +49,16 @@ var querybuilderCmd = &cobra.Command{
 			if _, ok := decl.(*ast.GenDecl); ok {
 				declComment := decl.(*ast.GenDecl).Doc.Text()
 				if len(declComment) > 0 && declComment[:len(querybuilder.ModelAnnotation)] == querybuilder.ModelAnnotation {
-					name := decl.(*ast.GenDecl).Specs[0].(*ast.TypeSpec).Name.String()
+
 					// arguments := strings.Split(strings.Trim(declComment[len(annotation)+1:], " \n\t\r"), " ")
-					fields := make(map[string]string)
-					for _, field := range decl.(*ast.GenDecl).Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List {
-						for _, name := range field.Names {
-							fields[name.String()] = fmt.Sprint(field.Type)
-						}
-					}
+
 					args := make(map[string]string)
 					// for _, argkv := range arguments {
 					// 	splitted := strings.Split(argkv, "=")
 					// 	args[splitted[0]] = splitted[1]
 					// }
-					output := querybuilder.Generate(fast.Name.String(), name, fields, nil, args, dialect)
+
+					output := querybuilder.Generate(fast.Name.String(), decl.(*ast.GenDecl), args, dialect)
 					fmt.Fprint(outputFile, output)
 				}
 			}
