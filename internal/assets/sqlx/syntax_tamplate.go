@@ -19,6 +19,7 @@ type Sqlx interface {
 	SelectAll(structure *structure.Structure) (syntax string, header string)
 	SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string, header []string)
 	Join(structure *structure.Structure, joinVariables *structure.JoinVariables) (syntax string, header string)
+	Aggregate(structure *structure.Structure, vars *[]structure.AggregateField) (syntax string, signatures []string)
 }
 
 type FieldType interface{ structure.Field | string }
@@ -36,6 +37,8 @@ type sqlx struct {
 	updateFuncBody         string
 	joinFuncBody           string
 	joinFuncSignature      string
+	aggregateFuncBody      string
+	aggregateFuncSignature string
 }
 
 func NewSqlx() Sqlx {
@@ -163,6 +166,27 @@ func (r *mysql%s) GetJoined%s(ctx context.Context, limit uint) ([]%s.%s, error) 
 `
 
 	s.joinFuncSignature = `GetJoined%s(ctx context.Context, limit uint) ([]%s.%s, error)`
+
+	s.aggregateFuncBody = `
+func (r *mysql%s) GetAggregateBy%s(ctx context.Context, %s) (*int, error) {
+	var res struct{` +
+		"result int `db:\"%s\"`" + `
+	}
+
+	err := r.db.SelectContext(ctx, &res, "SELECT %s FROM %s " +
+		"%s%s",
+		 %s,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res.result, nil
+}
+`
+
+	s.aggregateFuncSignature = `GetAggregateBy%s(ctx context.Context, %s) (*int, error)`
 
 	return s
 }
@@ -362,6 +386,60 @@ func (s sqlx) Join(structure *structure.Structure, joinVariables *structure.Join
 	)
 
 	return syntax, header
+}
+
+func (s sqlx) Aggregate(structure *structure.Structure, vars *[]structure.AggregateField) (syntax string, signatures []string) {
+
+	for _, v := range *vars {
+		functionNameList := make([]string, 0)
+		for _, condition := range v.Conditions {
+			functionNameList = append(functionNameList, structure.FieldMapDBFlagToName[condition])
+		}
+		functionName := strings.Join(functionNameList, "And")
+
+		syntax += fmt.Sprintf(
+			s.aggregateFuncBody,
+			structure.Name,
+			functionName,
+			inputFunctionVariables(v.Conditions, structure),
+			v.As,
+			aggregateSyntax(v),
+			structure.TableName,
+			conditions(v.Conditions, structure, true),
+			groupBy(v),
+			contextVariables(v.Conditions, structure),
+		)
+
+		signatures = append(
+			signatures,
+			fmt.Sprintf(
+				s.selectFuncSignature,
+				functionName,
+				inputFunctionVariables(v.Conditions, structure),
+				structure.PackageName,
+				structure.Name,
+			),
+		)
+	}
+
+	return syntax, signatures
+}
+
+func groupBy(v structure.AggregateField) string {
+	if len(v.GroupBy) == 0 {
+		return ""
+	}
+
+	return " GROUP BY " + strings.Join(v.GroupBy, ", ")
+}
+
+func aggregateSyntax(v structure.AggregateField) string {
+	function, ok := structure.AggregateMap[v.Function]
+	if !ok {
+		panic("aggregate function not found")
+	}
+
+	return function + "(" + v.On + ")" + " AS " + v.As
 }
 
 func joinField(s *structure.Structure, joinVariables *structure.JoinVariables) string {
