@@ -1,6 +1,6 @@
 # Crafting Table
 
-# UNRELEASED
+# v2.0.0 - Nov 08 2022 
 
 * Support yaml file for creating multiple repositories. (2022-08-05, @n25a, !29)
 * Add simple terminal UI that can be used instead of CLI args. (2022-08-06, @anvari1313, !28)
