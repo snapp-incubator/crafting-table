@@ -13,6 +13,7 @@
 * Add `Join` function for generating join query with tests. (2022-09-01, @n25a, !44)
 * Isolate sql tests by reseting sqlmock for each test. (2022-10-29, @bamdadnouri, !46)
 * Remove unnecessary sqlmock row creation in sql tests. (2022-10-29, @bamdadnouri, !48)
+* Add aggregate functions and group by to manifest. (2022-11-08, @n25a, !55)
 
 # v1.2.0 - Jun 25 2022
 
