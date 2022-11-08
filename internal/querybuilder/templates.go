@@ -28,7 +28,10 @@ var (
 	finishersTemplate             = template.Must(template.New("ct-finishers").Funcs(funcMap).Parse(finishers))
 	placeholderGeneratorTemplate  = template.Must(template.New("ct-placeholder").Funcs(funcMap).Parse(placeholderGenerator))
 	orderByTemplate               = template.Must(template.New("ct-orderby").Funcs(funcMap).Parse(orderby))
+	schemaTemplate                = template.Must(template.New("ct-schema").Funcs(funcMap).Parse(schema))
 	queryBuilderInterfaceTemplate = template.Must(template.New("ct-interface").Funcs(funcMap).Parse(queryBuilderInterface))
+	newOrderbyTemplate            = template.Must(template.New("ct-newOrderby").Funcs(funcMap).Parse(neworderby))
+	newSelectTemplate             = template.Must(template.New("ct-select").Funcs(funcMap).Parse(newselect))
 )
 
 type templateData struct {
@@ -47,14 +50,18 @@ type {{.ModelName}}SQLQueryBuilder interface{
 	Where{{.Name}}LT({{ .Type }}) {{$.ModelName}}SQLQueryBuilder
 	Where{{.Name}}LE({{ .Type }}) {{$.ModelName}}SQLQueryBuilder
 	{{ end }}
+	Set{{.Name}}({{.Type}}) {{$.ModelName}}SQLQueryBuilder
 	OrderBy{{.Name}}Asc() {{$.ModelName}}SQLQueryBuilder
 	OrderBy{{.Name}}Desc() {{$.ModelName}}SQLQueryBuilder
-	Select{{.Name}}() {{$.ModelName}}SQLQueryBuilder
-	Set{{.Name}}({{.Type}}) {{$.ModelName}}SQLQueryBuilder
 	{{ end }}
+
+	// experimental API
+	Select(column {{$.ModelName}}Column) {{$.ModelName}}SQLQueryBuilder
+	OrderByAsc(column {{$.ModelName}}Column) {{$.ModelName}}SQLQueryBuilder
+	OrderByDesc(column {{$.ModelName}}Column) {{$.ModelName}}SQLQueryBuilder
+
 	Limit(int) {{$.ModelName}}SQLQueryBuilder
 	Offset(int) {{$.ModelName}}SQLQueryBuilder
-	SelectAll() {{$.ModelName}}SQLQueryBuilder
 
     getPlaceholder() string
 	
@@ -66,6 +73,19 @@ type {{.ModelName}}SQLQueryBuilder interface{
 	Fetch(db *sql.DB) ([]{{ .ModelName }}, error)
 
 
+}
+`
+
+const schema = `
+type {{.ModelName}}Column string 
+var {{.ModelName}}Columns = struct {
+	{{ range .Fields }}
+	{{.Name}} {{$.ModelName}}Column
+	{{ end }}
+}{
+	{{ range .Fields }}
+	{{.Name}}: {{$.ModelName}}Column("{{ toSnakeCase .Name }}"),
+	{{ end }}
 }
 `
 
@@ -237,6 +257,24 @@ func (q *__{{ $.ModelName}}SQLQueryBuilder) Select{{.Name}}() {{ $.ModelName }}S
 
 func (q *__{{ $.ModelName}}SQLQueryBuilder) SelectAll() {{ $.ModelName }}SQLQueryBuilder {
 	q.projected = append(q.projected, "*")
+	return q
+}
+`
+
+const newselect = `
+func (q *__{{ $.ModelName}}SQLQueryBuilder) Select(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
+	q.projected = append(q.projected, column)
+	return q
+}
+`
+
+const neworderby = `
+func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderByAsc(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
+	q.orderby = append(q.orderby, fmt.Sprintf("%s ASC", column))
+	return q
+}
+func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderByDesc(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
+	q.orderby = append(q.orderby, fmt.Sprintf("%s DESC", column))
 	return q
 }
 `

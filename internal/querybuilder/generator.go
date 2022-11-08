@@ -87,6 +87,21 @@ func Generate(pkg string, structDecl *ast.GenDecl, args map[string]string, diale
 		panic(err)
 	}
 
+	err = schemaTemplate.Execute(&buff, td)
+	if err != nil {
+		panic(err)
+	}
+
+	err = newOrderbyTemplate.Execute(&buff, td)
+	if err != nil {
+		panic(err)
+	}
+
+	err = newSelectTemplate.Execute(&buff, td)
+	if err != nil {
+		panic(err)
+	}
+
 	err = queryBuilderTemplate.Execute(&buff, td)
 	if err != nil {
 		panic(err)

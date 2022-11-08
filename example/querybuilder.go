@@ -9,3 +9,10 @@ type User struct {
 	Name string
 	Age  Int
 }
+
+func some() {
+	UserQueryBuilder().
+		OrderByAsc(UserColumns.ID).
+		Select(UserColumns.Name).
+		First(db)
+}
