@@ -16,6 +16,7 @@ type SqlxTest interface {
 	SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string)
 	Join(structure *structure.Structure, vars *structure.JoinVariables) (syntax string)
 	//SelectAll(structure *structure.Structure) (syntax string)
+	Aggregate(structure *structure.Structure, vars *[]structure.AggregateField) (syntax string)
 }
 
 type sqlxTest struct {
@@ -38,6 +39,9 @@ type sqlxTest struct {
 
 	joinTestSuccess string
 	joinTestFailure string
+
+	aggregateTestSuccess string
+	aggregateTestFailure string
 }
 
 func NewSqlxTest() SqlxTest {
@@ -330,6 +334,7 @@ func (suite *%sRepositoryTestSuite) TestGetJoined%s_Success() {
 }
 
 `
+
 	s.joinTestFailure = `
 func (suite *%sRepositoryTestSuite) TestGetJoined%s_Failure() {
 	require := suite.Require()
@@ -347,6 +352,67 @@ func (suite *%sRepositoryTestSuite) TestGetJoined%s_Failure() {
 		WillReturnError(expectedError)
 
 	data, err := suite.repo.GetJoined%s(context.Background(), limit)
+	require.Equal(expectedError, err)
+	require.Nil(data)
+	require.NoError(suite.mock.ExpectationsWereMet())
+}
+
+`
+
+	s.aggregateTestSuccess = `
+func (suite *%sRepositoryTestSuite) TestGetAggregateBy%s_Success() {
+	require := suite.Require()
+
+	var %s %s.%s
+	errFakeData := faker.FakeData(&%s)
+	require.NoError(errFakeData)
+
+	rows := sqlmock.NewRows([]string{
+		"%s",
+	}).
+		AddRow(
+			5,
+	)
+
+	syntax := "SELECT .+ FROM %s .+"
+	suite.mock.ExpectQuery(syntax).
+		WithArgs(
+	%s
+	).
+	WillReturnRows(rows)
+
+	data, err := suite.repo.GetAggregateBy%s(
+		context.Background(),
+	%s
+	)
+	require.NoError(err)
+	require.Equal(5, data)
+	require.NoError(suite.mock.ExpectationsWereMet())
+}
+
+`
+
+	s.aggregateTestFailure = `
+func (suite *%sRepositoryTestSuite) TestGetAggregateBy%s_Failure() {
+	require := suite.Require()
+
+	expectedError := errors.New("something went wrong")
+
+	var %s %s.%s
+	errFakeData := faker.FakeData(&%s)
+	require.NoError(errFakeData)
+
+	syntax := "SELECT (.+) FROM %s (.+) "
+	suite.mock.ExpectQuery(syntax).
+		WithArgs(
+			%s
+		).
+		WillReturnError(expectedError)
+
+	data, err := suite.repo.GetAggregateBy%s(
+		context.Background(),
+		%s
+	)
 	require.Equal(expectedError, err)
 	require.Nil(data)
 	require.NoError(suite.mock.ExpectationsWereMet())
@@ -583,6 +649,55 @@ func (s *sqlxTest) Join(structure *structure.Structure, joinVariables *structure
 
 		structure.Name,
 	)
+	return syntax
+}
+
+func (s *sqlxTest) Aggregate(structure *structure.Structure, vars *[]structure.AggregateField) (syntax string) {
+
+	for _, v := range *vars {
+		functionNameList := make([]string, 0)
+		for _, conditions := range v.Conditions {
+			functionNameList = append(functionNameList, structure.FieldMapDBFlagToName[conditions])
+		}
+		functionName := strings.Join(functionNameList, "And")
+
+		syntax = fmt.Sprintf(
+			s.aggregateTestFailure,
+			structure.Name,
+			functionName,
+
+			strcase.ToLowerCamel(structure.Name),
+			structure.PackageName,
+			structure.Name,
+			strcase.ToLowerCamel(structure.Name),
+
+			structure.TableName,
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
+
+			functionName,
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
+		)
+
+		syntax += fmt.Sprintf(
+			s.aggregateTestSuccess,
+			structure.Name,
+			functionName,
+
+			strcase.ToLowerCamel(structure.Name),
+			structure.PackageName,
+			structure.Name,
+			strcase.ToLowerCamel(structure.Name),
+
+			v.As,
+
+			structure.TableName,
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
+
+			functionName,
+			s.addPrefix(contextVariables(v.Conditions, structure), strcase.ToLowerCamel(structure.Name)+"."),
+		)
+	}
+
 	return syntax
 }
 

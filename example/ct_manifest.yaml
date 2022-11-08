@@ -26,12 +26,12 @@ repositories:
     create:
       enable: true
       costum_function_name: ""
-    aggregte:
-      - conditions: ['var1']
+    aggregate:
+      - conditions: [ 'var1' ]
         function: "COUNT"
         on: "var2"
         as: "count"
-        group_by: ['var1', 'var2']
+        group_by: [ 'var1', 'var2' ]
         costum_function_name: ""
     test: true
 

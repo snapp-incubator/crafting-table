@@ -296,3 +296,12 @@ func aggregateFunction(structure *structure.Structure,
 
 	return syntax, functions, nil
 }
+
+func aggregateTestFunction(structure *structure.Structure, vars *[]structure.AggregateField) (syntax string) {
+	//syntax = assets.A.SqlxTest.SelectAll(structure)
+	body := assets.A.SqlxTest.Aggregate(structure, vars)
+
+	syntax += "\n" + body
+
+	return syntax
+}

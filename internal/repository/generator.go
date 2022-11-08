@@ -102,9 +102,9 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		}
 		signatures = append(signatures, signatureList...)
 
-		//if test {
-		//	aggregateTestSyntax = aggregateTestFunction(s, getVars)
-		//}
+		if test {
+			aggregateTestSyntax = aggregateTestFunction(s, aggregateVars)
+		}
 	}
 
 	interfaceSyntax := interfaceCreator(s, signatures)

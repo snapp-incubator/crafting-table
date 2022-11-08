@@ -432,7 +432,6 @@ func groupBy(v structure.AggregateField) string {
 }
 
 func aggregateSyntax(v structure.AggregateField) string {
-	fmt.Println(v.Function)
 	function, ok := structure.AggregateMap[strings.ToLower(v.Function)]
 	if !ok {
 		panic("aggregate function not found")
