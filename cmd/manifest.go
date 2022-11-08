@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -64,8 +63,6 @@ func apply(_ *cobra.Command, _ []string) {
 		if tags != "" && !repo.EqualTag(selectedTags) {
 			continue
 		}
-
-		fmt.Printf("%+v", &repo)
 
 		if err := repository.Generate(repo.Source, repo.Destination, repo.PackageName, repo.StructName, &repo.Get,
 			&repo.Update, &repo.Join, &repo.Aggregate, repo.Create.Enable, repo.Test); err != nil {

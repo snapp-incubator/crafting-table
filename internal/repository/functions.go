@@ -64,8 +64,6 @@ func NewMySQL%s(db *sqlx.DB) %s {
 		aggregateFunc,
 	)
 
-	//fmt.Println(interfaceSyntax)
-
 	return syntax
 }
 

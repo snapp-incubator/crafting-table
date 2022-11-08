@@ -101,7 +101,6 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 			return err
 		}
 		signatures = append(signatures, signatureList...)
-		fmt.Println(aggregateSyntax)
 
 		//if test {
 		//	aggregateTestSyntax = aggregateTestFunction(s, getVars)
