@@ -131,6 +131,35 @@ paths:
         500:
           description: 'internal server error'
 
+  '/api/db/get-struct-fields':
+    post:
+      tags:
+        - database
+      summary: get files of struct
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source:
+                  type: string
+                struct_name:
+                  type: string
+              example:
+                source: "./example/src/example.go"
+                struct_name: "Example"
+
+      responses:
+        201:
+          description: 'db repository created successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DBGetStructFields'
+        500:
+          description: 'internal server error'
+
 
 components:
   schemas:
@@ -159,3 +188,16 @@ components:
               structs:
                 type: array
                 example: ["Example", "Example2"]
+
+    DBGetStructFields:
+        type: object
+        properties:
+          status:
+            type: string
+            example: "success"
+          data:
+            type: object
+            properties:
+              structs:
+                type: array
+                example: [ "Var1", "Var2", "Var3" ]

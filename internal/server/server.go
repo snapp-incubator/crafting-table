@@ -12,13 +12,13 @@ import (
 )
 
 // Serve is HTTP server.
-func Serve(port string) {
+func Serve() {
 	r := mux.NewRouter()
 
 	initRoutes(r)
 
 	srv := &http.Server{
-		Addr:         "127.0.0.1:" + port,
+		Addr:         "127.0.0.1:7628",
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,

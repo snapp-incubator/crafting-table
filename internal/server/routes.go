@@ -13,4 +13,9 @@ func initRoutes(r *mux.Router) {
 		"/api/db/get-structs",
 		handlers.GetStructs(),
 	).Methods("POST")
+
+	r.HandleFunc(
+		"/api/db/get-struct-fields",
+		handlers.GetFieldsOFStruct(),
+	).Methods("POST")
 }
