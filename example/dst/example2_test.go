@@ -23,7 +23,7 @@ type Example2RepositoryTestSuite struct {
 	repo *mysqlExample2
 }
 
-func (suite *Example2RepositoryTestSuite) SetupSuite() {
+func (suite *Example2RepositoryTestSuite) SetupTest() {
 	require := suite.Require()
 	var err error
 
@@ -47,19 +47,6 @@ func (suite *Example2RepositoryTestSuite) TestUpdate_Success() {
 	var example2 src.Example2
 	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
-
-	sqlmock.NewRows([]string{
-		"var5",
-		"var6",
-		"var7",
-		"var8",
-	}).
-		AddRow(
-			example2.Var5,
-			example2.Var6,
-			example2.Var7,
-			example2.Var8,
-		)
 
 	syntax := "UPDATE example_2 SET .+"
 	suite.mock.ExpectExec(syntax).
@@ -112,19 +99,6 @@ func (suite *Example2RepositoryTestSuite) TestUpdateVar5AndVar6_Success() {
 	var example2 src.Example2
 	errFakeData := faker.FakeData(&example2)
 	require.NoError(errFakeData)
-
-	sqlmock.NewRows([]string{
-		"var5",
-		"var6",
-		"var7",
-		"var8",
-	}).
-		AddRow(
-			example2.Var5,
-			example2.Var6,
-			example2.Var7,
-			example2.Var8,
-		)
 
 	syntax := "UPDATE example_2 SET (.+) WHERE (.+)"
 	suite.mock.ExpectExec(syntax).

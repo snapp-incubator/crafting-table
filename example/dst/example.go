@@ -21,6 +21,7 @@ type Example interface {
 	Update(ctx context.Context, var1 int, example src.Example) (int64, error)
 	UpdateVar3(ctx context.Context, var1 int, var2 string, var3 bool) (int64, error)
 	UpdateVar2AndVar3(ctx context.Context, var4 bool, var2 string, var3 bool) (int64, error)
+	GetAggregateByVar1(ctx context.Context, var1 int) (*int, error)
 }
 
 var ErrExampleNotFound = errors.New("example not found")
@@ -161,4 +162,21 @@ func (r *mysqlExample) GetByVar3(ctx context.Context, var3 bool) (*src.Example, 
 	}
 
 	return &example, nil
+}
+
+func (r *mysqlExample) GetAggregateByVar1(ctx context.Context, var1 int) (*int, error) {
+	var res struct {
+		result int `db:"count"`
+	}
+
+	err := r.db.SelectContext(ctx, &res, "SELECT COUNT(var2) AS count FROM example "+
+		"WHERE var1 = ? GROUP BY var1, var2",
+		var1,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &res.result, nil
 }

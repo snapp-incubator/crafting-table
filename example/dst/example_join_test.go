@@ -23,7 +23,7 @@ type JoinExampleRepositoryTestSuite struct {
 	repo *mysqlJoinExample
 }
 
-func (suite *JoinExampleRepositoryTestSuite) SetupSuite() {
+func (suite *JoinExampleRepositoryTestSuite) SetupTest() {
 	require := suite.Require()
 	var err error
 
@@ -48,35 +48,35 @@ func (suite *JoinExampleRepositoryTestSuite) TestGetJoinedJoinExample_Success() 
 	require.NoError(errFakeData)
 
 	rows := sqlmock.NewRows([]string{
+		"var1",
+		"var9",
 		"var10",
 		"var11",
 		"var12",
-		"var1",
-		"var9",
+		"var13.var4",
 		"var13.var1",
 		"var13.var2",
 		"var13.var3",
-		"var13.var4",
 	}).
 		AddRow(
+			"joinExample.var12",
+			"joinExample.var1",
 			"joinExample.var9",
 			"joinExample.var10",
 			"joinExample.var11",
-			"joinExample.var12",
-			"joinExample.var1",
-			"joinExample.Var13.var2",
 			"joinExample.Var13.var3",
 			"joinExample.Var13.var4",
 			"joinExample.Var13.var1",
+			"joinExample.Var13.var2",
 		)
 
 	query := "SELECT " +
+		"j.var10 AS var10, " +
 		"j.var11 AS var11, " +
 		"j.var12 AS var12, " +
 		"j.var13 AS var13, " +
 		"j.var1 AS var1, " +
 		"j.var9 AS var9, " +
-		"j.var10 AS var10, " +
 		"e.var1 AS \"var13.var1\", " +
 		"e.var2 AS \"var13.var2\", " +
 		"e.var3 AS \"var13.var3\", " +
@@ -101,12 +101,12 @@ func (suite *JoinExampleRepositoryTestSuite) TestGetJoinedJoinExample_Failure() 
 	expectedError := errors.New("something went wrong")
 
 	query := "SELECT " +
-		"j.var10 AS var10, " +
-		"j.var11 AS var11, " +
 		"j.var12 AS var12, " +
 		"j.var13 AS var13, " +
 		"j.var1 AS var1, " +
 		"j.var9 AS var9, " +
+		"j.var10 AS var10, " +
+		"j.var11 AS var11, " +
 		"e.var1 AS \"var13.var1\", " +
 		"e.var2 AS \"var13.var2\", " +
 		"e.var3 AS \"var13.var3\", " +

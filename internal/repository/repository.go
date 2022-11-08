@@ -16,6 +16,7 @@ type Repo struct {
 	Get         []structure.GetVariable     `yaml:"get"`
 	Update      []structure.UpdateVariables `yaml:"update"`
 	Create      structure.CreateVariables   `yaml:"create"`
+	Aggregate   []structure.AggregateField  `yaml:"aggregate"`
 	Test        bool                        `yaml:"test"`
 }
 

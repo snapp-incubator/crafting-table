@@ -40,6 +40,23 @@ type JoinVariables struct {
 	CostumeFunctionName string      `yaml:"costume_function_name"`
 }
 
+var AggregateMap = map[string]string{
+	"sum":   "SUM",
+	"count": "COUNT",
+	"avg":   "AVG",
+	"max":   "MAX",
+	"min":   "MIN",
+}
+
+type AggregateField struct {
+	Conditions          []string `yaml:"conditions"`
+	Function            string   `yaml:"function"`
+	On                  string   `yaml:"on"`
+	As                  string   `yaml:"as"`
+	GroupBy             []string `yaml:"group_by"`
+	CostumeFunctionName string   `yaml:"costume_function_name"`
+}
+
 type Field struct {
 	Name   string
 	Type   string

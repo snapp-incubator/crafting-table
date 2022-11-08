@@ -23,7 +23,7 @@ type ExampleRepositoryTestSuite struct {
 	repo *mysqlExample
 }
 
-func (suite *ExampleRepositoryTestSuite) SetupSuite() {
+func (suite *ExampleRepositoryTestSuite) SetupTest() {
 	require := suite.Require()
 	var err error
 
@@ -47,19 +47,6 @@ func (suite *ExampleRepositoryTestSuite) TestInsert_Success() {
 	var example src.Example
 	errFakeData := faker.FakeData(&example)
 	require.NoError(errFakeData)
-
-	sqlmock.NewRows([]string{
-		"var1",
-		"var2",
-		"var3",
-		"var4",
-	}).
-		AddRow(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
-		)
 
 	syntax := "INSERT INTO example .+"
 	suite.mock.ExpectExec(syntax).
@@ -119,19 +106,6 @@ func (suite *ExampleRepositoryTestSuite) TestUpdate_Success() {
 	errFakeData := faker.FakeData(&example)
 	require.NoError(errFakeData)
 
-	sqlmock.NewRows([]string{
-		"var1",
-		"var2",
-		"var3",
-		"var4",
-	}).
-		AddRow(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
-		)
-
 	syntax := "UPDATE example SET .+"
 	suite.mock.ExpectExec(syntax).
 		WithArgs(
@@ -183,19 +157,6 @@ func (suite *ExampleRepositoryTestSuite) TestUpdateVar2AndVar3_Success() {
 	var example src.Example
 	errFakeData := faker.FakeData(&example)
 	require.NoError(errFakeData)
-
-	sqlmock.NewRows([]string{
-		"var1",
-		"var2",
-		"var3",
-		"var4",
-	}).
-		AddRow(
-			example.Var1,
-			example.Var2,
-			example.Var3,
-			example.Var4,
-		)
 
 	syntax := "UPDATE example SET (.+) WHERE (.+)"
 	suite.mock.ExpectExec(syntax).
@@ -335,6 +296,65 @@ func (suite *ExampleRepositoryTestSuite) TestGetByVar3_OtherErr_Failure() {
 	)
 	require.Equal(expectedError, err)
 	require.Nil(data)
+	require.NoError(suite.mock.ExpectationsWereMet())
+}
+
+//-----------------------------------------------------------------
+//							AGGREGATE
+//-----------------------------------------------------------------
+
+func (suite *ExampleRepositoryTestSuite) TestGetAggregateByVar1_Failure() {
+	require := suite.Require()
+
+	expectedError := errors.New("something went wrong")
+
+	var example src.Example
+	errFakeData := faker.FakeData(&example)
+	require.NoError(errFakeData)
+
+	syntax := "SELECT (.+) FROM example (.+) "
+	suite.mock.ExpectQuery(syntax).
+		WithArgs(
+			example.Var1,
+		).
+		WillReturnError(expectedError)
+
+	data, err := suite.repo.GetAggregateByVar1(
+		context.Background(),
+		example.Var1,
+	)
+	require.Equal(expectedError, err)
+	require.Nil(data)
+	require.NoError(suite.mock.ExpectationsWereMet())
+}
+
+func (suite *ExampleRepositoryTestSuite) TestGetAggregateByVar1_Success() {
+	require := suite.Require()
+
+	var example src.Example
+	errFakeData := faker.FakeData(&example)
+	require.NoError(errFakeData)
+
+	rows := sqlmock.NewRows([]string{
+		"count",
+	}).
+		AddRow(
+			5,
+		)
+
+	syntax := "SELECT .+ FROM example .+"
+	suite.mock.ExpectQuery(syntax).
+		WithArgs(
+			example.Var1,
+		).
+		WillReturnRows(rows)
+
+	data, err := suite.repo.GetAggregateByVar1(
+		context.Background(),
+		example.Var1,
+	)
+	require.NoError(err)
+	require.Equal(5, data)
 	require.NoError(suite.mock.ExpectationsWereMet())
 }
 
