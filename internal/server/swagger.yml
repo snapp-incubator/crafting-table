@@ -50,7 +50,7 @@ paths:
 
               example:
                 source: "./example/src/example.go"
-                destination: "./example/dst/"
+                destination: "./example/dst"
                 destination_file_name: "example_repo"
                 struct_name: "Example2"
                 table_name: "example"
