@@ -10,20 +10,20 @@ import (
 )
 
 type CreateVariables struct {
-	Enable              bool   `yaml:"enable"`
-	CostumeFunctionName string `yaml:"costume_function_name"`
+	Enable              bool   `yaml:"enable" json:"enable"`
+	CostumeFunctionName string `yaml:"costume_function_name" json:"costume_function_name"`
 }
 
 type GetVariable struct {
-	Conditions          []string `yaml:"conditions"`
-	CostumeFields       []string `yaml:"costume_fields"`
-	CostumeFunctionName string   `yaml:"costume_function_name"`
+	Conditions          []string `yaml:"conditions" json:"conditions"`
+	CostumeFields       []string `yaml:"costume_fields" json:"costume_fields"`
+	CostumeFunctionName string   `yaml:"costume_function_name" json:"costume_function_name"`
 }
 
 type UpdateVariables struct {
-	Conditions          []string `yaml:"conditions"`
-	Fields              []string `yaml:"fields"`
-	CostumeFunctionName string   `yaml:"costume_function_name"`
+	Conditions          []string `yaml:"conditions" json:"conditions"`
+	Fields              []string `yaml:"fields" json:"fields"`
+	CostumeFunctionName string   `yaml:"costume_function_name" json:"costume_function_name"`
 }
 
 type JoinField struct {
