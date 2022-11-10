@@ -163,10 +163,6 @@ func Generate(pkg string, structDecl *ast.GenDecl, args map[string]string, diale
 	if err != nil {
 		panic(err)
 	}
-	err = orderByTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
 	err = placeholderGeneratorTemplate.Execute(&buff, td)
 	if err != nil {
 		panic(err)

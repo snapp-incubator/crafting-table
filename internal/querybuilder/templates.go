@@ -27,7 +27,6 @@ var (
 	toRowsTemplate                = template.Must(template.New("ct-to-rows").Funcs(funcMap).Parse(toRows))
 	finishersTemplate             = template.Must(template.New("ct-finishers").Funcs(funcMap).Parse(finishers))
 	placeholderGeneratorTemplate  = template.Must(template.New("ct-placeholder").Funcs(funcMap).Parse(placeholderGenerator))
-	orderByTemplate               = template.Must(template.New("ct-orderby").Funcs(funcMap).Parse(orderby))
 	schemaTemplate                = template.Must(template.New("ct-schema").Funcs(funcMap).Parse(schema))
 	queryBuilderInterfaceTemplate = template.Must(template.New("ct-interface").Funcs(funcMap).Parse(queryBuilderInterface))
 	newOrderbyTemplate            = template.Must(template.New("ct-newOrderby").Funcs(funcMap).Parse(neworderby))
@@ -51,12 +50,8 @@ type {{.ModelName}}SQLQueryBuilder interface{
 	Where{{.Name}}LE({{ .Type }}) {{$.ModelName}}SQLQueryBuilder
 	{{ end }}
 	Set{{.Name}}({{.Type}}) {{$.ModelName}}SQLQueryBuilder
-	OrderBy{{.Name}}Asc() {{$.ModelName}}SQLQueryBuilder
-	OrderBy{{.Name}}Desc() {{$.ModelName}}SQLQueryBuilder
 	{{ end }}
 
-	// experimental API
-	Select(column {{$.ModelName}}Column) {{$.ModelName}}SQLQueryBuilder
 	OrderByAsc(column {{$.ModelName}}Column) {{$.ModelName}}SQLQueryBuilder
 	OrderByDesc(column {{$.ModelName}}Column) {{$.ModelName}}SQLQueryBuilder
 
@@ -71,8 +66,6 @@ type {{.ModelName}}SQLQueryBuilder interface{
 	Update(db *sql.DB) (sql.Result, error)
 	Delete(db *sql.DB) (sql.Result, error)
 	Fetch(db *sql.DB) ([]{{ .ModelName }}, error)
-
-
 }
 `
 
@@ -278,20 +271,6 @@ func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderByDesc(column {{.ModelName}}Col
 	return q
 }
 `
-
-const orderby = `
-{{ range .Fields }}
-func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderBy{{.Name}}Asc() {{ $.ModelName }}SQLQueryBuilder {
-	q.orderby = append(q.orderby, "{{ toSnakeCase .Name }} ASC")
-	return q
-}
-func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderBy{{.Name}}Desc() {{ $.ModelName }}SQLQueryBuilder {
-	q.orderby = append(q.orderby, "{{ toSnakeCase .Name }} DESC")
-	return q
-}
-{{ end }}
-`
-
 const selectQueryBuilder = `
 func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
 	if q.projected == nil {
