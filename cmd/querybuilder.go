@@ -16,12 +16,12 @@ import (
 )
 
 var dialect string
-
+var table string
 var querybuilderCmd = &cobra.Command{
 	Use: "qb",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 {
-			log.Fatalln("needs a filename")
+			log.Fatalln("needs a filename and dialect")
 		}
 		filename := args[0]
 
@@ -49,16 +49,8 @@ var querybuilderCmd = &cobra.Command{
 			if _, ok := decl.(*ast.GenDecl); ok {
 				declComment := decl.(*ast.GenDecl).Doc.Text()
 				if len(declComment) > 0 && declComment[:len(querybuilder.ModelAnnotation)] == querybuilder.ModelAnnotation {
-
-					// arguments := strings.Split(strings.Trim(declComment[len(annotation)+1:], " \n\t\r"), " ")
-
 					args := make(map[string]string)
-					// for _, argkv := range arguments {
-					// 	splitted := strings.Split(argkv, "=")
-					// 	args[splitted[0]] = splitted[1]
-					// }
-
-					output := querybuilder.Generate(fast.Name.String(), decl.(*ast.GenDecl), args, dialect)
+					output := querybuilder.Generate(dialect, fast.Name.String(), decl.(*ast.GenDecl), args)
 					fmt.Fprint(outputFile, output)
 				}
 			}
@@ -69,4 +61,5 @@ var querybuilderCmd = &cobra.Command{
 
 func init() {
 	querybuilderCmd.Flags().StringVarP(&dialect, "dialect", "d", "mysql", "dialect you want to generate sql for")
+	querybuilderCmd.Flags().StringVarP(&table, "table", "t", "", "table name of the type if not specified defaults to snakeCase(plural(typeName))")
 }

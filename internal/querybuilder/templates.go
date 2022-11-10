@@ -6,7 +6,7 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-var funcMap template.FuncMap = template.FuncMap{
+var funcMap = template.FuncMap{
 	"toSnakeCase": func(name string) string {
 		return strcase.ToSnake(name)
 	},
@@ -19,7 +19,6 @@ var (
 	scalarWhereTemplate           = template.Must(template.New("ct-scalar-where").Funcs(funcMap).Parse(scalarWhere))
 	limitOffsetTemplate           = template.Must(template.New("ct-limit-offset").Funcs(funcMap).Parse(limitOffset))
 	queryBuilderTemplate          = template.Must(template.New("ct-query-builder").Funcs(funcMap).Parse(queryBuilder))
-	selectsTemplate               = template.Must(template.New("ct-selects").Funcs(funcMap).Parse(selects))
 	selectQueryBuilderTemplate    = template.Must(template.New("ct-select-builder").Funcs(funcMap).Parse(selectQueryBuilder))
 	updateQueryBuilderTemplate    = template.Must(template.New("ct-update-builder").Funcs(funcMap).Parse(updateQueryBuilder))
 	deleteQueryBuilderTemplate    = template.Must(template.New("ct-delete-builder").Funcs(funcMap).Parse(deleteQueryBuilder))
@@ -30,13 +29,15 @@ var (
 	schemaTemplate                = template.Must(template.New("ct-schema").Funcs(funcMap).Parse(schema))
 	queryBuilderInterfaceTemplate = template.Must(template.New("ct-interface").Funcs(funcMap).Parse(queryBuilderInterface))
 	newOrderbyTemplate            = template.Must(template.New("ct-newOrderby").Funcs(funcMap).Parse(neworderby))
-	newSelectTemplate             = template.Must(template.New("ct-select").Funcs(funcMap).Parse(newselect))
+	// newSelectTemplate             = template.Must(template.New("ct-select").Funcs(funcMap).Parse(newselect))
 )
 
 type templateData struct {
 	Pkg       string
 	ModelName string
+	TableName string
 	Fields    []structField
+	Dialect   string
 }
 
 const queryBuilderInterface = `
@@ -66,6 +67,7 @@ type {{.ModelName}}SQLQueryBuilder interface{
 	Update(db *sql.DB) (sql.Result, error)
 	Delete(db *sql.DB) (sql.Result, error)
 	Fetch(db *sql.DB) ([]{{ .ModelName }}, error)
+	SQL() (string, error)
 }
 `
 
@@ -83,14 +85,21 @@ var {{.ModelName}}Columns = struct {
 `
 
 const placeholderGenerator = `
+{{ if eq .Dialect "mysql" }}
 func (q *__{{ .ModelName }}SQLQueryBuilder) getPlaceholder() string {
-    if q.dialect == "mysql" { 
-		return "?" 
-	} else if q.dialect == "postgres" { 
-		return fmt.Sprintf("$", len(q.whereArgs) + len(q.setArgs) + 1) 
-	}
-	panic(fmt.Sprintf("dialect %s not supported\n", q.dialect))
+	return "?"
 }
+{{ end }}
+{{ if eq .Dialect "sqlite" }}
+func (q *__{{ .ModelName }}SQLQueryBuilder) getPlaceholder() string {
+	return "?"
+}
+{{ end }}
+{{ if eq .Dialect "postgres" }}
+func (q *__{{ .ModelName }}SQLQueryBuilder) getPlaceholder() string {
+	return fmt.Sprintf("$", len(q.whereArgs) + len(q.setArgs) + 1) 
+}
+{{ end }}
 `
 
 const limitOffset = `
@@ -155,17 +164,29 @@ const finishers = `
 func (q *__{{ .ModelName }}SQLQueryBuilder) Update(db *sql.DB) (sql.Result, error) {
 	q.mode = "update"
 	args := append(q.setArgs, q.whereArgs...)
-	return db.Exec(q.SQL(), args...)
+	query, err := q.SQL()
+	if err != nil {
+		return nil, err
+	}
+	return db.Exec(query, args...)
 }
 
 func (q *__{{ .ModelName }}SQLQueryBuilder) Delete(db *sql.DB) (sql.Result, error) {
 	q.mode = "delete"
-	return db.Exec(q.SQL(), q.whereArgs...)
+	query, err := q.SQL()
+	if err != nil {
+		return nil, err
+	}
+	return db.Exec(query, q.whereArgs...)
 }
 
 func (q *__{{ .ModelName }}SQLQueryBuilder) Fetch(db *sql.DB) ([]{{ .ModelName }}, error) {
 	q.mode = "select"
-	rows, err := db.Query(q.SQL(), q.whereArgs...)
+	query, err := q.SQL()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(query, q.whereArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +197,11 @@ func (q *__{{ .ModelName }}SQLQueryBuilder) First(db *sql.DB) ({{ .ModelName }},
 	q.mode = "select"
 	q.orderby = []string{"ORDER BY ID ASC"}
 	q.Limit(1)
-	row := db.QueryRow(q.SQL(), q.whereArgs...)
+	query, err := q.SQL()
+	if err != nil {
+		return {{ .ModelName }}{}, err
+	}
+	row := db.QueryRow(query, q.whereArgs...)
 	if row.Err() != nil {
 		return {{ .ModelName }} {}, row.Err()
 	}
@@ -188,7 +213,11 @@ func (q *__{{ .ModelName }}SQLQueryBuilder) Last(db *sql.DB) ({{ .ModelName }}, 
 	q.mode = "select"
 	q.orderby = []string{"ORDER BY ID DESC"}
 	q.Limit(1)
-	row := db.QueryRow(q.SQL(), q.whereArgs...)
+	query, err := q.SQL()
+	if err != nil {
+		return {{ .ModelName }}{}, err
+	}
+	row := db.QueryRow(query, q.whereArgs...)
 	if row.Err() != nil {
 		return {{ .ModelName}} {}, row.Err()
 	}
@@ -200,16 +229,12 @@ const queryBuilder = `
 type __{{ .ModelName }}SQLQueryBuilder struct {
 	mode string
 
-    dialect string
-
     where __{{ .ModelName }}Where
 
 	set __{{ .ModelName }}Set
 
 	orderby []string
 	groupby string
-
-	table string
 
 	projected []string
 
@@ -226,7 +251,7 @@ func {{.ModelName}}QueryBuilder() {{ .ModelName }}SQLQueryBuilder {
 
 
 
-func (q *__{{ .ModelName }}SQLQueryBuilder) SQL() string {
+func (q *__{{ .ModelName }}SQLQueryBuilder) SQL() (string, error) {
 	if q.mode == "select" {
 		return q.sqlSelect()
 	} else if q.mode == "update" {
@@ -234,49 +259,35 @@ func (q *__{{ .ModelName }}SQLQueryBuilder) SQL() string {
 	} else if q.mode == "delete" {
 		return q.sqlDelete()
 	} else {
-		panic("unsupported query mode")
+		return "", fmt.Errorf("unsupported query mode '%s'", q.mode)
 	}
 }
 
 `
 
-const selects = `
-{{ range .Fields }}
-func (q *__{{ $.ModelName}}SQLQueryBuilder) Select{{.Name}}() {{ $.ModelName }}SQLQueryBuilder {
-	q.projected = append(q.projected, "{{ toSnakeCase .Name }}")
-	return q
-}
-{{ end }}
-
-func (q *__{{ $.ModelName}}SQLQueryBuilder) SelectAll() {{ $.ModelName }}SQLQueryBuilder {
-	q.projected = append(q.projected, "*")
-	return q
-}
-`
-
 const newselect = `
 func (q *__{{ $.ModelName}}SQLQueryBuilder) Select(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
-	q.projected = append(q.projected, column)
+	q.projected = append(q.projected, string(column))
 	return q
 }
 `
 
 const neworderby = `
 func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderByAsc(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
-	q.orderby = append(q.orderby, fmt.Sprintf("%s ASC", column))
+	q.orderby = append(q.orderby, fmt.Sprintf("%s ASC", string(column)))
 	return q
 }
 func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderByDesc(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
-	q.orderby = append(q.orderby, fmt.Sprintf("%s DESC", column))
+	q.orderby = append(q.orderby, fmt.Sprintf("%s DESC", string(column)))
 	return q
 }
 `
 const selectQueryBuilder = `
-func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
+func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() (string, error) {
 	if q.projected == nil {
 		q.projected = append(q.projected, "*")
 	}
-	base := fmt.Sprintf("SELECT %s FROM %s", strings.Join(q.projected, ", "), q.table)
+	base := fmt.Sprintf("SELECT %s FROM {{ .TableName }}", strings.Join(q.projected, ", "))
 
 	var wheres []string 
 	{{ range .Fields }}
@@ -285,19 +296,26 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlSelect() string {
 	}
 	{{ end }}
 	if len(wheres) > 0 {
-		base += "WHERE " + strings.Join(wheres, " AND ")
+		base += " WHERE " + strings.Join(wheres, " AND ")
 	}
 
 	if len(q.orderby) > 0 {
 		base += fmt.Sprintf(" ORDER BY %s", strings.Join(q.orderby, ", "))
 	}
-	return base
+
+	if q.limit != 0 {
+		base += " LIMIT " + fmt.Sprint(q.limit)
+	}
+	if q.offset != 0 {
+		base += " OFFSET " + fmt.Sprint(q.offset)
+	}
+	return base, nil
 }
 `
 
 var updateQueryBuilder = `
-func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() string {
-	base := fmt.Sprintf("UPDATE %s", q.table)
+func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() (string, error) {
+	base := fmt.Sprintf("UPDATE {{.TableName}} ")
 
 	var wheres []string 
     var sets []string 
@@ -321,13 +339,13 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlUpdate() string {
 
 	
 
-	return base
+	return base, nil
 }
 `
 
 const deleteQueryBuilder = `
-func (q *__{{ .ModelName}}SQLQueryBuilder) sqlDelete() string {
-    base := fmt.Sprintf("DELETE FROM %s", q.table)
+func (q *__{{ .ModelName}}SQLQueryBuilder) sqlDelete() (string, error) {
+    base := fmt.Sprintf("DELETE FROM {{ .TableName }}")
 
 	var wheres []string 
 	{{ range .Fields }}
@@ -339,8 +357,7 @@ func (q *__{{ .ModelName}}SQLQueryBuilder) sqlDelete() string {
 		base += " WHERE " + strings.Join(wheres, " AND ")
 	}
 
-	return base
-
+	return base, nil
 }
 `
 

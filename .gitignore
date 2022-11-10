@@ -24,4 +24,4 @@ vendor/
 crafting-table
 
 # Generated Files
-*_gen.go*
+*_gen*

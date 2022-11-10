@@ -22,4 +22,5 @@ it: build
 
 
 querybuilder-example:
-	- go run main.go qb example/querybuilder.go
+	- go install .
+	- go generate ./example/...
