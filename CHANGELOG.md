@@ -1,5 +1,9 @@
 # Crafting Table
 
+## UNRELEASED
+
+* Replace sprintf with text templates. (2022-11-09, @bamdadnouri, !57)
+
 # v2.0.0 - Nov 08 2022 
 
 * Support yaml file for creating multiple repositories. (2022-08-05, @n25a, !29)
