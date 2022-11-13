@@ -39,6 +39,13 @@ type WhereCondition struct {
 	Operator OperatorType
 }
 
+type JoinField struct {
+	Table    string
+	As       string
+	OnSource string
+	OnJoin   string
+}
+
 func BuildSelectQuery(
 	table string,
 	fields []interface{},
@@ -48,6 +55,7 @@ func BuildSelectQuery(
 	orderType *OrderType,
 	limit *uint,
 	groupBy []interface{},
+	join []JoinField,
 ) string {
 	ds := goqu.From(table)
 
