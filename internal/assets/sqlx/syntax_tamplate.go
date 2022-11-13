@@ -6,6 +6,7 @@ import (
 	"log"
 	"reflect"
 	"strings"
+	"text/template"
 
 	"github.com/iancoleman/strcase"
 
@@ -25,93 +26,92 @@ type Sqlx interface {
 type FieldType interface{ structure.Field | string }
 
 type sqlx struct {
-	insertFuncSignature    string
-	insertFuncBody         string
-	selectAllFuncSignature string
-	selectAllFuncBody      string
-	selectFuncSignature    string
-	selectFuncBody         string
-	updateAllFuncSignature string
-	updateAllFuncBody      string
-	updateFuncSignature    string
-	updateFuncBody         string
-	joinFuncBody           string
-	joinFuncSignature      string
-	aggregateFuncBody      string
-	aggregateFuncSignature string
+	insertFuncSignatureTemplate    *template.Template
+	insertFuncBodyTemplate         *template.Template
+	selectAllFuncSignatureTemplate *template.Template
+	selectAllFuncBodyTemplate      *template.Template
+	selectFuncSignatureTemplate    *template.Template
+	selectFuncBodyTemplate         *template.Template
+	updateAllFuncSignatureTemplate *template.Template
+	updateAllFuncBodyTemplate      *template.Template
+	updateFuncSignatureTemplate    *template.Template
+	updateFuncBodyTemplate         *template.Template
+	joinFuncBodyTemplate           *template.Template
+	joinFuncSignatureTemplate      *template.Template
+	aggregateFuncBodyTemplate      *template.Template
+	aggregateFuncSignatureTemplate *template.Template
 }
 
 func NewSqlx() Sqlx {
 	s := sqlx{}
 
-	s.insertFuncBody = `
-func (r *mysql%s) Insert(ctx context.Context, %s *%s.%s) error {
-	_, err := r.db.NamedExecContext(ctx, "INSERT INTO %s (" +
-	%s +
-	") VALUES (" +
-	%s)", 
-	%s)
-	
-	if err != nil {
-		return err
-	}
+	s.insertFuncBodyTemplate = template.Must(template.New("insert").Parse(`
+		func (r *mysql{{.Name}}) Insert(ctx context.Context, {{.NameLowerCamel}} *{{.PackageName}}.{{.Name}}) error {
+			_, err := r.db.NamedExecContext(ctx, "INSERT INTO {{.NameSnake}} (" +
+			{{.Fields}} +
+			") VALUES (" +
+			{{.FieldsWithColon}})", 
+			{{.NameLowerCamel}})
+			
+			if err != nil {
+				return err
+			}
+		
+			return nil
+		}
+		`))
+	s.insertFuncSignatureTemplate = template.Must(template.New("insert-signiture").Parse(`Insert(ctx context.Context, {{.NameLowerCamel}} *{{.PackageName}}.{{.Name}}) error`))
 
-	return nil
-}
-`
-
-	s.insertFuncSignature = `Insert(ctx context.Context, %s *%s.%s) error`
-
-	s.selectAllFuncBody = `
-func (r *mysql%s) Get%ss(ctx context.Context) (*[]%s.%s, error) {
-	var %s []%s.%s
-	err := r.db.SelectContext(ctx, &%s, "SELECT * from %s")
+	s.selectAllFuncBodyTemplate = template.Must(template.New("select-all").Parse(`
+func (r *mysql{{.Name}}) Get{{.Name}}s(ctx context.Context) (*[]{{.PackageName}}.{{.Name}}, error) {
+	var {{.TableNameLowerCamel}} []{{.PackageName}}.{{.Name}}
+	err := r.db.SelectContext(ctx, &{{.NameLowerCamel}}, "SELECT * from {{.TableName}}")
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, Err%sNotFound
+			return nil, Err{{.Name}}NotFound
 		}
 
 		return nil, err
 	}
 
-	return &%s, nil
+	return &{{.NameLowerCamel}}, nil
 }
-`
+`))
 
-	s.selectAllFuncSignature = `Get%ss(ctx context.Context) (*[]%s.%s, error)`
+	s.selectAllFuncSignatureTemplate = template.Must(template.New("select-all-signiture").Parse(`Get{{.Name}}s(ctx context.Context) (*[]{{.PackageName}}.{{.Name}}, error)`))
 
-	s.selectFuncBody = `
-func (r *mysql%s) GetBy%s(ctx context.Context, %s) (*%s.%s, error) {
-	var %s %s.%s
+	s.selectFuncBodyTemplate = template.Must(template.New("select").Parse(`
+func (r *mysql{{.Name}}) GetBy{{.FuncName}}(ctx context.Context, {{.Inputs}}) (*{{.PackageName}}.{{.Name}}, error) {
+	var {{.NameLowerCamel}} {{.PackageName}}.{{.Name}}
 
-	err := r.db.GetContext(ctx, &%s, "SELECT * FROM %s " +
-		"%s",
-		%s,
+	err := r.db.GetContext(ctx, &{{.NameLowerCamel}}, "SELECT * FROM {{.TableName}} " +
+		"{{.Conditions}}",
+		{{.ContextVariables}},
 	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, Err%sNotFound
+			return nil, Err{{.Name}}NotFound
 		}
 
 		return nil, err
 	}
 
-	return &%s, nil
+	return &{{.NameLowerCamel}}, nil
 }
-`
+`))
 
-	s.selectFuncSignature = `GetBy%s(ctx context.Context, %s) (*%s.%s, error)`
+	s.selectFuncSignatureTemplate = template.Must(template.New("select-signiture").Parse(`GetBy{{.FuncName}}(ctx context.Context, {{.Inputs}}) (*{{.PackageName}}.{{.Name}}, error)`))
 
-	s.updateAllFuncBody = `
-func (r *mysql%s) Update(ctx context.Context, %s %s, %s %s.%s) (int64, error) {
-	%s.%s = %s
+	s.updateAllFuncBodyTemplate = template.Must(template.New("update-all").Parse(`
+func (r *mysql{{.Name}}) Update(ctx context.Context, {{.FieldNameLowerCamel}} {{.FieldType}}, {{.NameLowerCamel}} {{.PackageName}}.{{.Name}}) (int64, error) {
+	{{.NameLowerCamel}}.{{.FieldName}} = {{.FieldNameLowerCamel}}
 
-	result, err := r.db.NamedExecContext(ctx, "UPDATE %s "+
+	result, err := r.db.NamedExecContext(ctx, "UPDATE {{.TableName}} "+
 		"SET "+
-		%s +
-		"%s",
-		%s,
+		{{.FieldsContextKeys}} +
+		"{{.Conditions}}",
+		{{.NameLowerCamel}},
 	)
 
 	if err != nil {
@@ -120,17 +120,17 @@ func (r *mysql%s) Update(ctx context.Context, %s %s, %s %s.%s) (int64, error) {
 
 	return result.RowsAffected()
 }
-`
+`))
 
-	s.updateAllFuncSignature = `Update(ctx context.Context, %s %s, %s %s.%s) (int64, error)`
+	s.updateAllFuncSignatureTemplate = template.Must(template.New("update-all").Parse(`Update(ctx context.Context, {{.FieldNameLowerCamel}} {{.FieldType}}, {{.NameLowerCamel}} {{.PackageName}}.{{.Name}}) (int64, error)`))
 
-	s.updateFuncBody = `
-func (r *mysql%s) Update%s(ctx context.Context, %s, %s) (int64, error) {
-	query := "UPDATE %s SET " +
-			%s +
-			"%s;" 
+	s.updateFuncBodyTemplate = template.Must(template.New("update").Parse(`
+func (r *mysql{{.Name}}) Update{{.FuncName}}(ctx context.Context, {{.InputConditions}}, {{.InputFields}}) (int64, error) {
+	query := "UPDATE {{.TableName}} SET " +
+			{{.FieldsContextKeys}} +
+			"{{.Conditions}};" 
 
-	result, err := r.db.ExecContext(ctx, query, %s)
+	result, err := r.db.ExecContext(ctx, query, {{.ExecVars}})
 
 	if err != nil {
 		return 0, err
@@ -138,44 +138,44 @@ func (r *mysql%s) Update%s(ctx context.Context, %s, %s) (int64, error) {
 
 	return result.RowsAffected()
 }
-`
+`))
 
-	s.updateFuncSignature = `Update%s(ctx context.Context, %s, %s) (int64, error)`
+	s.updateFuncSignatureTemplate = template.Must(template.New("update-signiture").Parse(`Update{{.FuncName}}(ctx context.Context, {{.InputConditions}}, {{.InputFields}}) (int64, error)`))
 
-	s.joinFuncBody = `
-func (r *mysql%s) GetJoined%s(ctx context.Context, limit uint) ([]%s.%s, error) {
+	s.joinFuncBodyTemplate = template.Must(template.New("join").Parse(`
+func (r *mysql{{.Name}}) GetJoined{{.Name}}(ctx context.Context, limit uint) ([]{{.PackageName}}.{{.Name}}, error) {
 	query := "SELECT " +
-		%s
-		"FROM %s AS %s " +
-		%s +
+		{{.JoinFields}}
+		"FROM {{.TableName}} AS {{.TableNameShort}} " +
+		{{.Joins}} +
 		"LIMIT ?"
 
-	var %s []%s.%s
-	err := r.db.SelectContext(ctx, &%s, query, limit)
+	var {{.NameLowerCamel}} []{{.PackageName}}.{{.Name}}
+	err := r.db.SelectContext(ctx, &{{.NameLowerCamel}}, query, limit)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, %s
+			return nil, {{.NotFoundErr}}
 		}
 
 		return nil, err
 	}
 
-	return %s, nil
+	return {{.NameLowerCamel}}, nil
 }
-`
+`))
 
-	s.joinFuncSignature = `GetJoined%s(ctx context.Context, limit uint) ([]%s.%s, error)`
+	s.joinFuncSignatureTemplate = template.Must(template.New("join-signiture").Parse(`GetJoined{{.Name}}(ctx context.Context, limit uint) ([]{{.PackageName}}.{{.Name}}, error)`))
 
-	s.aggregateFuncBody = `
-func (r *mysql%s) GetAggregateBy%s(ctx context.Context, %s) (*int, error) {
+	s.aggregateFuncBodyTemplate = template.Must(template.New("aggregate").Parse(`
+func (r *mysql{{.Name}}) GetAggregateBy{{.FuncName}}(ctx context.Context, {{.InputConditions}}) (*int, error) {
 	var res struct{` +
-		"result int `db:\"%s\"`" + `
+		"result int `db:\"{{.AggregateFieldAs}}\"`" + `
 	}
 
-	err := r.db.SelectContext(ctx, &res, "SELECT %s FROM %s " +
-		"%s%s",
-		 %s,
+	err := r.db.SelectContext(ctx, &res, "SELECT {{.AggregateSyntax}} FROM {{.TableName}} " +
+		"{{.Conditions}}{{.GroupBy}}",
+		 {{.ContextVariables}},
 	)
 
 	if err != nil {
@@ -184,71 +184,81 @@ func (r *mysql%s) GetAggregateBy%s(ctx context.Context, %s) (*int, error) {
 
 	return &res.result, nil
 }
-`
+`))
 
-	s.aggregateFuncSignature = `GetAggregateBy%s(ctx context.Context, %s) (*int, error)`
+	s.aggregateFuncSignatureTemplate = template.Must(template.New("aggregate-signiture").Parse(`GetAggregateBy{{.FuncName}}(ctx context.Context, {{.Inputs}}) (*int, error)`))
 
 	return s
 }
 
-func (s sqlx) Insert(structure *structure.Structure) (syntax string, signature string) {
+func (s sqlx) Insert(structure *structure.Structure) (string, string) {
 	fields := structure.GetDBFields(":")
-
-	syntax = fmt.Sprintf(
-		s.insertFuncBody,
+	data := struct {
+		Name            string
+		NameLowerCamel  string
+		PackageName     string
+		NameSnake       string
+		Fields          string
+		FieldsWithColon string
+	}{
 		structure.Name,
 		strcase.ToLowerCamel(structure.Name),
 		structure.PackageName,
-		structure.Name,
 		strcase.ToSnake(structure.Name),
 		structure.GetDBFields(""),
 		fields[:len(fields)-1],
-		strcase.ToLowerCamel(structure.Name),
-	)
+	}
+	var syntax strings.Builder
+	if err := s.insertFuncSignatureTemplate.Execute(&syntax, data); err != nil {
+		panic(err)
+	}
 
-	signature = fmt.Sprintf(
-		s.insertFuncSignature,
-		strcase.ToLowerCamel(structure.Name),
-		structure.PackageName,
-		structure.Name,
-	)
+	var signiture strings.Builder
+	if err := s.insertFuncSignatureTemplate.Execute(&signiture, data); err != nil {
+		panic(err)
+	}
 
-	return syntax, signature
+	return syntax.String(), signiture.String()
 }
 
-func (s sqlx) UpdateAll(structure *structure.Structure) (syntax string, signature string) {
-	syntax = fmt.Sprintf(
-		s.updateAllFuncBody,
+func (s sqlx) UpdateAll(structure *structure.Structure) (string, string) {
+	data := struct {
+		Name                string
+		FieldNameLowerCamel string
+		FieldType           string
+		NameLowerCamel      string
+		PackageName         string
+		FieldName           string
+		TableName           string
+		FieldsContextKeys   string
+		Conditions          string
+	}{
 		structure.Name,
 		strcase.ToLowerCamel(structure.Fields[0].Name),
 		structure.Fields[0].Type,
 		strcase.ToLowerCamel(structure.Name),
 		structure.PackageName,
-		structure.Name,
-		strcase.ToLowerCamel(structure.Name),
 		structure.Fields[0].Name,
-		strcase.ToLowerCamel(structure.Fields[0].Name),
 		structure.TableName,
 		contextKeys(structure.Fields),
 		conditions([]string{
 			structure.FieldMapNameToDBFlag[structure.Fields[0].Name],
 		}, structure, false),
-		strcase.ToLowerCamel(structure.Name),
-	)
+	}
+	var syntax strings.Builder
+	if err := s.updateAllFuncBodyTemplate.Execute(&syntax, data); err != nil {
+		panic(err)
+	}
 
-	signature = fmt.Sprintf(
-		s.updateAllFuncSignature,
-		strcase.ToLowerCamel(structure.Fields[0].Name),
-		structure.Fields[0].Type,
-		strcase.ToLowerCamel(structure.Name),
-		structure.PackageName,
-		structure.Name,
-	)
+	var signiture strings.Builder
+	if err := s.updateAllFuncSignatureTemplate.Execute(&signiture, data); err != nil {
+		panic(err)
+	}
 
-	return syntax, signature
+	return syntax.String(), signiture.String()
 }
 
-func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string, signatures []string) {
+func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateVariables) (syntax string, signitures []string) {
 
 	for _, v := range *vars {
 		functionNameList := make([]string, 0)
@@ -257,8 +267,16 @@ func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateV
 		}
 		functionName := strings.Join(functionNameList, "And")
 
-		syntax += fmt.Sprintf(
-			s.updateFuncBody,
+		data := struct {
+			Name              string
+			FuncName          string
+			InputConditions   string
+			InputFields       string
+			TableName         string
+			FieldsContextKeys string
+			Conditions        string
+			ExecVars          string
+		}{
 			structure.Name,
 			functionName,
 			inputFunctionVariables(v.Conditions, structure),
@@ -267,47 +285,53 @@ func (s sqlx) UpdateBy(structure *structure.Structure, vars *[]structure.UpdateV
 			contextKeys(v.Fields),
 			conditions(v.Conditions, structure, true),
 			execContextVariables(v, structure, false),
-		)
+		}
 
-		signatures = append(
-			signatures,
-			fmt.Sprintf(
-				s.updateFuncSignature,
-				functionName,
-				inputFunctionVariables(v.Conditions, structure),
-				inputFunctionVariables(v.Fields, structure),
-			),
-		)
+		var syntaxBuilder strings.Builder
+		if err := s.updateFuncBodyTemplate.Execute(&syntaxBuilder, data); err != nil {
+			panic(err)
+		}
+
+		syntax += syntaxBuilder.String()
+
+		var signaturesBuilder strings.Builder
+		if err := s.updateFuncSignatureTemplate.Execute(&signaturesBuilder, data); err != nil {
+			panic(err)
+		}
+
+		signitures = append(signitures, signaturesBuilder.String())
 	}
 
-	return syntax, signatures
+	return syntax, signitures
 }
 
-func (s sqlx) SelectAll(structure *structure.Structure) (syntax string, signature string) {
+func (s sqlx) SelectAll(structure *structure.Structure) (string, string) {
 
-	syntax = fmt.Sprintf(
-		s.selectAllFuncBody,
-		structure.Name,
+	data := struct {
+		Name                string
+		PackageName         string
+		TableNameLowerCamel string
+		NameLowerCamel      string
+		TableName           string
+	}{
 		structure.Name,
 		structure.PackageName,
-		structure.Name,
 		strcase.ToLowerCamel(structure.TableName),
-		structure.PackageName,
-		structure.Name,
 		strcase.ToLowerCamel(structure.Name),
 		structure.TableName,
-		structure.Name,
-		strcase.ToLowerCamel(structure.Name),
-	)
+	}
 
-	signature = fmt.Sprintf(
-		s.selectAllFuncSignature,
-		structure.Name,
-		structure.PackageName,
-		structure.Name,
-	)
+	var syntax strings.Builder
+	if err := s.selectAllFuncBodyTemplate.Execute(&syntax, data); err != nil {
+		panic(err)
+	}
 
-	return syntax, signature
+	var signiture strings.Builder
+	if err := s.selectAllFuncSignatureTemplate.Execute(&signiture, data); err != nil {
+		panic(err)
+	}
+
+	return syntax.String(), signiture.String()
 }
 
 func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.GetVariable) (syntax string, signatures []string) {
@@ -319,73 +343,76 @@ func (s sqlx) SelectBy(structure *structure.Structure, vars *[]structure.GetVari
 		}
 		functionName := strings.Join(functionNameList, "And")
 
-		syntax += fmt.Sprintf(
-			s.selectFuncBody,
+		data := struct {
+			Name             string
+			FuncName         string
+			Inputs           string
+			PackageName      string
+			NameLowerCamel   string
+			TableName        string
+			Conditions       string
+			ContextVariables string
+		}{
 			structure.Name,
 			functionName,
 			inputFunctionVariables(v.Conditions, structure),
 			structure.PackageName,
-			structure.Name,
-			strcase.ToLowerCamel(structure.Name),
-			structure.PackageName,
-			structure.Name,
 			strcase.ToLowerCamel(structure.Name),
 			structure.TableName,
 			conditions(v.Conditions, structure, true),
 			contextVariables(v.Conditions, structure),
-			structure.Name,
-			strcase.ToLowerCamel(structure.Name),
-		)
+		}
 
-		signatures = append(
-			signatures,
-			fmt.Sprintf(
-				s.selectFuncSignature,
-				functionName,
-				inputFunctionVariables(v.Conditions, structure),
-				structure.PackageName,
-				structure.Name,
-			),
-		)
+		var syntaxBuilder strings.Builder
+		if err := s.selectFuncBodyTemplate.Execute(&syntaxBuilder, data); err != nil {
+			panic(err)
+		}
+
+		syntax += syntaxBuilder.String()
+
+		var signitureBuilder strings.Builder
+		if err := s.selectFuncSignatureTemplate.Execute(&signitureBuilder, data); err != nil {
+			panic(err)
+		}
+		signatures = append(signatures, signitureBuilder.String())
 	}
 
 	return syntax, signatures
 }
 
-func (s sqlx) Join(structure *structure.Structure, joinVariables *structure.JoinVariables) (syntax string, header string) {
+func (s sqlx) Join(structure *structure.Structure, joinVariables *structure.JoinVariables) (string, string) {
 
-	syntax = fmt.Sprintf(
-		s.joinFuncBody,
-		structure.Name,
+	data := struct {
+		Name           string
+		PackageName    string
+		JoinFields     string
+		TableName      string
+		TableNameShort string
+		Joins          string
+		NameLowerCamel string
+		NotFoundErr    string
+	}{
 		structure.Name,
 		structure.PackageName,
-		structure.Name,
-
 		joinField(structure, joinVariables),
-
 		structure.TableName,
 		string(structure.TableName[0]),
-
 		joins(structure, joinVariables),
-
 		strcase.ToLowerCamel(structure.Name),
-		structure.PackageName,
-		structure.Name,
-		strcase.ToLowerCamel(structure.Name),
+		"Err" + structure.Name + "NotFound",
+	}
 
-		"Err"+structure.Name+"NotFound",
+	var syntax strings.Builder
+	if err := s.joinFuncBodyTemplate.Execute(&syntax, data); err != nil {
+		panic(err)
+	}
 
-		strcase.ToLowerCamel(structure.Name),
-	)
+	var header strings.Builder
+	if err := s.joinFuncSignatureTemplate.Execute(&header, data); err != nil {
+		panic(err)
+	}
 
-	header = fmt.Sprintf(
-		s.joinFuncSignature,
-		structure.Name,
-		structure.PackageName,
-		structure.Name,
-	)
-
-	return syntax, header
+	return syntax.String(), header.String()
 }
 
 func (s sqlx) Aggregate(structure *structure.Structure, vars *[]structure.AggregateField) (syntax string, signatures []string) {
@@ -397,8 +424,17 @@ func (s sqlx) Aggregate(structure *structure.Structure, vars *[]structure.Aggreg
 		}
 		functionName := strings.Join(functionNameList, "And")
 
-		syntax += fmt.Sprintf(
-			s.aggregateFuncBody,
+		data := struct {
+			Name             string
+			FuncName         string
+			InputConditions  string
+			AggregateFieldAs string
+			AggregateSyntax  string
+			TableName        string
+			Conditions       string
+			GroupBy          string
+			ContextVariables string
+		}{
 			structure.Name,
 			functionName,
 			inputFunctionVariables(v.Conditions, structure),
@@ -408,16 +444,21 @@ func (s sqlx) Aggregate(structure *structure.Structure, vars *[]structure.Aggreg
 			conditions(v.Conditions, structure, true),
 			groupBy(v),
 			contextVariables(v.Conditions, structure),
-		)
+		}
 
-		signatures = append(
-			signatures,
-			fmt.Sprintf(
-				s.aggregateFuncSignature,
-				functionName,
-				inputFunctionVariables(v.Conditions, structure),
-			),
-		)
+		var syntaxBuilder strings.Builder
+		if err := s.aggregateFuncBodyTemplate.Execute(&syntaxBuilder, data); err != nil {
+			panic(err)
+		}
+
+		syntax += syntaxBuilder.String()
+
+		var signitureBuilder strings.Builder
+		if err := s.aggregateFuncSignatureTemplate.Execute(&signitureBuilder, data); err != nil {
+			panic(err)
+		}
+
+		signatures = append(signatures, signitureBuilder.String())
 	}
 
 	return syntax, signatures
