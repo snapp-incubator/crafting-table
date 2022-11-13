@@ -28,24 +28,47 @@ const (
 	OperatorTypeIsNotNull OperatorType = "is_not_null"
 )
 
+type JoinType string
+
+const (
+	JoinTypeJoin         JoinType = "Join"
+	JoinTypeInner        JoinType = "inner"
+	JoinTypeFullOuter    JoinType = "fullOuter"
+	JoinTypeRightOuter   JoinType = "rightOuter"
+	JoinTypeLeftOuter    JoinType = "leftOuter"
+	JoinTypeFull         JoinType = "full"
+	JoinTypeLeft         JoinType = "left"
+	JoinTypeRight        JoinType = "right"
+	JoinTypeNatural      JoinType = "natural"
+	JoinTypeNaturalLeft  JoinType = "naturalLeft"
+	JoinTypeNaturalRight JoinType = "naturalRight"
+	JoinTypeNaturalFull  JoinType = "naturalFull"
+	JoinTypeCross        JoinType = "cross"
+)
+
+// AggregateField is a struct for aggregate field
 type AggregateField struct {
 	Function string
 	On       string
 	As       string
 }
 
+// WhereCondition is a condition for where clause
 type WhereCondition struct {
 	Column   string
 	Operator OperatorType
 }
 
+// JoinField is a struct for join field
 type JoinField struct {
 	Table    string
 	As       string
 	OnSource string
 	OnJoin   string
+	Function JoinType
 }
 
+// BuildSelectQuery builds a select query
 func BuildSelectQuery(
 	table string,
 	fields []interface{},
@@ -140,6 +163,70 @@ func BuildSelectQuery(
 	}
 
 	// Join
+	for _, j := range join {
+		switch j.Function {
+		case JoinTypeJoin:
+			ds = ds.Join(
+				goqu.T(j.Table).As(j.As),
+				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+			)
+		case JoinTypeFullOuter:
+			ds = ds.FullOuterJoin(
+				goqu.T(j.Table).As(j.As),
+				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+			)
+		case JoinTypeLeft:
+			ds = ds.LeftJoin(
+				goqu.T(j.Table).As(j.As),
+				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+			)
+		case JoinTypeRight:
+			ds = ds.RightJoin(
+				goqu.T(j.Table).As(j.As),
+				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+			)
+		case JoinTypeInner:
+			ds = ds.InnerJoin(
+				goqu.T(j.Table).As(j.As),
+				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+			)
+		case JoinTypeRightOuter:
+			ds = ds.RightOuterJoin(
+				goqu.T(j.Table).As(j.As),
+				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+			)
+		case JoinTypeLeftOuter:
+			ds = ds.LeftOuterJoin(
+				goqu.T(j.Table).As(j.As),
+				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+			)
+		case JoinTypeFull:
+			ds = ds.FullJoin(
+				goqu.T(j.Table).As(j.As),
+				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+			)
+		case JoinTypeNatural:
+			ds = ds.NaturalJoin(
+				goqu.T(j.Table).As(j.As),
+			)
+		case JoinTypeNaturalLeft:
+			ds = ds.NaturalLeftJoin(
+				goqu.T(j.Table).As(j.As),
+			)
+		case JoinTypeNaturalRight:
+			ds = ds.NaturalRightJoin(
+				goqu.T(j.Table).As(j.As),
+			)
+		case JoinTypeNaturalFull:
+			ds = ds.NaturalFullJoin(
+				goqu.T(j.Table).As(j.As),
+			)
+		case JoinTypeCross:
+			ds = ds.CrossJoin(
+				goqu.T(j.Table).As(j.As),
+			)
+		}
+	}
 
 	// Build
 	query, _, _ := ds.ToSQL()
