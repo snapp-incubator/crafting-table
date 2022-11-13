@@ -52,9 +52,9 @@ var function *template.Template = template.Must(template.New("function").Parse(`
 func (d *database{{.ModelName}}) {{.Signature}} {
 	{{.DesStructTemplate}}
 
-	var {{.DesStructName}} {{.ModelName}}
+	var dst {{.Model}}
 
-	{{.QueryTemplate}}
+	{{.ExecQueryTemplate}}
 
 	return {{.Outputs}}
 }
