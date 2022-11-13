@@ -303,7 +303,7 @@ func BuildInsertQuery(
 	// Set
 	setRecords := make(goqu.Record, 0)
 	for _, f := range fields {
-		setRecords[f.(string)] = 9999999999999999
+		setRecords[f.(string)] = ":" + f.(string)
 	}
 	ds = ds.Rows(setRecords)
 
