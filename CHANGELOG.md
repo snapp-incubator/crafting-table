@@ -3,6 +3,7 @@
 ## UNRELEASED
 
 * Replace sprintf with text templates. (2022-11-09, @bamdadnouri, !57)
+* Add query builder layer. (2022-11-13, @n25a, !58)
 
 # v2.0.0 - Nov 08 2022 
 
