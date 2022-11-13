@@ -240,6 +240,7 @@ func BuildSelectQuery(
 	return query
 }
 
+// BuildUpdateQuery Building a query to update a table.
 func BuildUpdateQuery(
 	table string,
 	fields []interface{},
@@ -293,6 +294,7 @@ func BuildUpdateQuery(
 	return query
 }
 
+// BuildInsertQuery build insert query
 func BuildInsertQuery(
 	table string,
 	fields []interface{},
