@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/bxcodec/faker/v3 v3.8.0
+	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/rivo/tview v0.0.0-20220801133142-711ef394f9b3
@@ -15,6 +16,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/doug-martin/goqu v5.0.0+incompatible // indirect
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/gdamore/tcell/v2 v2.5.2 // indirect
 	github.com/gertd/go-pluralize v0.2.1 // indirect

@@ -95,7 +95,8 @@ func generate(_ *cobra.Command, _ []string) {
 		joinVars = parser.ExtractJoinVariables(join)
 	}
 
-	if err := repository.Generate(source, destination, packageName, structName, getVars, updateVars, joinVars, create, test); err != nil {
+	if err := repository.Generate(source, destination, packageName, structName,
+		getVars, updateVars, joinVars, &[]structure.AggregateField{}, create, test); err != nil {
 		log.Fatal(err)
 	}
 }

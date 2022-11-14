@@ -10,16 +10,19 @@ import (
 )
 
 func Generate(source, destination, packageName, structName string, getVars *[]structure.GetVariable,
-	updateVars *[]structure.UpdateVariables, joinVars *[]structure.JoinVariables, create, test bool) error {
+	updateVars *[]structure.UpdateVariables, joinVars *[]structure.JoinVariables,
+	aggregateVars *[]structure.AggregateField, create, test bool) error {
 	createSyntax := ""
 	updateSyntax := ""
 	getSyntax := ""
 	joinSyntax := ""
+	aggregateSyntax := ""
 
 	createTestSyntax := ""
 	updateTestSyntax := ""
 	getTestSyntax := ""
 	joinTestSyntax := ""
+	aggregateTestSyntax := ""
 
 	var testDestination string
 	if test {
@@ -91,10 +94,23 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 		}
 	}
 
+	if aggregateVars != nil && len(*aggregateVars) > 0 {
+		aggregateSyntax, signatureList, err = aggregateFunction(s, aggregateVars)
+		if err != nil {
+			err = errors.New(fmt.Sprintf("Error in aggregateSyntax: %s", err.Error()))
+			return err
+		}
+		signatures = append(signatures, signatureList...)
+
+		if test {
+			aggregateTestSyntax = aggregateTestFunction(s, aggregateVars)
+		}
+	}
+
 	interfaceSyntax := interfaceCreator(s, signatures)
 
 	fileContent := createTemplate(s, packageName, interfaceSyntax,
-		createSyntax, updateSyntax, getSyntax, joinSyntax)
+		createSyntax, updateSyntax, getSyntax, joinSyntax, aggregateSyntax)
 
 	err = exportRepository(fileContent, destination)
 	if err != nil {
@@ -110,7 +126,7 @@ func Generate(source, destination, packageName, structName string, getVars *[]st
 
 	if test {
 		testFileContent := createTestTemplate(s, packageName, createTestSyntax, updateTestSyntax,
-			getTestSyntax, joinTestSyntax)
+			getTestSyntax, joinTestSyntax, aggregateTestSyntax)
 
 		err = exportRepository(testFileContent, testDestination)
 		if err != nil {

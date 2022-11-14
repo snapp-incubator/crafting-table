@@ -1,6 +1,11 @@
 # Crafting Table
 
-# UNRELEASED
+## UNRELEASED
+
+* Replace sprintf with text templates. (2022-11-09, @bamdadnouri, !57)
+* Add query builder layer. (2022-11-13, @n25a, !58)
+
+# v2.0.0 - Nov 08 2022 
 
 * Support yaml file for creating multiple repositories. (2022-08-05, @n25a, !29)
 * Add simple terminal UI that can be used instead of CLI args. (2022-08-06, @anvari1313, !28)
@@ -13,6 +18,7 @@
 * Add `Join` function for generating join query with tests. (2022-09-01, @n25a, !44)
 * Isolate sql tests by reseting sqlmock for each test. (2022-10-29, @bamdadnouri, !46)
 * Remove unnecessary sqlmock row creation in sql tests. (2022-10-29, @bamdadnouri, !48)
+* Add aggregate functions and group by to manifest. (2022-11-08, @n25a, !55)
 
 # v1.2.0 - Jun 25 2022
 
