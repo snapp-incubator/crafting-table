@@ -38,6 +38,15 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, "UPDATE users SET age = ? WHERE age > ?", query)
 		assert.Equal(t, []interface{}{10}, q.(*__UserSQLQueryBuilder).whereArgs)
 		assert.Equal(t, []interface{}{11}, q.(*__UserSQLQueryBuilder).setArgs)
+    })
+
+    t.Run("delete where age greater 10", func(t *testing.T) {
+        q := UserQueryBuilder().WhereAgeGT(10)
+        q.(*__UserSQLQueryBuilder).mode = "delete"
+		query, err := q.SQL()
+		assert.NoError(t, err)
+		assert.Equal(t, "DELETE FROM users WHERE age > ?", query)
+		assert.Equal(t, []interface{}{10}, q.(*__UserSQLQueryBuilder).whereArgs)
 
     })
 }
