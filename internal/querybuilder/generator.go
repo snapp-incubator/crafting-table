@@ -70,6 +70,60 @@ func resolveTypes(structDecl *ast.GenDecl) []structField {
 	return fields
 }
 
+func getSampleValues(fields []structField) []any {
+    var values []any
+    for _, field := range fields {
+        switch (field.Type) {
+            case "string":
+               values = append(values, "some string") 
+           case "int":
+           case "int8":
+           case "int16":
+           case "int32":
+           case "int64":
+           case "uint":
+           case "uint8":
+           case "uint16":
+           case "uint32":
+           case "uint64":
+               values = append(values, 1)
+           case "float32":
+           case "float64":
+               values = append(values, 2.2)
+           default:
+               values = append(values, nil)
+        }
+    }
+
+    return values
+}
+
+func GenerateTests(dialect string, pkg string, structDecl *ast.GenDecl, args map[string]string) string {
+	fields := resolveTypes(structDecl)
+	typeName := structDecl.Specs[0].(*ast.TypeSpec).Name.String()
+	var buff strings.Builder
+	td := testTemplateData{
+        templateData: templateData {
+            ModelName: typeName,
+            Fields:    fields,
+            Pkg:       pkg,
+            Dialect:   dialect,
+            TableName: strcase.ToSnake(pluralize.NewClient().Plural(typeName)),
+        },
+
+	}
+    err := baseOutputFileTemplate.Execute(&buff, td)
+	if err != nil {
+		panic(err)
+	}
+
+    err = testTemplate.Execute(&buff, td)
+    if err != nil {
+		panic(err)
+	}
+	return buff.String()
+}
+
 func Generate(dialect string, pkg string, structDecl *ast.GenDecl, args map[string]string) string {
 	fields := resolveTypes(structDecl)
 	typeName := structDecl.Specs[0].(*ast.TypeSpec).Name.String()

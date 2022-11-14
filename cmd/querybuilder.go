@@ -17,6 +17,8 @@ import (
 
 var dialect string
 var table string
+var debugMode bool
+
 var querybuilderCmd = &cobra.Command{
 	Use: "qb",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -44,6 +46,15 @@ var querybuilderCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
+        var outputTestFile *os.File
+        if debugMode {
+            outputTestFilePath := filepath.Join(dir, fmt.Sprintf("%s_sqlgen_gen_test.go", actualName))
+            outputTestFile, err = os.Create(outputTestFilePath)
+            if err != nil {
+                panic(err)
+            }
+            defer outputTestFile.Close()
+        }
 		defer outputFile.Close()
 		for _, decl := range fast.Decls {
 			if _, ok := decl.(*ast.GenDecl); ok {
@@ -52,6 +63,9 @@ var querybuilderCmd = &cobra.Command{
 					args := make(map[string]string)
 					output := querybuilder.Generate(dialect, fast.Name.String(), decl.(*ast.GenDecl), args)
 					fmt.Fprint(outputFile, output)
+                    if debugMode {
+                        fmt.Fprint(outputTestFile, querybuilder.GenerateTests(dialect, fast.Name.String(), decl.(*ast.GenDecl), args))
+                    } 
 				}
 			}
 
@@ -62,4 +76,5 @@ var querybuilderCmd = &cobra.Command{
 func init() {
 	querybuilderCmd.Flags().StringVarP(&dialect, "dialect", "d", "mysql", "dialect you want to generate sql for")
 	querybuilderCmd.Flags().StringVarP(&table, "table", "t", "", "table name of the type if not specified defaults to snakeCase(plural(typeName))")
+	querybuilderCmd.Flags().BoolVarP(&debugMode, "debug", "", false, "Debug mode")
 }
