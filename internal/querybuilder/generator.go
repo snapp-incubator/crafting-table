@@ -98,32 +98,6 @@ func getSampleValues(fields []structField) []any {
     return values
 }
 
-func GenerateTests(dialect string, pkg string, structDecl *ast.GenDecl, args map[string]string) string {
-	fields := resolveTypes(structDecl)
-	typeName := structDecl.Specs[0].(*ast.TypeSpec).Name.String()
-	var buff strings.Builder
-	td := testTemplateData{
-        templateData: templateData {
-            ModelName: typeName,
-            Fields:    fields,
-            Pkg:       pkg,
-            Dialect:   dialect,
-            TableName: strcase.ToSnake(pluralize.NewClient().Plural(typeName)),
-        },
-
-	}
-    err := baseOutputFileTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-
-    err = testTemplate.Execute(&buff, td)
-    if err != nil {
-		panic(err)
-	}
-	return buff.String()
-}
-
 func Generate(dialect string, pkg string, structDecl *ast.GenDecl, args map[string]string) string {
 	fields := resolveTypes(structDecl)
 	typeName := structDecl.Specs[0].(*ast.TypeSpec).Name.String()
