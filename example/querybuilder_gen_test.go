@@ -23,6 +23,15 @@ func TestQueryBuilder(t *testing.T) {
 		assert.Equal(t, []interface{}{"Hello World"}, q.(*__UserSQLQueryBuilder).whereArgs)
     })
 
+
+    t.Run("where by name offset 10 limit 100", func(t *testing.T) {
+        q := UserQueryBuilder().Offset(10).Limit(100).WhereNameEq("Hello World")
+		query, err := q.SQL()
+		assert.NoError(t, err)
+		assert.Equal(t, "SELECT * FROM users WHERE name = ? LIMIT 100 OFFSET 10", query)
+		assert.Equal(t, []interface{}{"Hello World"}, q.(*__UserSQLQueryBuilder).whereArgs)
+    })
+
     t.Run("where by age greater 10 order by id desc", func(t *testing.T) {
         q := UserQueryBuilder().OrderByDesc(UserColumns.ID).WhereAgeGT(10)
 		query, err := q.SQL()
