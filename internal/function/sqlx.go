@@ -7,11 +7,7 @@ var selectContext *template.Template = template.Must(template.New("selectContext
 query := {{.Query}}
 err := d.db.SelectContext(ctx, &{{.Dest}}, query)
 if err != nil {
-	if err == sql.ErrNoRows {
-		return nil, Err{{.ModelName}}NotFound
-	}
-
-	return nil, err
+	return {{.OutputsWithErr}}
 }
 `))
 
@@ -20,7 +16,7 @@ query := {{.Query}}
 err := d.db.GetContext(ctx, &{{.Dest}}, query)
 if err != nil {
 	if err == sql.ErrNoRows {
-		return nil, Err{{.ModelName}}NotFound
+		return {{.OutputsWithNotFoundErr}}
 	}
 
 	return nil, err
@@ -31,14 +27,14 @@ var namedExecContext *template.Template = template.Must(template.New("namedExecC
 query := {{.Query}}
 _, err := d.db.NamedExecContext(ctx, query, {{.Dest}})
 if err != nil {
-	return err
+	return {{.OutputsWithErr}}
 }
 `))
 
 var execContext *template.Template = template.Must(template.New("execContext").Parse(`
 _, err := d.db.ExecContext(ctx, query, {{.ExecVars}})
 if err != nil {
-	return err
+	return {{.OutputsWithErr}}
 }
 `))
 
