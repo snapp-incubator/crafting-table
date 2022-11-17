@@ -21,7 +21,7 @@ func BuildGetFunction(
 	limit *uint,
 	groupBy []string,
 	join []query.JoinField,
-) string {
+) (functionTemplate string, signatureTemplate string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
 	groupByInterface := make([]interface{}, len(groupBy))
@@ -77,6 +77,7 @@ func BuildGetFunction(
 	if desStructTemplate != "" {
 		model += "structDes\n"
 	}
+
 	// fields: prepare outputs
 	var outputList []string
 	if len(aggregate) > 0 {
@@ -88,6 +89,22 @@ func BuildGetFunction(
 	}
 	outputList = append(outputList, "error")
 	outputs := strings.Join(outputList, ", ")
+
+	// fields: prepare real outputs without error
+	var realOutputList []string
+	if len(aggregate) > 0 {
+		for _, v := range aggregate {
+			realOutputList = append(realOutputList, "structDes"+strcase.ToCamel(v.As))
+		}
+	} else {
+		realOutputList = append(realOutputList, strcase.ToLowerCamel(structure.Name))
+	}
+
+	// fields: prepare Dest
+	dest := strcase.ToLowerCamel(structure.Name)
+	if len(aggregate) > 0 {
+		dest = "structDes"
+	}
 
 	// fields: prepare builder
 	var builder strings.Builder
@@ -105,7 +122,28 @@ func BuildGetFunction(
 	if err := signature.Execute(&builder, signatureData); err != nil {
 		panic(err)
 	}
-	signature := builder.String()
+	signatureTemplate = builder.String()
+
+	// create exec query
+	outputsWithNotFoundError := make([]string, len(realOutputList)+1)
+	for i, _ := range realOutputList {
+		outputsWithNotFoundError[i] = "nil"
+	}
+	outputsWithNotFoundError[len(realOutputList)] = "Err" + structure.Name + "NotFound"
+
+	execQueryData := struct {
+		Query                    string
+		Dest                     string
+		OutputsWithNotFoundError string
+	}{
+		Query:                    q,
+		Dest:                     dest,
+		OutputsWithNotFoundError: strings.Join(outputsWithNotFoundError, ", "),
+	}
+	if err := getContext.Execute(&builder, execQueryData); err != nil {
+		panic(err)
+	}
+	getContextQuery := builder.String()
 
 	// create function
 	functionData := struct {
@@ -117,17 +155,17 @@ func BuildGetFunction(
 		Outputs           string
 	}{
 		ModelName:         structure.Name,
-		Signature:         signature,
+		Signature:         signatureTemplate,
 		DesStructTemplate: desStructTemplate,
 		Model:             model,
-		ExecQueryTemplate: "",
-		Outputs:           "",
+		ExecQueryTemplate: getContextQuery,
+		Outputs:           strings.Join(append(realOutputList, "nil"), ", "),
 	}
 
 	if err := function.Execute(&builder, functionData); err != nil {
 		panic(err)
 	}
-	signature := builder.String()
+	functionTemplate = builder.String()
 
-	return ""
+	return functionTemplate, signatureTemplate
 }
