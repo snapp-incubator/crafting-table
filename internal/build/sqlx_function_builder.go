@@ -1,4 +1,4 @@
-package function
+package build
 
 import (
 	"strings"
@@ -7,21 +7,19 @@ import (
 	"github.com/iancoleman/strcase"
 
 	"github.com/snapp-incubator/crafting-table/internal/structure"
-
-	"github.com/snapp-incubator/crafting-table/internal/query"
 )
 
 func BuildGetFunction(
 	structure *structure.Structure,
 	table string,
 	fields []string,
-	where []query.WhereCondition,
-	aggregate []query.AggregateField,
+	where []WhereCondition,
+	aggregate []AggregateField,
 	orderBy *string,
-	orderType *query.OrderType,
+	orderType *OrderType,
 	limit *uint,
 	groupBy []string,
-	join []query.JoinField,
+	join []JoinField,
 ) (functionTemplate string, signatureTemplate string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
@@ -34,7 +32,7 @@ func BuildGetFunction(
 	}
 
 	// create query
-	q := query.BuildSelectQuery(
+	q := BuildSelectQuery(
 		table,
 		fieldsInterface,
 		where,
@@ -175,13 +173,13 @@ func BuildSelectFunction(
 	structure *structure.Structure,
 	table string,
 	fields []string,
-	where []query.WhereCondition,
-	aggregate []query.AggregateField,
+	where []WhereCondition,
+	aggregate []AggregateField,
 	orderBy *string,
-	orderType *query.OrderType,
+	orderType *OrderType,
 	limit *uint,
 	groupBy []string,
-	join []query.JoinField,
+	join []JoinField,
 ) (functionTemplate string, signatureTemplate string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
@@ -194,7 +192,7 @@ func BuildSelectFunction(
 	}
 
 	// create query
-	q := query.BuildSelectQuery(
+	q := BuildSelectQuery(
 		table,
 		fieldsInterface,
 		where,
