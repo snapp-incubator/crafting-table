@@ -56,19 +56,25 @@ func BuildGetFunction(
 	}
 
 	// fields: prepare inputs
+	inputWithTypeList := make([]string, len(where))
 	inputList := make([]string, len(where))
+
 	for i, v := range where {
-		inputList[i] = v.Column + " " + structure.FieldMapNameToType[v.Column]
+		inputList[i] = strcase.ToLowerCamel(v.Column)
+		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " + structure.FieldMapNameToType[v.Column]
 	}
+	inputsWithType := strings.Join(inputWithTypeList, ", ")
 	inputs := strings.Join(inputList, ", ")
 
 	// fields: prepare DesStructTemplate
+	// TODO: add fields to DesStructTemplate
 	desStructTemplate := ""
 	if len(aggregate) > 0 {
 		desStructTemplate += "type structDes struct {\n"
 		for _, v := range aggregate {
 			desStructTemplate += strcase.ToCamel(v.As) + " int  " + "`db:\"" + v.As + "\"`" + "\n"
 		}
+		desStructTemplate += "}"
 	}
 
 	// fields: prepare model
@@ -84,7 +90,7 @@ func BuildGetFunction(
 			outputList = append(outputList, "*int")
 		}
 	} else {
-		outputList = append(outputList, "*"+structure.PackageName+structure.Name)
+		outputList = append(outputList, "*"+structure.PackageName+"."+structure.Name)
 	}
 	outputList = append(outputList, "error")
 	outputs := strings.Join(outputList, ", ")
@@ -93,20 +99,11 @@ func BuildGetFunction(
 	var realOutputList []string
 	if len(aggregate) > 0 {
 		for _, v := range aggregate {
-			realOutputList = append(realOutputList, "structDes"+strcase.ToCamel(v.As))
+			realOutputList = append(realOutputList, "&dst"+strcase.ToCamel(v.As))
 		}
 	} else {
-		realOutputList = append(realOutputList, strcase.ToLowerCamel(structure.Name))
+		realOutputList = append(realOutputList, "&dst")
 	}
-
-	// fields: prepare Dest
-	dest := strcase.ToLowerCamel(structure.Name)
-	if len(aggregate) > 0 {
-		dest = "structDes"
-	}
-
-	// fields: prepare builder
-	var builder strings.Builder
 
 	// create signature
 	signatureData := struct {
@@ -115,56 +112,64 @@ func BuildGetFunction(
 		Outputs  string
 	}{
 		FuncName: functionName,
-		Inputs:   inputs,
+		Inputs:   inputsWithType,
 		Outputs:  outputs,
 	}
-	if err := signature.Execute(&builder, signatureData); err != nil {
+
+	var signatureBuilder strings.Builder
+	if err := signature.Execute(&signatureBuilder, signatureData); err != nil {
 		panic(err)
 	}
-	signatureTemplate = builder.String()
+	signatureTemplate = signatureBuilder.String()
 
 	// create exec query
-	outputsWithNotFoundError := make([]string, len(realOutputList)+1)
-	for i, _ := range realOutputList {
-		outputsWithNotFoundError[i] = "nil"
+	var outputsWithError []string
+	for i := 0; i < len(realOutputList); i++ {
+		outputsWithError = append(outputsWithError, "nil")
 	}
-	outputsWithNotFoundError[len(realOutputList)] = "Err" + structure.Name + "NotFound"
 
-	execQueryData := struct {
-		Query                    string
-		Dest                     string
-		OutputsWithNotFoundError string
+	getQueryData := struct {
+		Query                  string
+		Dest                   string
+		OutputsWithNotFoundErr string
+		OutputsWithErr         string
+		Inputs                 string
 	}{
-		Query:                    q,
-		Dest:                     dest,
-		OutputsWithNotFoundError: strings.Join(outputsWithNotFoundError, ", "),
+		Query: q,
+		Dest:  "dst",
+		OutputsWithNotFoundErr: strings.Join(
+			append(outputsWithError, "Err"+structure.Name+"NotFound"), ", "),
+		OutputsWithErr: strings.Join(append(outputsWithError, "err"), ", "),
+		Inputs:         inputs,
 	}
-	if err := getContext.Execute(&builder, execQueryData); err != nil {
+	var getContextBuilder strings.Builder
+	if err := getContext.Execute(&getContextBuilder, getQueryData); err != nil {
 		panic(err)
 	}
-	getContextQuery := builder.String()
+	getContextQuery := getContextBuilder.String()
 
 	// create function
 	functionData := struct {
 		ModelName         string
 		Signature         string
 		DesStructTemplate string
-		Model             string
+		DstModel          string
 		ExecQueryTemplate string
 		Outputs           string
 	}{
 		ModelName:         structure.Name,
 		Signature:         signatureTemplate,
 		DesStructTemplate: desStructTemplate,
-		Model:             model,
+		DstModel:          model,
 		ExecQueryTemplate: getContextQuery,
 		Outputs:           strings.Join(append(realOutputList, "nil"), ", "),
 	}
 
-	if err := function.Execute(&builder, functionData); err != nil {
+	var functionBuilder strings.Builder
+	if err := function.Execute(&functionBuilder, functionData); err != nil {
 		panic(err)
 	}
-	functionTemplate = builder.String()
+	functionTemplate = functionBuilder.String()
 
 	return functionTemplate, signatureTemplate
 }
@@ -210,16 +215,19 @@ func BuildSelectFunction(
 		whereColumns[i] = v.Column
 	}
 
-	functionName := "Get"
+	functionName := "Select"
 	if len(whereColumns) > 0 {
 		functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
 	}
 
 	// fields: prepare inputs
+	inputWithTypeList := make([]string, len(where))
 	inputList := make([]string, len(where))
 	for i, v := range where {
-		inputList[i] = v.Column + " " + structure.FieldMapNameToType[v.Column]
+		inputList[i] = strcase.ToLowerCamel(v.Column)
+		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " + structure.FieldMapNameToType[v.Column]
 	}
+	inputsWithType := strings.Join(inputWithTypeList, ", ")
 	inputs := strings.Join(inputList, ", ")
 
 	// fields: prepare DesStructTemplate
@@ -229,12 +237,13 @@ func BuildSelectFunction(
 		for _, v := range aggregate {
 			desStructTemplate += strcase.ToCamel(v.As) + " int  " + "`db:\"" + v.As + "\"`" + "\n"
 		}
+		desStructTemplate += "}"
 	}
 
 	// fields: prepare model
 	model := structure.PackageName + "." + structure.Name
 	if desStructTemplate != "" {
-		model += "structDes\n"
+		model = "structDes\n"
 	}
 
 	// fields: prepare outputs
@@ -244,7 +253,7 @@ func BuildSelectFunction(
 			outputList = append(outputList, "*int")
 		}
 	} else {
-		outputList = append(outputList, "*"+structure.PackageName+structure.Name)
+		outputList = append(outputList, "*"+structure.PackageName+"."+structure.Name)
 	}
 	outputList = append(outputList, "error")
 	outputs := strings.Join(outputList, ", ")
@@ -253,20 +262,11 @@ func BuildSelectFunction(
 	var realOutputList []string
 	if len(aggregate) > 0 {
 		for _, v := range aggregate {
-			realOutputList = append(realOutputList, "structDes"+strcase.ToCamel(v.As))
+			realOutputList = append(realOutputList, "&dst."+strcase.ToCamel(v.As))
 		}
 	} else {
-		realOutputList = append(realOutputList, strcase.ToLowerCamel(structure.Name))
+		realOutputList = append(realOutputList, "&dst")
 	}
-
-	// fields: prepare Dest
-	dest := strcase.ToLowerCamel(structure.Name)
-	if len(aggregate) > 0 {
-		dest = "structDes"
-	}
-
-	// fields: prepare builder
-	var builder strings.Builder
 
 	// create signature
 	signatureData := struct {
@@ -275,13 +275,14 @@ func BuildSelectFunction(
 		Outputs  string
 	}{
 		FuncName: functionName,
-		Inputs:   inputs,
+		Inputs:   inputsWithType,
 		Outputs:  outputs,
 	}
-	if err := signature.Execute(&builder, signatureData); err != nil {
+	var signatureBuilder strings.Builder
+	if err := signature.Execute(&signatureBuilder, signatureData); err != nil {
 		panic(err)
 	}
-	signatureTemplate = builder.String()
+	signatureTemplate = signatureBuilder.String()
 
 	// create exec query
 	outputsWithError := make([]string, len(realOutputList)+1)
@@ -291,40 +292,44 @@ func BuildSelectFunction(
 	outputsWithError[len(realOutputList)] = "err"
 
 	execQueryData := struct {
-		Query                    string
-		Dest                     string
-		OutputsWithNotFoundError string
+		Query          string
+		Dest           string
+		OutputsWithErr string
+		Inputs         string
 	}{
-		Query:                    q,
-		Dest:                     dest,
-		OutputsWithNotFoundError: strings.Join(outputsWithError, ", "),
+		Query:          q,
+		Dest:           "dst",
+		OutputsWithErr: strings.Join(outputsWithError, ", "),
+		Inputs:         inputs,
 	}
-	if err := selectContext.Execute(&builder, execQueryData); err != nil {
+	var selectContextBuilder strings.Builder
+	if err := selectContext.Execute(&selectContextBuilder, execQueryData); err != nil {
 		panic(err)
 	}
-	selectContextQuery := builder.String()
+	selectContextQuery := selectContextBuilder.String()
 
 	// create function
 	functionData := struct {
 		ModelName         string
 		Signature         string
 		DesStructTemplate string
-		Model             string
+		DstModel          string
 		ExecQueryTemplate string
 		Outputs           string
 	}{
 		ModelName:         structure.Name,
 		Signature:         signatureTemplate,
 		DesStructTemplate: desStructTemplate,
-		Model:             model,
+		DstModel:          model,
 		ExecQueryTemplate: selectContextQuery,
 		Outputs:           strings.Join(append(realOutputList, "nil"), ", "),
 	}
 
-	if err := function.Execute(&builder, functionData); err != nil {
+	var functionBuilder strings.Builder
+	if err := function.Execute(&functionBuilder, functionData); err != nil {
 		panic(err)
 	}
-	functionTemplate = builder.String()
+	functionTemplate = functionBuilder.String()
 
 	return functionTemplate, signatureTemplate
 }
@@ -364,52 +369,52 @@ func BuildRepository(
 }
 
 // Query to database
-var selectContext *template.Template = template.Must(template.New("selectContext").Parse(`
-query := {{.Query}}
-err := d.db.SelectContext(ctx, &{{.Dest}}, query)
+var selectContext *template.Template = template.Must(
+	template.New("selectContext").Parse("query := `{{.Query}}`\n" +
+		`err := d.db.SelectContext(ctx, &{{.Dest}}, query, {{.Inputs}})
 if err != nil {
 	return {{.OutputsWithErr}}
 }
 `))
 
-var getContext *template.Template = template.Must(template.New("getContext").Parse(`
-query := {{.Query}}
-err := d.db.GetContext(ctx, &{{.Dest}}, query)
+var getContext *template.Template = template.Must(
+	template.New("getContext").Parse("query := `{{.Query}}`\n" +
+		`err := d.db.GetContext(ctx, &{{.Dest}}, query, {{.Inputs}})
 if err != nil {
 	if err == sql.ErrNoRows {
 		return {{.OutputsWithNotFoundErr}}
 	}
 
-	return nil, err
+	return {{.OutputsWithErr}}
 }
 `))
 
-var namedExecContext *template.Template = template.Must(template.New("namedExecContext").Parse(`
-query := {{.Query}}
-_, err := d.db.NamedExecContext(ctx, query, {{.Dest}})
+var namedExecContext *template.Template = template.Must(
+	template.New("namedExecContext").Parse("query := `{{.Query}}`\n" +
+		`_, err := d.db.NamedExecContext(ctx, query, {{.Dest}})
 if err != nil {
 	return {{.OutputsWithErr}}
 }
 `))
 
-var execContext *template.Template = template.Must(template.New("execContext").Parse(`
-_, err := d.db.ExecContext(ctx, query, {{.ExecVars}})
+var execContext *template.Template = template.Must(
+	template.New("execContext").Parse("query := `{{.Query}}`\n" +
+		`_, err := d.db.ExecContext(ctx, query, {{.ExecVars}})
 if err != nil {
 	return {{.OutputsWithErr}}
 }
 `))
 
 // signature is function's signature
-var signature *template.Template = template.Must(template.New("signature").Parse(`
-{{.FuncName}}(ctx context.Context, {{.Inputs}}) ({{.Outputs}})
-`))
+var signature *template.Template = template.Must(
+	template.New("signature").Parse(`{{.FuncName}}(ctx context.Context, {{.Inputs}}) ({{.Outputs}})`))
 
 // function is function's body
 var function *template.Template = template.Must(template.New("function").Parse(`
 func (d *database{{.ModelName}}) {{.Signature}} {
 	{{.DesStructTemplate}}
 
-	var dst {{.Model}}
+	var dst {{.DstModel}}
 
 	{{.ExecQueryTemplate}}
 
