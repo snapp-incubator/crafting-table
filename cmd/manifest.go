@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/snapp-incubator/crafting-table/internal/parser"
-	"github.com/snapp-incubator/crafting-table/internal/repository"
+	"github.com/snapp-incubator/crafting-table/internal/build"
+
 	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
@@ -37,12 +37,7 @@ func apply(_ *cobra.Command, _ []string) {
 		panic("manifest path is not set")
 	}
 
-	var selectedTags []string
-	if tags != "" {
-		selectedTags = parser.ExtractManifestTags(tags)
-	}
-
-	var manifest repository.Manifest
+	var manifest build.Repo
 	file, err := os.Open(manifestPath)
 	if err != nil {
 		panic(err)
@@ -59,14 +54,7 @@ func apply(_ *cobra.Command, _ []string) {
 		panic(err)
 	}
 
-	for _, repo := range manifest.Repos {
-		if tags != "" && !repo.EqualTag(selectedTags) {
-			continue
-		}
-
-		if err := repository.Generate(repo.Source, repo.Destination, repo.PackageName, repo.StructName, &repo.Get,
-			&repo.Update, &repo.Join, &repo.Aggregate, repo.Create.Enable, repo.Test); err != nil {
-			log.Fatal(err)
-		}
+	if err := build.Generate(manifest); err != nil {
+		log.Fatal(err)
 	}
 }
