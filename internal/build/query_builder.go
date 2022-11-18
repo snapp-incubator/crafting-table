@@ -13,6 +13,13 @@ const (
 	OrderTypeDesc OrderType = "desc"
 )
 
+type SelectType string
+
+const (
+	SelectTypeSelect SelectType = "select"
+	SelectTypeGet    SelectType = "get"
+)
+
 type OperatorType string
 
 const (
@@ -48,24 +55,47 @@ const (
 
 // AggregateField is a struct for aggregate field
 type AggregateField struct {
-	Function string
-	On       string
-	As       string
+	Function string `yaml:"function"`
+	On       string `yaml:"on"`
+	As       string `yaml:"as"`
 }
 
 // WhereCondition is a condition for where clause
 type WhereCondition struct {
-	Column   string
-	Operator OperatorType
+	Column   string       `yaml:"column"`
+	Operator OperatorType `yaml:"operator"`
 }
 
 // JoinField is a struct for join field
 type JoinField struct {
-	Table    string
-	As       string
-	OnSource string
-	OnJoin   string
-	Function JoinType
+	Table    string   `yaml:"table"`
+	As       string   `yaml:"as"`
+	OnSource string   `yaml:"on_source"`
+	OnJoin   string   `yaml:"on_join"`
+	Function JoinType `yaml:"function"`
+}
+
+type Select struct {
+	Type            SelectType       `yaml:"type"`
+	Fields          []string         `yaml:"fields"`
+	AggregateFields []AggregateField `yaml:"aggregate_fields"`
+	WhereConditions []WhereCondition `yaml:"where_conditions"`
+	JoinFields      []JoinField      `yaml:"join_fields"`
+	OrderBy         string           `yaml:"order_by"`
+	OrderType       OrderType        `yaml:"order_type"`
+	Limit           uint             `yaml:"limit"`
+	GroupBy         []string         `yaml:"group_by"`
+}
+
+type Repo struct {
+	Source      string   `yaml:"source"`
+	Destination string   `yaml:"destination"`
+	PackageName string   `yaml:"package_name"`
+	StructName  string   `yaml:"struct_name"`
+	TableName   string   `yaml:"table_name"`
+	DBLibrary   string   `yaml:"db_library"`
+	Test        bool     `yaml:"test"`
+	Select      []Select `yaml:"select"`
 }
 
 // TODO: ADD DB NAME TO INPUT
@@ -146,7 +176,7 @@ func BuildSelectQuery(
 	}
 
 	// Order By
-	if orderBy != nil {
+	if orderBy != nil && *orderType != "" {
 		if *orderType == OrderTypeAsc {
 			ds = ds.Order(goqu.I("a").Asc())
 		} else if *orderType == OrderTypeDesc {
@@ -170,42 +200,42 @@ func BuildSelectQuery(
 		case JoinTypeJoin:
 			ds = ds.Join(
 				goqu.T(j.Table).As(j.As),
-				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+				goqu.On(goqu.Ex{table + "." + j.OnSource: j.Table + "." + j.OnJoin}),
 			)
 		case JoinTypeFullOuter:
 			ds = ds.FullOuterJoin(
 				goqu.T(j.Table).As(j.As),
-				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+				goqu.On(goqu.Ex{table + "." + j.OnSource: j.Table + "." + j.OnJoin}),
 			)
 		case JoinTypeLeft:
 			ds = ds.LeftJoin(
 				goqu.T(j.Table).As(j.As),
-				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+				goqu.On(goqu.Ex{table + "." + j.OnSource: j.Table + "." + j.OnJoin}),
 			)
 		case JoinTypeRight:
 			ds = ds.RightJoin(
 				goqu.T(j.Table).As(j.As),
-				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+				goqu.On(goqu.Ex{table + "." + j.OnSource: j.Table + "." + j.OnJoin}),
 			)
 		case JoinTypeInner:
 			ds = ds.InnerJoin(
 				goqu.T(j.Table).As(j.As),
-				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+				goqu.On(goqu.Ex{table + "." + j.OnSource: j.Table + "." + j.OnJoin}),
 			)
 		case JoinTypeRightOuter:
 			ds = ds.RightOuterJoin(
 				goqu.T(j.Table).As(j.As),
-				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+				goqu.On(goqu.Ex{table + "." + j.OnSource: j.Table + "." + j.OnJoin}),
 			)
 		case JoinTypeLeftOuter:
 			ds = ds.LeftOuterJoin(
 				goqu.T(j.Table).As(j.As),
-				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+				goqu.On(goqu.Ex{table + "." + j.OnSource: j.Table + "." + j.OnJoin}),
 			)
 		case JoinTypeFull:
 			ds = ds.FullJoin(
 				goqu.T(j.Table).As(j.As),
-				goqu.On(goqu.Ex{table + j.OnSource: j.Table + j.OnJoin}),
+				goqu.On(goqu.Ex{table + "." + j.OnSource: j.Table + "." + j.OnJoin}),
 			)
 		case JoinTypeNatural:
 			ds = ds.NaturalJoin(
