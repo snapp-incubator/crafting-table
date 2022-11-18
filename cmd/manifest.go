@@ -54,7 +54,7 @@ func apply(_ *cobra.Command, _ []string) {
 		panic(err)
 	}
 
-	if err := build.NewGenerate(manifest); err != nil {
+	if err := build.Generate(manifest); err != nil {
 		log.Fatal(err)
 	}
 }

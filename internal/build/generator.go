@@ -9,7 +9,7 @@ import (
 	internalStruct "github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-func NewGenerate(repo Repo) error {
+func Generate(repo Repo) error {
 	//testDestination := repo.Destination[:len(repo.Destination)-3] + "_test.go"
 
 	s, err := internalStruct.BindStruct(repo.Source, repo.StructName)
