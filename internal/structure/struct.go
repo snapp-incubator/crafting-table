@@ -9,54 +9,6 @@ import (
 	"github.com/iancoleman/strcase"
 )
 
-type CreateVariables struct {
-	Enable              bool   `yaml:"enable"`
-	CostumeFunctionName string `yaml:"costume_function_name"`
-}
-
-type GetVariable struct {
-	Conditions          []string `yaml:"conditions"`
-	CostumeFields       []string `yaml:"costume_fields"`
-	CostumeFunctionName string   `yaml:"costume_function_name"`
-}
-
-type UpdateVariables struct {
-	Conditions          []string `yaml:"conditions"`
-	Fields              []string `yaml:"fields"`
-	CostumeFunctionName string   `yaml:"costume_function_name"`
-}
-
-type JoinField struct {
-	JoinStructPath string `yaml:"join_struct_path"`
-	JoinStructName string `yaml:"join_struct_name"`
-	JoinTableName  string `yaml:"join_table_name"`
-	JoinFieldAs    string `yaml:"join_field_as"`
-	JoinOn         string `yaml:"join_on"`
-	JoinType       string `yaml:"join_type"`
-}
-
-type JoinVariables struct {
-	Fields              []JoinField `yaml:"fields"`
-	CostumeFunctionName string      `yaml:"costume_function_name"`
-}
-
-var AggregateMap = map[string]string{
-	"sum":   "SUM",
-	"count": "COUNT",
-	"avg":   "AVG",
-	"max":   "MAX",
-	"min":   "MIN",
-}
-
-type AggregateField struct {
-	Conditions          []string `yaml:"conditions"`
-	Function            string   `yaml:"function"`
-	On                  string   `yaml:"on"`
-	As                  string   `yaml:"as"`
-	GroupBy             []string `yaml:"group_by"`
-	CostumeFunctionName string   `yaml:"costume_function_name"`
-}
-
 type Field struct {
 	Name   string
 	Type   string
@@ -158,40 +110,4 @@ func BindStruct(src, structName string) (*Structure, error) {
 	}
 
 	return structure, nil
-}
-
-func (s *Structure) GetDBFields(prefix string) string {
-	result := "\""
-	tmp := ""
-	for _, field := range s.Fields {
-		if len(tmp) > 80 {
-			result += tmp[:len(tmp)-2] + ", \"+\n\t\""
-			tmp = ""
-		}
-		tmp += prefix + field.DBFlag + ", "
-	}
-
-	if tmp != "" {
-		result += tmp[:len(tmp)-2] + "\""
-	}
-
-	return result
-}
-
-func (s *Structure) GetDBFieldsInQuotation() string {
-	result := ""
-	for _, field := range s.Fields {
-		result += "\"" + field.DBFlag + "\",\n\t\t\t"
-	}
-
-	return result
-}
-
-func (s *Structure) GetVariableFields(prefix string) string {
-	result := ""
-	for _, field := range s.Fields {
-		result += prefix + field.Name + ",\n\t\t\t"
-	}
-
-	return result
 }
