@@ -35,6 +35,7 @@ func Generate(repo Repo) error {
 				&r.Limit,
 				r.GroupBy,
 				r.JoinFields,
+				r.FunctionName,
 			)
 			functionList = append(functionList, function)
 			signatureList = append(signatureList, signature)
@@ -50,6 +51,7 @@ func Generate(repo Repo) error {
 				&r.Limit,
 				r.GroupBy,
 				r.JoinFields,
+				r.FunctionName,
 			)
 			functionList = append(functionList, function)
 			signatureList = append(signatureList, signature)
