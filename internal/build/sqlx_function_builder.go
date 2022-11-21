@@ -51,10 +51,14 @@ func BuildGetFunction(
 		whereColumns[i] = v.Column
 	}
 
-	// read from input if a name is set
-	functionName := "Get"
-	if len(whereColumns) > 0 {
-		functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Get"
+		if len(whereColumns) > 0 {
+			functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+		}
+	} else {
+		functionName = customFunctionName
 	}
 
 	// fields: prepare inputs
@@ -219,9 +223,14 @@ func BuildSelectFunction(
 	}
 
 	// read from input if a name is set
-	functionName := "Select"
-	if len(whereColumns) > 0 {
-		functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Select"
+		if len(whereColumns) > 0 {
+			functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+		}
+	} else {
+		functionName = customFunctionName
 	}
 
 	// fields: prepare inputs
