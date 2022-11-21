@@ -20,7 +20,7 @@ func BuildGetFunction(
 	limit *uint,
 	groupBy []string,
 	join []JoinField,
-	customFunctionName string, // make an optional argument
+	customFunctionName string,
 ) (functionTemplate string, signatureTemplate string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
@@ -191,7 +191,7 @@ func BuildSelectFunction(
 	limit *uint,
 	groupBy []string,
 	join []JoinField,
-	customFunctionName string, // make an optional argument
+	customFunctionName string,
 ) (functionTemplate string, signatureTemplate string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
@@ -222,7 +222,6 @@ func BuildSelectFunction(
 		whereColumns[i] = v.Column
 	}
 
-	// read from input if a name is set
 	var functionName string
 	if customFunctionName == "" {
 		functionName = "Select"
