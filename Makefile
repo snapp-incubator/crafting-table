@@ -20,7 +20,3 @@ build: format vendor
 it: build
 	- sh integration_test.sh $(ROOT)
 
-
-querybuilder-example:
-	- go install .
-	- go generate ./example/...
