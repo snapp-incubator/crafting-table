@@ -11,6 +11,7 @@ import (
 
 func BuildGetFunction(
 	structure *structure.Structure,
+	database string,
 	table string,
 	fields []string,
 	where []WhereCondition,
@@ -33,6 +34,7 @@ func BuildGetFunction(
 
 	// create query
 	q := BuildSelectQuery(
+		database,
 		table,
 		fieldsInterface,
 		where,
@@ -176,6 +178,7 @@ func BuildGetFunction(
 
 func BuildSelectFunction(
 	structure *structure.Structure,
+	database string,
 	table string,
 	fields []string,
 	where []WhereCondition,
@@ -198,6 +201,7 @@ func BuildSelectFunction(
 
 	// create query
 	q := BuildSelectQuery(
+		database,
 		table,
 		fieldsInterface,
 		where,

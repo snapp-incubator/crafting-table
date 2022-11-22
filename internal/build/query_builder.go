@@ -88,20 +88,22 @@ type Select struct {
 }
 
 type Repo struct {
-	Source      string   `yaml:"source"`
-	Destination string   `yaml:"destination"`
-	PackageName string   `yaml:"package_name"`
-	StructName  string   `yaml:"struct_name"`
-	TableName   string   `yaml:"table_name"`
-	DBLibrary   string   `yaml:"db_library"`
-	Test        bool     `yaml:"test"`
-	Select      []Select `yaml:"select"`
+	Source       string   `yaml:"source"`
+	Destination  string   `yaml:"destination"`
+	DatabaseName string   `yaml:"database_name"`
+	PackageName  string   `yaml:"package_name"`
+	StructName   string   `yaml:"struct_name"`
+	TableName    string   `yaml:"table_name"`
+	DBLibrary    string   `yaml:"db_library"`
+	Test         bool     `yaml:"test"`
+	Select       []Select `yaml:"select"`
 }
 
 // TODO: ADD DB NAME TO INPUT
 
 // BuildSelectQuery builds a select query
 func BuildSelectQuery(
+	database string,
 	table string,
 	fields []interface{},
 	where []WhereCondition,
@@ -112,7 +114,8 @@ func BuildSelectQuery(
 	groupBy []interface{},
 	join []JoinField,
 ) string {
-	ds := goqu.From(table)
+	dialect := goqu.Dialect(database)
+	ds := dialect.From(table)
 
 	// Aggregate: e.g. COUNT, SUM, MIN, MAX, AVG, FIRST, LAST
 	// TODO: ADD AGGREGATE FUNCTION TO MAP
@@ -272,11 +275,13 @@ func BuildSelectQuery(
 
 // BuildUpdateQuery Building a query to update a table.
 func BuildUpdateQuery(
+	database string,
 	table string,
 	fields []interface{},
 	where []WhereCondition,
 ) string {
-	ds := goqu.Update(table)
+	dialect := goqu.Dialect(database)
+	ds := dialect.Update(table)
 
 	// Set
 	setRecords := make(goqu.Record, 0)
@@ -326,11 +331,13 @@ func BuildUpdateQuery(
 
 // BuildInsertQuery build insert query
 func BuildInsertQuery(
+	database string,
 	table string,
 	fields []interface{},
 	where []WhereCondition,
 ) string {
-	ds := goqu.Insert(table)
+	dialect := goqu.Dialect(database)
+	ds := dialect.Insert(table)
 
 	// Set
 	setRecords := make(goqu.Record, 0)
