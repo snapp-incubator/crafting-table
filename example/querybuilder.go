@@ -1,4 +1,4 @@
-//go:generate crafting-table qb --dialect=mysql $GOFILE
+//go:generate crafting-table qb --dialect=mysql -f $GOFILE
 package cmd
 
 // ct: model

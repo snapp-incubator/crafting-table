@@ -124,7 +124,7 @@ func Generate(dialect string, pkg string, structDecl *ast.GenDecl, args map[stri
 		panic(err)
 	}
 
-	err = newOrderbyTemplate.Execute(&buff, td)
+	err = orderByTemplate.Execute(&buff, td)
 	if err != nil {
 		panic(err)
 	}
