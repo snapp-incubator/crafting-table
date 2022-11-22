@@ -26,7 +26,7 @@ func Generate(repo Repo) error {
 		if r.Type == SelectTypeGet {
 			function, signature := BuildGetFunction(
 				s,
-				repo.DatabaseName,
+				repo.Dialect,
 				s.TableName,
 				r.Fields,
 				r.WhereConditions,
@@ -42,7 +42,7 @@ func Generate(repo Repo) error {
 		} else if r.Type == SelectTypeSelect {
 			function, signature := BuildSelectFunction(
 				s,
-				repo.DatabaseName,
+				repo.Dialect,
 				s.TableName,
 				r.Fields,
 				r.WhereConditions,

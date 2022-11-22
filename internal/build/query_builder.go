@@ -53,6 +53,15 @@ const (
 	JoinTypeCross        JoinType = "cross"
 )
 
+type DialectType string
+
+const (
+	MySQL     DialectType = "mysql"
+	Postgres  DialectType = "postgres"
+	SQLite3   DialectType = "sqlite3"
+	SQLServer DialectType = "sqlserver"
+)
+
 // AggregateField is a struct for aggregate field
 type AggregateField struct {
 	Function string `yaml:"function"`
@@ -88,22 +97,22 @@ type Select struct {
 }
 
 type Repo struct {
-	Source       string   `yaml:"source"`
-	Destination  string   `yaml:"destination"`
-	DatabaseName string   `yaml:"database_name"`
-	PackageName  string   `yaml:"package_name"`
-	StructName   string   `yaml:"struct_name"`
-	TableName    string   `yaml:"table_name"`
-	DBLibrary    string   `yaml:"db_library"`
-	Test         bool     `yaml:"test"`
-	Select       []Select `yaml:"select"`
+	Source      string      `yaml:"source"`
+	Destination string      `yaml:"destination"`
+	Dialect     DialectType `yaml:"dialect"`
+	PackageName string      `yaml:"package_name"`
+	StructName  string      `yaml:"struct_name"`
+	TableName   string      `yaml:"table_name"`
+	DBLibrary   string      `yaml:"db_library"`
+	Test        bool        `yaml:"test"`
+	Select      []Select    `yaml:"select"`
 }
 
 // TODO: ADD DB NAME TO INPUT
 
 // BuildSelectQuery builds a select query
 func BuildSelectQuery(
-	database string,
+	dialect DialectType,
 	table string,
 	fields []interface{},
 	where []WhereCondition,
@@ -114,8 +123,19 @@ func BuildSelectQuery(
 	groupBy []interface{},
 	join []JoinField,
 ) string {
-	dialect := goqu.Dialect(database)
-	ds := dialect.From(table)
+	var d goqu.DialectWrapper
+	switch dialect {
+	case MySQL:
+		d = goqu.Dialect(string(MySQL))
+	case Postgres:
+		d = goqu.Dialect(string(Postgres))
+	case SQLite3:
+		d = goqu.Dialect(string(SQLite3))
+	case SQLServer:
+		d = goqu.Dialect(string(SQLServer))
+	}
+
+	ds := d.From(table)
 
 	// Aggregate: e.g. COUNT, SUM, MIN, MAX, AVG, FIRST, LAST
 	// TODO: ADD AGGREGATE FUNCTION TO MAP
@@ -275,13 +295,23 @@ func BuildSelectQuery(
 
 // BuildUpdateQuery Building a query to update a table.
 func BuildUpdateQuery(
-	database string,
+	dialect DialectType,
 	table string,
 	fields []interface{},
 	where []WhereCondition,
 ) string {
-	dialect := goqu.Dialect(database)
-	ds := dialect.Update(table)
+	var d goqu.DialectWrapper
+	switch dialect {
+	case MySQL:
+		d = goqu.Dialect(string(MySQL))
+	case Postgres:
+		d = goqu.Dialect(string(Postgres))
+	case SQLite3:
+		d = goqu.Dialect(string(SQLite3))
+	case SQLServer:
+		d = goqu.Dialect(string(SQLServer))
+	}
+	ds := d.Update(table)
 
 	// Set
 	setRecords := make(goqu.Record, 0)
@@ -331,13 +361,24 @@ func BuildUpdateQuery(
 
 // BuildInsertQuery build insert query
 func BuildInsertQuery(
-	database string,
+	dialect DialectType,
 	table string,
 	fields []interface{},
 	where []WhereCondition,
 ) string {
-	dialect := goqu.Dialect(database)
-	ds := dialect.Insert(table)
+	var d goqu.DialectWrapper
+	switch dialect {
+	case MySQL:
+		d = goqu.Dialect(string(MySQL))
+	case Postgres:
+		d = goqu.Dialect(string(Postgres))
+	case SQLite3:
+		d = goqu.Dialect(string(SQLite3))
+	case SQLServer:
+		d = goqu.Dialect(string(SQLServer))
+	}
+
+	ds := d.Insert(table)
 
 	// Set
 	setRecords := make(goqu.Record, 0)
