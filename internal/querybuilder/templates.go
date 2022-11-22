@@ -28,7 +28,7 @@ var (
 	placeholderGeneratorTemplate  = template.Must(template.New("ct-placeholder").Funcs(funcMap).Parse(placeholderGenerator))
 	schemaTemplate                = template.Must(template.New("ct-schema").Funcs(funcMap).Parse(schema))
 	queryBuilderInterfaceTemplate = template.Must(template.New("ct-interface").Funcs(funcMap).Parse(queryBuilderInterface))
-	newOrderbyTemplate            = template.Must(template.New("ct-newOrderby").Funcs(funcMap).Parse(neworderby))
+	orderByTemplate               = template.Must(template.New("ct-orderby").Funcs(funcMap).Parse(orderBy))
 )
 
 type templateData struct {
@@ -38,7 +38,6 @@ type templateData struct {
 	Fields    []structField
 	Dialect   string
 }
-
 
 const queryBuilderInterface = `
 type {{.ModelName}}SQLQueryBuilder interface{
@@ -272,7 +271,7 @@ func (q *__{{ $.ModelName}}SQLQueryBuilder) Select(column {{.ModelName}}Column) 
 }
 `
 
-const neworderby = `
+const orderBy = `
 func (q *__{{ $.ModelName}}SQLQueryBuilder) OrderByAsc(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
     q.mode = "select"
 	q.orderby = append(q.orderby, fmt.Sprintf("%s ASC", string(column)))
