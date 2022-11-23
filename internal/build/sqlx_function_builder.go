@@ -20,6 +20,7 @@ func BuildGetFunction(
 	limit *uint,
 	groupBy []string,
 	join []JoinField,
+	customFunctionName string,
 ) (functionTemplate string, signatureTemplate string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
@@ -50,9 +51,14 @@ func BuildGetFunction(
 		whereColumns[i] = v.Column
 	}
 
-	functionName := "Get"
-	if len(whereColumns) > 0 {
-		functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Get"
+		if len(whereColumns) > 0 {
+			functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+		}
+	} else {
+		functionName = customFunctionName
 	}
 
 	// fields: prepare inputs
@@ -185,6 +191,7 @@ func BuildSelectFunction(
 	limit *uint,
 	groupBy []string,
 	join []JoinField,
+	customFunctionName string,
 ) (functionTemplate string, signatureTemplate string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
@@ -215,9 +222,14 @@ func BuildSelectFunction(
 		whereColumns[i] = v.Column
 	}
 
-	functionName := "Select"
-	if len(whereColumns) > 0 {
-		functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Select"
+		if len(whereColumns) > 0 {
+			functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+		}
+	} else {
+		functionName = customFunctionName
 	}
 
 	// fields: prepare inputs
