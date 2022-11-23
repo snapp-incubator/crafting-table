@@ -91,6 +91,7 @@ type JoinField struct {
 type Select struct {
 	Type            SelectType       `yaml:"type"`
 	Fields          []string         `yaml:"fields"`
+	FunctionName    string           `yaml:"function_name"`
 	AggregateFields []AggregateField `yaml:"aggregate_fields"`
 	WhereConditions []WhereCondition `yaml:"where_conditions"`
 	JoinFields      []JoinField      `yaml:"join_fields"`
