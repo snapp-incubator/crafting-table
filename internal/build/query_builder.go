@@ -123,18 +123,7 @@ func BuildSelectQuery(
 	groupBy []interface{},
 	join []JoinField,
 ) string {
-	var d goqu.DialectWrapper
-	switch dialect {
-	case MySQL:
-		d = goqu.Dialect(string(MySQL))
-	case Postgres:
-		d = goqu.Dialect(string(Postgres))
-	case SQLite3:
-		d = goqu.Dialect(string(SQLite3))
-	case SQLServer:
-		d = goqu.Dialect(string(SQLServer))
-	}
-
+	d := goqu.Dialect(string(dialect))
 	ds := d.From(table)
 
 	// Aggregate: e.g. COUNT, SUM, MIN, MAX, AVG, FIRST, LAST
@@ -300,17 +289,7 @@ func BuildUpdateQuery(
 	fields []interface{},
 	where []WhereCondition,
 ) string {
-	var d goqu.DialectWrapper
-	switch dialect {
-	case MySQL:
-		d = goqu.Dialect(string(MySQL))
-	case Postgres:
-		d = goqu.Dialect(string(Postgres))
-	case SQLite3:
-		d = goqu.Dialect(string(SQLite3))
-	case SQLServer:
-		d = goqu.Dialect(string(SQLServer))
-	}
+	d := goqu.Dialect(string(dialect))
 	ds := d.Update(table)
 
 	// Set
@@ -366,18 +345,7 @@ func BuildInsertQuery(
 	fields []interface{},
 	where []WhereCondition,
 ) string {
-	var d goqu.DialectWrapper
-	switch dialect {
-	case MySQL:
-		d = goqu.Dialect(string(MySQL))
-	case Postgres:
-		d = goqu.Dialect(string(Postgres))
-	case SQLite3:
-		d = goqu.Dialect(string(SQLite3))
-	case SQLServer:
-		d = goqu.Dialect(string(SQLServer))
-	}
-
+	d := goqu.Dialect(string(dialect))
 	ds := d.Insert(table)
 
 	// Set
