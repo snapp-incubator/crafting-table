@@ -7,7 +7,7 @@
 * Add function builder layer. (2022-11-17, @n25a, !59)
 * Refactor query builder layer and function builder layer and merge them. (2022-11-18, @n25a, !60)
 * Remove cli and terminal UI commands. (2022-11-18, @n25a, !61)
-* Add custom function name (2022-11-21, @parsaeisa , !69)
+* Add custom function name (2022-11-21, @parsaeisa, !69)
 
 # v2.0.0 - Nov 08 2022 
 
