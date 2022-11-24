@@ -11,6 +11,7 @@ import (
 
 func BuildGetFunction(
 	structure *structure.Structure,
+	dialect DialectType,
 	table string,
 	fields []string,
 	where []WhereCondition,
@@ -34,6 +35,7 @@ func BuildGetFunction(
 
 	// create query
 	q := BuildSelectQuery(
+		dialect,
 		table,
 		fieldsInterface,
 		where,
@@ -134,15 +136,22 @@ func BuildGetFunction(
 		outputsWithError = append(outputsWithError, "nil")
 	}
 
+	specialQuery := false
+	if dialect == MySQL || dialect == SQLite3 {
+		specialQuery = true
+	}
+
 	getQueryData := struct {
 		Query                  string
+		SpecialQuery           bool
 		Dest                   string
 		OutputsWithNotFoundErr string
 		OutputsWithErr         string
 		Inputs                 string
 	}{
-		Query: q,
-		Dest:  "dst",
+		Query:        q,
+		SpecialQuery: specialQuery,
+		Dest:         "dst",
 		OutputsWithNotFoundErr: strings.Join(
 			append(outputsWithError, "Err"+structure.Name+"NotFound"), ", "),
 		OutputsWithErr: strings.Join(append(outputsWithError, "err"), ", "),
@@ -182,6 +191,7 @@ func BuildGetFunction(
 
 func BuildSelectFunction(
 	structure *structure.Structure,
+	dialect DialectType,
 	table string,
 	fields []string,
 	where []WhereCondition,
@@ -205,6 +215,7 @@ func BuildSelectFunction(
 
 	// create query
 	q := BuildSelectQuery(
+		dialect,
 		table,
 		fieldsInterface,
 		where,
@@ -303,13 +314,20 @@ func BuildSelectFunction(
 	}
 	outputsWithError[len(realOutputList)] = "err"
 
+	specialQuery := false
+	if dialect == MySQL || dialect == SQLite3 {
+		specialQuery = true
+	}
+
 	execQueryData := struct {
 		Query          string
+		SpecialQuery   bool
 		Dest           string
 		OutputsWithErr string
 		Inputs         string
 	}{
 		Query:          q,
+		SpecialQuery:   specialQuery,
 		Dest:           "dst",
 		OutputsWithErr: strings.Join(outputsWithError, ", "),
 		Inputs:         inputs,
@@ -382,7 +400,8 @@ func BuildRepository(
 
 // Query to database
 var selectContext *template.Template = template.Must(
-	template.New("selectContext").Parse("query := `{{.Query}}`\n" +
+	template.New("selectContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`err := d.db.SelectContext(ctx, &{{.Dest}}, query, {{.Inputs}})
 if err != nil {
 	return {{.OutputsWithErr}}
@@ -390,7 +409,8 @@ if err != nil {
 `))
 
 var getContext *template.Template = template.Must(
-	template.New("getContext").Parse("query := `{{.Query}}`\n" +
+	template.New("getContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`err := d.db.GetContext(ctx, &{{.Dest}}, query, {{.Inputs}})
 if err != nil {
 	if err == sql.ErrNoRows {
