@@ -180,11 +180,13 @@ func BuildGetFunction(
 		Outputs:           strings.Join(append(realOutputList, "nil"), ", "),
 	}
 
+	println(getContextQuery)
+
 	var functionBuilder strings.Builder
 	if err := function.Execute(&functionBuilder, functionData); err != nil {
 		panic(err)
 	}
-	functionTemplate = functionBuilder.String()
+	functionTemplate = functionBuilder.String() // This is the result
 
 	return functionTemplate, signatureTemplate
 }
@@ -398,6 +400,27 @@ func BuildRepository(
 	return repositoryTemplate
 }
 
+func BuildInsertFunction(
+	structure *structure.Structure,
+	dialect DialectType,
+	table string,
+	fields []string,
+
+	customFunctionName string,
+) (functionTemplate string, signatureTemplate string) {
+	var builder strings.Builder
+	// bring an example of wanted result
+
+	// define an struct
+
+	// build it with
+	if err := insertContext.Execute(builder); err != nil {
+		// do sth with error
+	}
+
+	// return the result
+}
+
 // Query to database
 var selectContext *template.Template = template.Must(
 	template.New("selectContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
@@ -420,6 +443,10 @@ if err != nil {
 	return {{.OutputsWithErr}}
 }
 `))
+
+// Complete it
+var insertContext *template.Template = template.Must(
+	template.New("insertContext").Parse())
 
 var namedExecContext *template.Template = template.Must(
 	template.New("namedExecContext").Parse("query := `{{.Query}}`\n" +
