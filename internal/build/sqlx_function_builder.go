@@ -378,8 +378,9 @@ func BuildInsertFunction(
 	structure *structure.Structure,
 	dialect DialectType,
 	table string,
-	fields []string,
-
+	fields []interface{},
+	where []WhereCondition,
+	objectName string,
 	customFunctionName string,
 ) (functionTemplate string, signatureTemplate string) {
 	// bring an example of wanted result
@@ -398,8 +399,6 @@ func BuildInsertFunction(
 		functionName = customFunctionName
 	}
 
-	var objectName string
-
 	inputs := fmt.Sprintf("%s *%s.%s", objectName, structure.PackageName, structure.Name)
 
 	// make functions signature
@@ -417,7 +416,12 @@ func BuildInsertFunction(
 	// is this template a good name ? because this is not a template actually .
 
 	// make functions body
-	var insertQuery string
+	insertQuery := BuildInsertQuery(
+		dialect,
+		table,
+		fields,
+		where,
+	)
 	functionData := struct {
 		Query      string
 		ObjectName string
