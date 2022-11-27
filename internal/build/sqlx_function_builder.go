@@ -378,7 +378,7 @@ func BuildInsertFunction(
 	structure *structure.Structure,
 	dialect DialectType,
 	table string,
-	fields []interface{},
+	fields []string,
 	where []WhereCondition,
 	objectName string,
 	customFunctionName string,
