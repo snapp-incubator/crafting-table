@@ -421,7 +421,12 @@ func BuildInsertFunction(
 			return err
 		}
 	*/
-	// make function name
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Create"
+	} else {
+		functionName = customFunctionName
+	}
 
 	// make functions signature
 	signatureData := signatureParameters{
