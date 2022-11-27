@@ -498,7 +498,7 @@ if err != nil {
 
 // Complete it
 var insertContext *template.Template = template.Must(
-	template.New("insertContext").Parse("query := {{.Query}} \n" +
+	template.New("insertContext").Parse("query := '{{.Query}}' \n" +
 		`_, err := r.db.NamedExecContext(ctx, query , {{.ObjectName}})
 if err != nil {
 	return err
