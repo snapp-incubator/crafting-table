@@ -382,15 +382,6 @@ func BuildInsertFunction(
 	objectName string,
 	customFunctionName string,
 ) (function string, signature string) {
-	// bring an example of wanted result
-	/*
-		_, err := r.db.NamedExecContext(ctx, "INSERT INTO cancellation_schedule_ride "+
-			"(ride_id, match_time, driver_delay, driver_pickup_waiting_time, created_at) "+
-			"values ( :ride_id,  :match_time,  :driver_delay,  :driver_pickup_waiting_time,  now())", ride)
-		if err != nil {
-			return err
-		}
-	*/
 	var functionName string
 	if customFunctionName == "" {
 		functionName = "Create"
