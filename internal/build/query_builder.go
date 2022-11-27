@@ -101,6 +101,7 @@ type Select struct {
 	OrderType       OrderType        `yaml:"order_type"`
 	Limit           uint             `yaml:"limit"`
 	GroupBy         []string         `yaml:"group_by"`
+	ObjectName      string           `yaml:"object_name"`
 }
 
 type Repo struct {
