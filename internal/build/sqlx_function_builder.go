@@ -298,6 +298,7 @@ func BuildSelectFunction(
 	}
 
 	// create signature
+	// this struct is duplicated among all methods ,is this correct ?
 	signatureData := struct {
 		FuncName string
 		Inputs   string
@@ -440,6 +441,7 @@ func BuildInsertFunction(
 	}
 
 	signatureTemplate = signatureBuilder.String()
+	// is this template a good name ? because this is not a template actually .
 
 	// make functions body
 	var insertQuery, objectName string
@@ -511,6 +513,7 @@ if err != nil {
 `))
 
 // signature is function's signature
+// I think it would be better if this name became "signatureTemplate"
 var signature *template.Template = template.Must(
 	template.New("signature").Parse(`{{.FuncName}}(ctx context.Context, {{.Inputs}}) ({{.Outputs}})`))
 
