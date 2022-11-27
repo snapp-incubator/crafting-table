@@ -22,7 +22,7 @@ type SelectType string
 const (
 	SelectTypeSelect SelectType = "select"
 	SelectTypeGet    SelectType = "get"
-	SelectTypeInsert SelectType = "insert"
+	TypeInsert       SelectType = "insert"
 	// What is this select at the beginning of the name ?
 )
 

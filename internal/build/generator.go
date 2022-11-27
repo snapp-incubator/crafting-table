@@ -57,7 +57,7 @@ func Generate(repo Repo) error {
 			)
 			functionList = append(functionList, function)
 			signatureList = append(signatureList, signature)
-		} else if r.Type == SelectTypeInsert {
+		} else if r.Type == TypeInsert {
 			function, signature := BuildInsertFunction(
 				s,
 				repo.Dialect,
