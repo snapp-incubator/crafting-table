@@ -374,38 +374,6 @@ func BuildSelectFunction(
 
 // TODO: add more functions like: update, insert.
 
-func BuildRepository(
-	signatureTemplateList []string,
-	functionTemplateList []string,
-	packageName string,
-	tableName string,
-	modelName string,
-) (repositoryTemplate string) {
-	// fields: prepare builder
-	var builder strings.Builder
-
-	// create repository
-	repositoryData := struct {
-		PackageName string
-		ModelName   string
-		Signatures  string
-		TableName   string
-		Functions   string
-	}{
-		PackageName: packageName,
-		ModelName:   modelName,
-		Signatures:  strings.Join(signatureTemplateList, "\n"),
-		TableName:   tableName,
-		Functions:   strings.Join(functionTemplateList, "\n"),
-	}
-	if err := repository.Execute(&builder, repositoryData); err != nil {
-		panic(err)
-	}
-	repositoryTemplate = builder.String()
-
-	return repositoryTemplate
-}
-
 func BuildInsertFunction(
 	structure *structure.Structure,
 	dialect DialectType,
@@ -467,6 +435,38 @@ func BuildInsertFunction(
 	return functionTemplate, signatureTemplate
 
 	// return the result
+}
+
+func BuildRepository(
+	signatureTemplateList []string,
+	functionTemplateList []string,
+	packageName string,
+	tableName string,
+	modelName string,
+) (repositoryTemplate string) {
+	// fields: prepare builder
+	var builder strings.Builder
+
+	// create repository
+	repositoryData := struct {
+		PackageName string
+		ModelName   string
+		Signatures  string
+		TableName   string
+		Functions   string
+	}{
+		PackageName: packageName,
+		ModelName:   modelName,
+		Signatures:  strings.Join(signatureTemplateList, "\n"),
+		TableName:   tableName,
+		Functions:   strings.Join(functionTemplateList, "\n"),
+	}
+	if err := repository.Execute(&builder, repositoryData); err != nil {
+		panic(err)
+	}
+	repositoryTemplate = builder.String()
+
+	return repositoryTemplate
 }
 
 // Query to database
