@@ -381,7 +381,7 @@ func BuildInsertFunction(
 	where []WhereCondition,
 	objectName string,
 	customFunctionName string,
-) (functionTemplate string, signatureTemplate string) {
+) (function string, signature string) {
 	// bring an example of wanted result
 	/*
 		_, err := r.db.NamedExecContext(ctx, "INSERT INTO cancellation_schedule_ride "+
@@ -411,7 +411,7 @@ func BuildInsertFunction(
 		panic(err)
 	}
 
-	signatureTemplate = signatureBuilder.String()
+	signature = signatureBuilder.String()
 	// is this template a good name ? because this is not a template actually .
 
 	// make functions body
@@ -433,9 +433,9 @@ func BuildInsertFunction(
 		panic(err)
 	}
 
-	functionTemplate = builder.String()
+	function = builder.String()
 
-	return functionTemplate, signatureTemplate
+	return function, signature
 
 	// return the result
 }
@@ -495,7 +495,6 @@ if err != nil {
 }
 `))
 
-var namedExecContextTemplate *template.Template = template.Must(
 // Complete it
 var insertContext *template.Template = template.Must(
 	template.New("insertContext").Parse("query := '{{.Query}}' \n" +
@@ -505,7 +504,7 @@ if err != nil {
 }
 `))
 
-var namedExecContext *template.Template = template.Must(
+var namedExecContextTemplate *template.Template = template.Must(
 	template.New("namedExecContext").Parse("query := `{{.Query}}`\n" +
 		`_, err := d.db.NamedExecContext(ctx, query, {{.Dest}})
 if err != nil {
