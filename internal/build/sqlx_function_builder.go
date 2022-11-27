@@ -9,6 +9,12 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
+type signatureParameters struct {
+	FuncName string
+	Inputs   string
+	Outputs  string
+}
+
 func BuildGetFunction(
 	structure *structure.Structure,
 	dialect DialectType,
@@ -179,8 +185,6 @@ func BuildGetFunction(
 		ExecQueryTemplate: getContextQuery,
 		Outputs:           strings.Join(append(realOutputList, "nil"), ", "),
 	}
-
-	println(getContextQuery)
 
 	var functionBuilder strings.Builder
 	if err := function.Execute(&functionBuilder, functionData); err != nil {
@@ -408,7 +412,6 @@ func BuildInsertFunction(
 
 	customFunctionName string,
 ) (functionTemplate string, signatureTemplate string) {
-	var builder strings.Builder
 	// bring an example of wanted result
 	/*
 		_, err := r.db.NamedExecContext(ctx, "INSERT INTO cancellation_schedule_ride "+
@@ -418,10 +421,22 @@ func BuildInsertFunction(
 			return err
 		}
 	*/
+	// make function name
 
-	// define methods signature
+	// make functions signature
+	signatureData := signatureParameters{
+		FuncName: functionName,
+		Inputs:   inputs,
+		Outputs:  outputs,
+	}
+	var signatureBuilder strings.Builder
+	if err := signature.Execute(&signatureBuilder, signatureData); err != nil {
+		panic(err)
+	}
 
-	// define methods body
+	signatureTemplate = signatureBuilder.String()
+
+	// make functions body
 	var insertQuery, objectName string
 	functionData := struct {
 		Query      string
@@ -430,11 +445,14 @@ func BuildInsertFunction(
 		Query:      insertQuery,
 		ObjectName: objectName,
 	}
-
-	// build it with
+	var builder strings.Builder
 	if err := insertContext.Execute(&builder, functionData); err != nil {
 		panic(err)
 	}
+
+	functionTemplate = builder.String()
+
+	return functionTemplate, signatureTemplate
 
 	// return the result
 }
