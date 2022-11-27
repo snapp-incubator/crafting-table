@@ -59,7 +59,13 @@ func Generate(repo Repo) error {
 			signatureList = append(signatureList, signature)
 		} else if r.Type == SelectTypeInsert {
 			function, signature := BuildInsertFunction(
-			//  arguments
+				s,
+				repo.Dialect,
+				s.TableName,
+				r.Fields,
+				r.WhereConditions,
+				r.ObjectName,
+				r.FunctionName,
 			)
 			functionList = append(functionList, function)
 			signatureList = append(signatureList, signature)
