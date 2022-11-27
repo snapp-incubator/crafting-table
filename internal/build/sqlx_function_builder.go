@@ -390,12 +390,11 @@ func BuildInsertFunction(
 	}
 
 	inputs := fmt.Sprintf("%s *%s.%s", objectName, structure.PackageName, structure.Name)
-	output := "error"
 	// make functions signature
 	signatureData := signatureParameters{
 		FuncName: functionName,
 		Inputs:   inputs,
-		Outputs:  output,
+		Outputs:  "error",
 	}
 	var signatureBuilder strings.Builder
 	if err := signatureTemplate.Execute(&signatureBuilder, signatureData); err != nil {
@@ -439,7 +438,7 @@ func BuildInsertFunction(
 		DesStructTemplate: desStructTemplate,
 		DstModel:          model,
 		ExecQueryTemplate: insertContextQuery,
-		Outputs:           output,
+		Outputs:           "nil",
 	}
 
 	var functionBuilder strings.Builder
