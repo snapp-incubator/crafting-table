@@ -410,12 +410,30 @@ func BuildInsertFunction(
 ) (functionTemplate string, signatureTemplate string) {
 	var builder strings.Builder
 	// bring an example of wanted result
+	/*
+		_, err := r.db.NamedExecContext(ctx, "INSERT INTO cancellation_schedule_ride "+
+			"(ride_id, match_time, driver_delay, driver_pickup_waiting_time, created_at) "+
+			"values ( :ride_id,  :match_time,  :driver_delay,  :driver_pickup_waiting_time,  now())", ride)
+		if err != nil {
+			return err
+		}
+	*/
 
-	// define an struct
+	// define methods signature
+
+	// define methods body
+	var insertQuery, objectName string
+	functionData := struct {
+		Query      string
+		ObjectName string
+	}{
+		Query:      insertQuery,
+		ObjectName: objectName,
+	}
 
 	// build it with
-	if err := insertContext.Execute(builder); err != nil {
-		// do sth with error
+	if err := insertContext.Execute(&builder, functionData); err != nil {
+		panic(err)
 	}
 
 	// return the result
@@ -446,7 +464,12 @@ if err != nil {
 
 // Complete it
 var insertContext *template.Template = template.Must(
-	template.New("insertContext").Parse())
+	template.New("insertContext").Parse("query := {{.Query}} \n" +
+		`_, err := r.db.NamedExecContext(ctx, {{.Query }} , {{.ObjectName}})
+if err != nil {
+	return err
+}
+`))
 
 var namedExecContext *template.Template = template.Must(
 	template.New("namedExecContext").Parse("query := `{{.Query}}`\n" +
