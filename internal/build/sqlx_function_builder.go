@@ -1,6 +1,7 @@
 package build
 
 import (
+	"fmt"
 	"strings"
 	"text/template"
 
@@ -429,11 +430,15 @@ func BuildInsertFunction(
 		functionName = customFunctionName
 	}
 
+	var objectName string
+
+	inputs := fmt.Sprintf("%s *%s.%s", objectName, structure.PackageName, structure.Name)
+
 	// make functions signature
 	signatureData := signatureParameters{
 		FuncName: functionName,
 		Inputs:   inputs,
-		Outputs:  outputs,
+		Outputs:  "error",
 	}
 	var signatureBuilder strings.Builder
 	if err := signature.Execute(&signatureBuilder, signatureData); err != nil {
@@ -444,7 +449,7 @@ func BuildInsertFunction(
 	// is this template a good name ? because this is not a template actually .
 
 	// make functions body
-	var insertQuery, objectName string
+	var insertQuery string
 	functionData := struct {
 		Query      string
 		ObjectName string
