@@ -390,12 +390,12 @@ func BuildInsertFunction(
 	}
 
 	inputs := fmt.Sprintf("%s *%s.%s", objectName, structure.PackageName, structure.Name)
-
+	output := "error"
 	// make functions signature
 	signatureData := signatureParameters{
 		FuncName: functionName,
 		Inputs:   inputs,
-		Outputs:  "error",
+		Outputs:  output,
 	}
 	var signatureBuilder strings.Builder
 	if err := signatureTemplate.Execute(&signatureBuilder, signatureData); err != nil {
@@ -412,19 +412,41 @@ func BuildInsertFunction(
 		fields,
 		where,
 	)
-	functionData := struct {
+	execQueryData := struct {
 		Query      string
 		ObjectName string
 	}{
 		Query:      insertQuery,
 		ObjectName: objectName,
 	}
-	var builder strings.Builder
-	if err := insertContext.Execute(&builder, functionData); err != nil {
+	var execQueryBuilder strings.Builder
+	if err := insertContext.Execute(&execQueryBuilder, execQueryData); err != nil {
 		panic(err)
 	}
 
-	function = builder.String()
+	insertContextQuery := execQueryBuilder.String()
+
+	functionData := struct {
+		ModelName         string
+		Signature         string
+		DesStructTemplate string
+		DstModel          string
+		ExecQueryTemplate string
+		Outputs           string
+	}{
+		ModelName:         structure.Name,
+		Signature:         signature,
+		DesStructTemplate: desStructTemplate,
+		DstModel:          model,
+		ExecQueryTemplate: insertContextQuery,
+		Outputs:           output,
+	}
+
+	var functionBuilder strings.Builder
+	if err := functionTemplate.Execute(&functionBuilder, functionData); err != nil {
+		panic(err)
+	}
+	function = functionBuilder.String()
 
 	return function, signature
 
@@ -440,6 +462,9 @@ func BuildRepository(
 ) (repository string) {
 	// fields: prepare builder
 	var builder strings.Builder
+
+	aa := strings.Join(functionTemplateList, "\n")
+	println(aa)
 
 	// create repository
 	repositoryData := struct {
