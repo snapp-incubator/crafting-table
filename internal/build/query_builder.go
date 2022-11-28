@@ -195,9 +195,9 @@ func BuildSelectQuery(
 	// Order By
 	if orderBy != nil && *orderType != "" {
 		if *orderType == OrderTypeAsc {
-			ds = ds.Order(goqu.I("a").Asc())
+			ds = ds.Order(goqu.I(*orderBy).Asc())
 		} else if *orderType == OrderTypeDesc {
-			ds = ds.Order(goqu.I("a").Desc())
+			ds = ds.Order(goqu.I(*orderBy).Desc())
 		}
 	}
 

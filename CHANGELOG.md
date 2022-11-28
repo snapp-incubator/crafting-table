@@ -9,6 +9,7 @@
 * Remove cli and terminal UI commands. (2022-11-18, @n25a, !61)
 * Add custom function name (2022-11-21, @parsaeisa, !69)
 * Add database type to layer (2022-11-20, @nemati21, !71)
+* Fix order by in build query layer (2022-11-27, @nemati21, !75)
 
 # v2.0.0 - Nov 08 2022 
 
