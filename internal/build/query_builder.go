@@ -66,6 +66,16 @@ const (
 	SQLServer DialectType = "sqlserver"
 )
 
+var setAggregate = map[string]struct{}{
+	"COUNT": struct{}{},
+	"SUM":   struct{}{},
+	"AVG":   struct{}{},
+	"MAX":   struct{}{},
+	"MIN":   struct{}{},
+	"FIRST": struct{}{},
+	"LAST":  struct{}{},
+}
+
 // AggregateField is a struct for aggregate field
 type AggregateField struct {
 	Function string `yaml:"function"`
@@ -113,8 +123,6 @@ type Repo struct {
 	Select      []Select    `yaml:"select"`
 }
 
-// TODO: ADD DB NAME TO INPUT
-
 // BuildSelectQuery builds a select query
 func BuildSelectQuery(
 	dialect DialectType,
@@ -132,11 +140,15 @@ func BuildSelectQuery(
 	ds := d.From(table)
 
 	// Aggregate: e.g. COUNT, SUM, MIN, MAX, AVG, FIRST, LAST
-	// TODO: ADD AGGREGATE FUNCTION TO MAP
 	aggregateExpressions := make([]interface{}, 0)
 	if len(aggregate) > 0 {
 		for _, agg := range aggregate {
-			switch agg.Function {
+			_, ok := setAggregate[strings.ToUpper(agg.Function)]
+			if !ok {
+				panic("invalid aggregate function: " + agg.Function)
+			}
+
+			switch strings.ToUpper(agg.Function) {
 			case "COUNT":
 				aggregateExpressions = append(aggregateExpressions, goqu.COUNT(agg.On).As(agg.As))
 			case "SUM":
