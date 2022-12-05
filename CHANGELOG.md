@@ -11,6 +11,7 @@
 * Add database type to layer. (2022-11-20, @nemati21, !71)
 * Fix order by in build query layer. (2022-11-27, @nemati21, !75)
 * Fix bug for using table name in manifest. (2022-12-05, @n25a, !76)  
+* Fix bug for checking `where` in build query layer and fix naming function. (2022-12-05, @n25a, !77)
 
 # v2.0.0 - Nov 08 2022 
 
