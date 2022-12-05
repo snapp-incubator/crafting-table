@@ -18,6 +18,11 @@ func Generate(repo Repo) error {
 		return err
 	}
 
+	tableName := s.TableName
+	if repo.TableName != "" {
+		tableName = repo.TableName
+	}
+
 	var signatureList []string
 	var functionList []string
 
@@ -27,7 +32,7 @@ func Generate(repo Repo) error {
 			function, signature := BuildGetFunction(
 				s,
 				repo.Dialect,
-				s.TableName,
+				tableName,
 				r.Fields,
 				r.WhereConditions,
 				r.AggregateFields,
@@ -44,7 +49,7 @@ func Generate(repo Repo) error {
 			function, signature := BuildSelectFunction(
 				s,
 				repo.Dialect,
-				s.TableName,
+				tableName,
 				r.Fields,
 				r.WhereConditions,
 				r.AggregateFields,
