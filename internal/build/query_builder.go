@@ -164,32 +164,33 @@ func BuildSelectQuery(
 	}
 
 	// Where
-	whereConditions := make([]interface{}, 0)
+	whereConditions := goqu.Ex{}
 	if len(where) > 0 {
 		for _, cond := range where {
 			switch cond.Operator {
 			case OperatorTypeEqual:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: 9999999999999999})
+				whereConditions[cond.Column] = 9999999999999999
 			case OperatorTypeNotEqual:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"neq": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"neq": 9999999999999999}
 			case OperatorTypeIn:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"in": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"in": 9999999999999999}
 			case OperatorTypeNotIn:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"not_in": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"not_in": 9999999999999999}
 			case OperatorTypeGt:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"gt": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"gt": 9999999999999999}
 			case OperatorTypeGte:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"gte": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"gte": 9999999999999999}
 			case OperatorTypeLt:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"lt": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"lt": 9999999999999999}
 			case OperatorTypeLte:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"lte": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"lte": 9999999999999999}
 			case OperatorTypeIsNull:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"is_null": true}})
+				whereConditions[cond.Column] = goqu.Op{"is_null": true}
 			case OperatorTypeIsNotNull:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"is_null": false}})
+				whereConditions[cond.Column] = goqu.Op{"is_null": false}
 			}
 		}
+		ds = ds.Where(whereConditions)
 	}
 
 	// Order By
@@ -281,8 +282,8 @@ func BuildSelectQuery(
 	query, _, _ := ds.ToSQL()
 
 	// Replace 9999999999999999 with "?"
-	strings.ReplaceAll(query, "'9999999999999999'", "?")
-	strings.ReplaceAll(query, "9999999999999999", "?")
+	query = strings.ReplaceAll(query, "'9999999999999999'", "?")
+	query = strings.ReplaceAll(query, "9999999999999999", "?")
 
 	return query
 }
@@ -305,40 +306,41 @@ func BuildUpdateQuery(
 	ds = ds.Set(setRecords)
 
 	// Where
-	whereConditions := make([]interface{}, 0)
+	whereConditions := goqu.Ex{}
 	if len(where) > 0 {
 		for _, cond := range where {
 			switch cond.Operator {
 			case OperatorTypeEqual:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: 9999999999999999})
+				whereConditions[cond.Column] = 9999999999999999
 			case OperatorTypeNotEqual:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"neq": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"neq": 9999999999999999}
 			case OperatorTypeIn:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"in": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"in": 9999999999999999}
 			case OperatorTypeNotIn:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"not_in": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"not_in": 9999999999999999}
 			case OperatorTypeGt:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"gt": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"gt": 9999999999999999}
 			case OperatorTypeGte:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"gte": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"gte": 9999999999999999}
 			case OperatorTypeLt:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"lt": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"lt": 9999999999999999}
 			case OperatorTypeLte:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"lte": 9999999999999999}})
+				whereConditions[cond.Column] = goqu.Op{"lte": 9999999999999999}
 			case OperatorTypeIsNull:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"is_null": true}})
+				whereConditions[cond.Column] = goqu.Op{"is_null": true}
 			case OperatorTypeIsNotNull:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"is_null": false}})
+				whereConditions[cond.Column] = goqu.Op{"is_null": false}
 			}
 		}
+		ds = ds.Where(whereConditions)
 	}
 
 	// Build
 	query, _, _ := ds.ToSQL()
 
 	// Replace 9999999999999999 with "?"
-	strings.ReplaceAll(query, "'9999999999999999'", "?")
-	strings.ReplaceAll(query, "9999999999999999", "?")
+	query = strings.ReplaceAll(query, "'9999999999999999'", "?")
+	query = strings.ReplaceAll(query, "9999999999999999", "?")
 
 	return query
 }
@@ -348,7 +350,6 @@ func BuildInsertQuery(
 	dialect DialectType,
 	table string,
 	fields []interface{},
-	where []WhereCondition,
 ) string {
 	d := goqu.Dialect(string(dialect))
 	ds := d.Insert(table)
@@ -360,41 +361,12 @@ func BuildInsertQuery(
 	}
 	ds = ds.Rows(setRecords)
 
-	// Where
-	whereConditions := make([]interface{}, 0)
-	if len(where) > 0 {
-		for _, cond := range where {
-			switch cond.Operator {
-			case OperatorTypeEqual:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: 9999999999999999})
-			case OperatorTypeNotEqual:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"neq": 9999999999999999}})
-			case OperatorTypeIn:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"in": 9999999999999999}})
-			case OperatorTypeNotIn:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"not_in": 9999999999999999}})
-			case OperatorTypeGt:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"gt": 9999999999999999}})
-			case OperatorTypeGte:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"gte": 9999999999999999}})
-			case OperatorTypeLt:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"lt": 9999999999999999}})
-			case OperatorTypeLte:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"lte": 9999999999999999}})
-			case OperatorTypeIsNull:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"is_null": true}})
-			case OperatorTypeIsNotNull:
-				whereConditions = append(whereConditions, goqu.Ex{cond.Column: goqu.Op{"is_null": false}})
-			}
-		}
-	}
-
 	// Build
 	query, _, _ := ds.ToSQL()
 
 	// Replace 9999999999999999 with "?"
-	strings.ReplaceAll(query, "'9999999999999999'", "?")
-	strings.ReplaceAll(query, "9999999999999999", "?")
+	query = strings.ReplaceAll(query, "'9999999999999999'", "?")
+	query = strings.ReplaceAll(query, "9999999999999999", "?")
 
 	return query
 }
