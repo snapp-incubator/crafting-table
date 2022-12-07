@@ -435,14 +435,12 @@ func BuildInsertFunction(
 	}{
 		ModelName:         structure.Name,
 		Signature:         signature,
-		DesStructTemplate: desStructTemplate,
-		DstModel:          model,
 		ExecQueryTemplate: insertContextQuery,
 		Outputs:           "nil",
 	}
 
 	var functionBuilder strings.Builder
-	if err := functionTemplate.Execute(&functionBuilder, functionData); err != nil {
+	if err := insertFunctionTemplate.Execute(&functionBuilder, functionData); err != nil {
 		panic(err)
 	}
 	function = functionBuilder.String()
@@ -512,7 +510,7 @@ if err != nil {
 
 // Complete it
 var insertContext *template.Template = template.Must(
-	template.New("insertContext").Parse("query := '{{.Query}}' \n" +
+	template.New("insertContext").Parse("query := '{{.Query}}'\n" +
 		`_, err := r.db.NamedExecContext(ctx, query , {{.ObjectName}})
 if err != nil {
 	return err
@@ -539,13 +537,22 @@ if err != nil {
 var signatureTemplate *template.Template = template.Must(
 	template.New("signature").Parse(`{{.FuncName}}(ctx context.Context, {{.Inputs}}) ({{.Outputs}})`))
 
-// function is function's body
+// functionTemplate is function's body
 var functionTemplate *template.Template = template.Must(template.New("function").Parse(`
 func (d *database{{.ModelName}}) {{.Signature}} {
 	{{.DesStructTemplate}}
 
 	var dst {{.DstModel}}
 
+	{{.ExecQueryTemplate}}
+
+	return {{.Outputs}}
+}
+`))
+
+// insertFunctionTemplate is function's body for insert methods
+var insertFunctionTemplate *template.Template = template.Must(template.New("function").Parse(`
+func (d *database{{.ModelName}}) {{.Signature}} {
 	{{.ExecQueryTemplate}}
 
 	return {{.Outputs}}
