@@ -458,9 +458,6 @@ func BuildRepository(
 	// fields: prepare builder
 	var builder strings.Builder
 
-	aa := strings.Join(functionTemplateList, "\n")
-	println(aa)
-
 	// create repository
 	repositoryData := struct {
 		PackageName string
