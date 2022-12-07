@@ -57,7 +57,7 @@ func BuildGetFunction(
 	// fields: prepare functionName
 	whereColumns := make([]string, len(where))
 	for i, v := range where {
-		whereColumns[i] = v.Column
+		whereColumns[i] = strcase.ToCamel(v.Column)
 	}
 
 	var functionName string
@@ -76,7 +76,8 @@ func BuildGetFunction(
 
 	for i, v := range where {
 		inputList[i] = strcase.ToLowerCamel(v.Column)
-		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " + structure.FieldMapNameToType[v.Column]
+		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " +
+			structure.FieldMapNameToType[structure.FieldMapDBFlagToName[v.Column]]
 	}
 	inputsWithType := strings.Join(inputWithTypeList, ", ")
 	inputs := strings.Join(inputList, ", ")
@@ -237,7 +238,7 @@ func BuildSelectFunction(
 	// fields: prepare functionName
 	whereColumns := make([]string, len(where))
 	for i, v := range where {
-		whereColumns[i] = v.Column
+		whereColumns[i] = strcase.ToCamel(v.Column)
 	}
 
 	var functionName string
@@ -255,7 +256,8 @@ func BuildSelectFunction(
 	inputList := make([]string, len(where))
 	for i, v := range where {
 		inputList[i] = strcase.ToLowerCamel(v.Column)
-		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " + structure.FieldMapNameToType[v.Column]
+		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " +
+			structure.FieldMapNameToType[structure.FieldMapDBFlagToName[v.Column]]
 	}
 	inputsWithType := strings.Join(inputWithTypeList, ", ")
 	inputs := strings.Join(inputList, ", ")

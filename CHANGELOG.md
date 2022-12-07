@@ -7,8 +7,12 @@
 * Add function builder layer. (2022-11-17, @n25a, !59)
 * Refactor query builder layer and function builder layer and merge them. (2022-11-18, @n25a, !60)
 * Remove cli and terminal UI commands. (2022-11-18, @n25a, !61)
-* Add custom function name (2022-11-21, @parsaeisa, !69)
-* Add database type to layer (2022-11-20, @nemati21, !71)
+* Add custom function name. (2022-11-21, @parsaeisa, !69)
+* Add database type to layer. (2022-11-20, @nemati21, !71)
+* Fix order by in build query layer. (2022-11-27, @nemati21, !75)
+* Fix bug for using table name in manifest. (2022-12-05, @n25a, !76)  
+* Fix bug for checking `where` in build query layer and fix naming function. (2022-12-05, @n25a, !77)
+* Add aggregate set for validation. (2022-12-05, @n25a, !78)
 
 # v2.0.0 - Nov 08 2022 
 
