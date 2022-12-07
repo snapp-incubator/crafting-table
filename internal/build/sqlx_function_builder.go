@@ -10,12 +10,6 @@ import (
 	"github.com/snapp-incubator/crafting-table/internal/structure"
 )
 
-type signatureParameters struct {
-	FuncName string
-	Inputs   string
-	Outputs  string
-}
-
 func BuildGetFunction(
 	structure *structure.Structure,
 	dialect DialectType,
@@ -394,7 +388,11 @@ func BuildInsertFunction(
 	inputs := fmt.Sprintf("%s *%s.%s", objectName, structure.PackageName, structure.Name)
 
 	// make functions signature
-	signatureData := signatureParameters{
+	signatureData := struct {
+		FuncName string
+		Inputs   string
+		Outputs  string
+	}{
 		FuncName: functionName,
 		Inputs:   inputs,
 		Outputs:  "error",
