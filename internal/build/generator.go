@@ -18,6 +18,11 @@ func Generate(repo Repo) error {
 		return err
 	}
 
+	tableName := s.TableName
+	if repo.TableName != "" {
+		tableName = repo.TableName
+	}
+
 	var signatureList []string
 	var functionList []string
 
@@ -26,7 +31,8 @@ func Generate(repo Repo) error {
 		if r.Type == SelectTypeGet {
 			function, signature := BuildGetFunction(
 				s,
-				s.TableName,
+				repo.Dialect,
+				tableName,
 				r.Fields,
 				r.WhereConditions,
 				r.AggregateFields,
@@ -35,13 +41,15 @@ func Generate(repo Repo) error {
 				&r.Limit,
 				r.GroupBy,
 				r.JoinFields,
+				r.FunctionName,
 			)
 			functionList = append(functionList, function)
 			signatureList = append(signatureList, signature)
 		} else if r.Type == SelectTypeSelect {
 			function, signature := BuildSelectFunction(
 				s,
-				s.TableName,
+				repo.Dialect,
+				tableName,
 				r.Fields,
 				r.WhereConditions,
 				r.AggregateFields,
@@ -50,6 +58,7 @@ func Generate(repo Repo) error {
 				&r.Limit,
 				r.GroupBy,
 				r.JoinFields,
+				r.FunctionName,
 			)
 			functionList = append(functionList, function)
 			signatureList = append(signatureList, signature)

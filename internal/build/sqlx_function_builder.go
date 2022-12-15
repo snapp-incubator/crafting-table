@@ -11,6 +11,7 @@ import (
 
 func BuildGetFunction(
 	structure *structure.Structure,
+	dialect DialectType,
 	table string,
 	fields []string,
 	where []WhereCondition,
@@ -20,7 +21,8 @@ func BuildGetFunction(
 	limit *uint,
 	groupBy []string,
 	join []JoinField,
-) (functionTemplate string, signatureTemplate string) {
+	customFunctionName string,
+) (function string, signature string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
 	groupByInterface := make([]interface{}, len(groupBy))
@@ -33,6 +35,7 @@ func BuildGetFunction(
 
 	// create query
 	q := BuildSelectQuery(
+		dialect,
 		table,
 		fieldsInterface,
 		where,
@@ -47,12 +50,17 @@ func BuildGetFunction(
 	// fields: prepare functionName
 	whereColumns := make([]string, len(where))
 	for i, v := range where {
-		whereColumns[i] = v.Column
+		whereColumns[i] = strcase.ToCamel(v.Column)
 	}
 
-	functionName := "Get"
-	if len(whereColumns) > 0 {
-		functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Get"
+		if len(whereColumns) > 0 {
+			functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+		}
+	} else {
+		functionName = customFunctionName
 	}
 
 	// fields: prepare inputs
@@ -61,7 +69,8 @@ func BuildGetFunction(
 
 	for i, v := range where {
 		inputList[i] = strcase.ToLowerCamel(v.Column)
-		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " + structure.FieldMapNameToType[v.Column]
+		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " +
+			structure.FieldMapNameToType[structure.FieldMapDBFlagToName[v.Column]]
 	}
 	inputsWithType := strings.Join(inputWithTypeList, ", ")
 	inputs := strings.Join(inputList, ", ")
@@ -117,10 +126,10 @@ func BuildGetFunction(
 	}
 
 	var signatureBuilder strings.Builder
-	if err := signature.Execute(&signatureBuilder, signatureData); err != nil {
+	if err := signatureTemplate.Execute(&signatureBuilder, signatureData); err != nil {
 		panic(err)
 	}
-	signatureTemplate = signatureBuilder.String()
+	signature = signatureBuilder.String()
 
 	// create exec query
 	var outputsWithError []string
@@ -128,22 +137,29 @@ func BuildGetFunction(
 		outputsWithError = append(outputsWithError, "nil")
 	}
 
+	specialQuery := false
+	if dialect == MySQL || dialect == SQLite3 {
+		specialQuery = true
+	}
+
 	getQueryData := struct {
 		Query                  string
+		SpecialQuery           bool
 		Dest                   string
 		OutputsWithNotFoundErr string
 		OutputsWithErr         string
 		Inputs                 string
 	}{
-		Query: q,
-		Dest:  "dst",
+		Query:        q,
+		SpecialQuery: specialQuery,
+		Dest:         "dst",
 		OutputsWithNotFoundErr: strings.Join(
 			append(outputsWithError, "Err"+structure.Name+"NotFound"), ", "),
 		OutputsWithErr: strings.Join(append(outputsWithError, "err"), ", "),
 		Inputs:         inputs,
 	}
 	var getContextBuilder strings.Builder
-	if err := getContext.Execute(&getContextBuilder, getQueryData); err != nil {
+	if err := getContextTemplate.Execute(&getContextBuilder, getQueryData); err != nil {
 		panic(err)
 	}
 	getContextQuery := getContextBuilder.String()
@@ -158,7 +174,7 @@ func BuildGetFunction(
 		Outputs           string
 	}{
 		ModelName:         structure.Name,
-		Signature:         signatureTemplate,
+		Signature:         signature,
 		DesStructTemplate: desStructTemplate,
 		DstModel:          model,
 		ExecQueryTemplate: getContextQuery,
@@ -166,16 +182,17 @@ func BuildGetFunction(
 	}
 
 	var functionBuilder strings.Builder
-	if err := function.Execute(&functionBuilder, functionData); err != nil {
+	if err := functionTemplate.Execute(&functionBuilder, functionData); err != nil {
 		panic(err)
 	}
-	functionTemplate = functionBuilder.String()
+	function = functionBuilder.String()
 
-	return functionTemplate, signatureTemplate
+	return function, signature
 }
 
 func BuildSelectFunction(
 	structure *structure.Structure,
+	dialect DialectType,
 	table string,
 	fields []string,
 	where []WhereCondition,
@@ -185,7 +202,8 @@ func BuildSelectFunction(
 	limit *uint,
 	groupBy []string,
 	join []JoinField,
-) (functionTemplate string, signatureTemplate string) {
+	customFunctionName string,
+) (function string, signature string) {
 	// converting a []string to a []interface{}
 	fieldsInterface := make([]interface{}, len(fields))
 	groupByInterface := make([]interface{}, len(groupBy))
@@ -198,6 +216,7 @@ func BuildSelectFunction(
 
 	// create query
 	q := BuildSelectQuery(
+		dialect,
 		table,
 		fieldsInterface,
 		where,
@@ -212,12 +231,17 @@ func BuildSelectFunction(
 	// fields: prepare functionName
 	whereColumns := make([]string, len(where))
 	for i, v := range where {
-		whereColumns[i] = v.Column
+		whereColumns[i] = strcase.ToCamel(v.Column)
 	}
 
-	functionName := "Select"
-	if len(whereColumns) > 0 {
-		functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Select"
+		if len(whereColumns) > 0 {
+			functionName += "By" + strings.Join(whereColumns, "And") // GetByColumn1AndColumn2AndColumn3
+		}
+	} else {
+		functionName = customFunctionName
 	}
 
 	// fields: prepare inputs
@@ -225,7 +249,8 @@ func BuildSelectFunction(
 	inputList := make([]string, len(where))
 	for i, v := range where {
 		inputList[i] = strcase.ToLowerCamel(v.Column)
-		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " + structure.FieldMapNameToType[v.Column]
+		inputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + " " +
+			structure.FieldMapNameToType[structure.FieldMapDBFlagToName[v.Column]]
 	}
 	inputsWithType := strings.Join(inputWithTypeList, ", ")
 	inputs := strings.Join(inputList, ", ")
@@ -279,10 +304,10 @@ func BuildSelectFunction(
 		Outputs:  outputs,
 	}
 	var signatureBuilder strings.Builder
-	if err := signature.Execute(&signatureBuilder, signatureData); err != nil {
+	if err := signatureTemplate.Execute(&signatureBuilder, signatureData); err != nil {
 		panic(err)
 	}
-	signatureTemplate = signatureBuilder.String()
+	signature = signatureBuilder.String()
 
 	// create exec query
 	outputsWithError := make([]string, len(realOutputList)+1)
@@ -291,19 +316,26 @@ func BuildSelectFunction(
 	}
 	outputsWithError[len(realOutputList)] = "err"
 
+	specialQuery := false
+	if dialect == MySQL || dialect == SQLite3 {
+		specialQuery = true
+	}
+
 	execQueryData := struct {
 		Query          string
+		SpecialQuery   bool
 		Dest           string
 		OutputsWithErr string
 		Inputs         string
 	}{
 		Query:          q,
+		SpecialQuery:   specialQuery,
 		Dest:           "dst",
 		OutputsWithErr: strings.Join(outputsWithError, ", "),
 		Inputs:         inputs,
 	}
 	var selectContextBuilder strings.Builder
-	if err := selectContext.Execute(&selectContextBuilder, execQueryData); err != nil {
+	if err := selectContextTemplate.Execute(&selectContextBuilder, execQueryData); err != nil {
 		panic(err)
 	}
 	selectContextQuery := selectContextBuilder.String()
@@ -318,7 +350,7 @@ func BuildSelectFunction(
 		Outputs           string
 	}{
 		ModelName:         structure.Name,
-		Signature:         signatureTemplate,
+		Signature:         signature,
 		DesStructTemplate: desStructTemplate,
 		DstModel:          model,
 		ExecQueryTemplate: selectContextQuery,
@@ -326,12 +358,12 @@ func BuildSelectFunction(
 	}
 
 	var functionBuilder strings.Builder
-	if err := function.Execute(&functionBuilder, functionData); err != nil {
+	if err := functionTemplate.Execute(&functionBuilder, functionData); err != nil {
 		panic(err)
 	}
-	functionTemplate = functionBuilder.String()
+	function = functionBuilder.String()
 
-	return functionTemplate, signatureTemplate
+	return function, signature
 }
 
 // TODO: add more functions like: update, insert.
@@ -342,7 +374,7 @@ func BuildRepository(
 	packageName string,
 	tableName string,
 	modelName string,
-) (repositoryTemplate string) {
+) (repository string) {
 	// fields: prepare builder
 	var builder strings.Builder
 
@@ -360,25 +392,27 @@ func BuildRepository(
 		TableName:   tableName,
 		Functions:   strings.Join(functionTemplateList, "\n"),
 	}
-	if err := repository.Execute(&builder, repositoryData); err != nil {
+	if err := repositoryTemplate.Execute(&builder, repositoryData); err != nil {
 		panic(err)
 	}
-	repositoryTemplate = builder.String()
+	repository = builder.String()
 
-	return repositoryTemplate
+	return repository
 }
 
 // Query to database
-var selectContext *template.Template = template.Must(
-	template.New("selectContext").Parse("query := `{{.Query}}`\n" +
+var selectContextTemplate *template.Template = template.Must(
+	template.New("selectContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`err := d.db.SelectContext(ctx, &{{.Dest}}, query, {{.Inputs}})
 if err != nil {
 	return {{.OutputsWithErr}}
 }
 `))
 
-var getContext *template.Template = template.Must(
-	template.New("getContext").Parse("query := `{{.Query}}`\n" +
+var getContextTemplate *template.Template = template.Must(
+	template.New("getContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`err := d.db.GetContext(ctx, &{{.Dest}}, query, {{.Inputs}})
 if err != nil {
 	if err == sql.ErrNoRows {
@@ -389,16 +423,18 @@ if err != nil {
 }
 `))
 
-var namedExecContext *template.Template = template.Must(
-	template.New("namedExecContext").Parse("query := `{{.Query}}`\n" +
+var namedExecContextTemplate *template.Template = template.Must(
+	template.New("namedExecContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`_, err := d.db.NamedExecContext(ctx, query, {{.Dest}})
 if err != nil {
 	return {{.OutputsWithErr}}
 }
 `))
 
-var execContext *template.Template = template.Must(
-	template.New("execContext").Parse("query := `{{.Query}}`\n" +
+var execContextTemplate *template.Template = template.Must(
+	template.New("execContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`_, err := d.db.ExecContext(ctx, query, {{.ExecVars}})
 if err != nil {
 	return {{.OutputsWithErr}}
@@ -406,11 +442,11 @@ if err != nil {
 `))
 
 // signature is function's signature
-var signature *template.Template = template.Must(
+var signatureTemplate *template.Template = template.Must(
 	template.New("signature").Parse(`{{.FuncName}}(ctx context.Context, {{.Inputs}}) ({{.Outputs}})`))
 
 // function is function's body
-var function *template.Template = template.Must(template.New("function").Parse(`
+var functionTemplate *template.Template = template.Must(template.New("function").Parse(`
 func (d *database{{.ModelName}}) {{.Signature}} {
 	{{.DesStructTemplate}}
 
@@ -423,7 +459,7 @@ func (d *database{{.ModelName}}) {{.Signature}} {
 `))
 
 // repository is file's body
-var repository *template.Template = template.Must(template.New("repository").Parse(`
+var repositoryTemplate *template.Template = template.Must(template.New("repository").Parse(`
 // Code generated by Crafting-Table.
 // Source code: https://github.com/snapp-incubator/crafting-table
 
