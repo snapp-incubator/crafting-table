@@ -80,6 +80,5 @@ func generateQueryBuilder(cmd *cobra.Command, filePath string) {
 				}
 			}
 		}
-
 	}
 }
