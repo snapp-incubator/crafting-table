@@ -2,10 +2,11 @@ package querybuilder
 
 import (
 	"fmt"
-	"github.com/gertd/go-pluralize"
-	"github.com/iancoleman/strcase"
 	"go/ast"
 	"strings"
+
+	"github.com/gertd/go-pluralize"
+	"github.com/iancoleman/strcase"
 )
 
 const ModelAnnotation = "ct: model"
@@ -27,18 +28,9 @@ func isComparable(typeExpr ast.Expr) bool {
 	case *ast.Ident:
 		if t.Obj == nil {
 			// it's a primitive go type
-			if t.Name == "int" ||
-				t.Name == "int8" ||
-				t.Name == "int16" ||
-				t.Name == "int32" ||
-				t.Name == "int64" ||
-				t.Name == "uint" ||
-				t.Name == "uint8" ||
-				t.Name == "uint16" ||
-				t.Name == "uint32" ||
-				t.Name == "uint64" ||
-				t.Name == "float32" ||
-				t.Name == "float64" {
+			if t.Name == "int" || t.Name == "int8" || t.Name == "int16" || t.Name == "int32" || t.Name == "int64" ||
+				t.Name == "uint" || t.Name == "uint8" || t.Name == "uint16" || t.Name == "uint32" || t.Name == "uint64" ||
+				t.Name == "float32" || t.Name == "float64" {
 				return true
 			}
 			return false
@@ -70,35 +62,7 @@ func resolveTypes(structDecl *ast.GenDecl) []structField {
 	return fields
 }
 
-func getSampleValues(fields []structField) []any {
-    var values []any
-    for _, field := range fields {
-        switch (field.Type) {
-            case "string":
-               values = append(values, "some string") 
-           case "int":
-           case "int8":
-           case "int16":
-           case "int32":
-           case "int64":
-           case "uint":
-           case "uint8":
-           case "uint16":
-           case "uint32":
-           case "uint64":
-               values = append(values, 1)
-           case "float32":
-           case "float64":
-               values = append(values, 2.2)
-           default:
-               values = append(values, nil)
-        }
-    }
-
-    return values
-}
-
-func Generate(dialect string, pkg string, structDecl *ast.GenDecl, args map[string]string) string {
+func Generate(dialect string, pkg string, structDecl *ast.GenDecl) string {
 	fields := resolveTypes(structDecl)
 	typeName := structDecl.Specs[0].(*ast.TypeSpec).Name.String()
 	var buff strings.Builder
@@ -109,89 +73,11 @@ func Generate(dialect string, pkg string, structDecl *ast.GenDecl, args map[stri
 		Dialect:   dialect,
 		TableName: strcase.ToSnake(pluralize.NewClient().Plural(typeName)),
 	}
-	err := baseOutputFileTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
 
-	err = queryBuilderInterfaceTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-
-	err = schemaTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-
-	err = orderByTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-
-	err = queryBuilderTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-
-	err = selectQueryBuilderTemplate.Execute(&buff, td)
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = limitOffsetTemplate.Execute(&buff, td)
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = updateQueryBuilderTemplate.Execute(&buff, td)
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = deleteQueryBuilderTemplate.Execute(&buff, td)
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = eqWhereTemplate.Execute(&buff, td)
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = scalarWhereTemplate.Execute(&buff, td)
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = setsTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-
-	err = fromRowsTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-
-	err = toRowsTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-	err = placeholderGeneratorTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
-	}
-
-	err = finishersTemplate.Execute(&buff, td)
-	if err != nil {
-		panic(err)
+	for _, t := range queryBuilderTemplates {
+		if err := t.Execute(&buff, td); err != nil {
+			panic(err)
+		}
 	}
 
 	return buff.String()
