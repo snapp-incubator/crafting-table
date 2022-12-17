@@ -66,7 +66,7 @@ func Generate(repo Repo) error {
 			function, signature := BuildInsertFunction(
 				s,
 				repo.Dialect,
-				s.TableName,
+				tableName,
 				r.Fields,
 				r.WhereConditions,
 				r.ObjectName,
