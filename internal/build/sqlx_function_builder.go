@@ -511,7 +511,8 @@ var insertContext *template.Template = template.Must(
 	}`))
 
 var namedExecContextTemplate *template.Template = template.Must(
-	template.New("namedExecContext").Parse("query := `{{.Query}}`\n" +
+	template.New("namedExecContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`_, err := d.db.NamedExecContext(ctx, query, {{.Dest}})
 if err != nil {
 	return {{.OutputsWithErr}}
@@ -519,7 +520,8 @@ if err != nil {
 `))
 
 var execContextTemplate *template.Template = template.Must(
-	template.New("execContext").Parse("query := `{{.Query}}`\n" +
+	template.New("execContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`_, err := d.db.ExecContext(ctx, query, {{.ExecVars}})
 if err != nil {
 	return {{.OutputsWithErr}}
