@@ -385,3 +385,5 @@ func BuildInsertQuery(
 
 	return query
 }
+
+// in Build insert query there is no need for WhereCondition array .
