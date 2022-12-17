@@ -505,10 +505,11 @@ if err != nil {
 
 var insertContext *template.Template = template.Must(
 	template.New("insertContext").Parse("query := '{{.Query}}'\n" +
-		`	_, err := r.db.NamedExecContext(ctx, query , {{.ObjectName}})
-	if err != nil {
-		return err
-	}`))
+		`_, err := r.db.NamedExecContext(ctx, query , {{.ObjectName}})
+if err != nil {
+	return err
+}
+`))
 
 var namedExecContextTemplate *template.Template = template.Must(
 	template.New("namedExecContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
