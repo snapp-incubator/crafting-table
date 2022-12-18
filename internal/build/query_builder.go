@@ -364,7 +364,6 @@ func BuildInsertQuery(
 	dialect DialectType,
 	table string,
 	fields []string,
-	where []WhereCondition,
 ) string {
 	d := goqu.Dialect(string(dialect))
 	ds := d.Insert(table)
