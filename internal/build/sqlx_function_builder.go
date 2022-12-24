@@ -367,6 +367,156 @@ func BuildSelectFunction(
 }
 
 // TODO: add more functions like: update, insert.
+func BuildUpdateFunction(
+	structure *structure.Structure,
+	dialect DialectType,
+	table string,
+	fields []string,
+	where []WhereCondition,
+	customFunctionName string,
+) (function string, signature string) {
+	// converting a []string to a []interface{}
+	fieldsInterface := make([]interface{}, len(fields))
+	for i, v := range fields {
+		fieldsInterface[i] = v
+	}
+
+	// create query
+	q := BuildUpdateQuery(
+		dialect,
+		table,
+		fieldsInterface,
+		where,
+	)
+
+	// fields: prepare functionName using field instead of where columns since updated fields are the main focus
+	fieldColumns := make([]string, len(fields))
+	for i, v := range fields {
+		fieldColumns[i] = strcase.ToCamel(v)
+	}
+
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Update"
+		if len(fieldColumns) > 0 {
+			functionName += "" + strings.Join(fieldColumns, "And") // UpdateColumn1AndColumn2AndColumn3
+		}
+	} else {
+		functionName = customFunctionName
+	}
+	// fields: prepare where inputs
+	// "current" is appended to field in signature to make selecting and updating the same field possible
+	// find row (where) using var1 (var1Current) and further down update row (set) using new value for var1 (var1New)
+	whereInputWithTypeList := make([]string, len(where))
+	whereInputList := make([]string, len(where))
+	for i, v := range where {
+		whereInputList[i] = strcase.ToLowerCamel(v.Column)
+		whereInputWithTypeList[i] = strcase.ToLowerCamel(v.Column) + "Current" + " " +
+			structure.FieldMapNameToType[structure.FieldMapDBFlagToName[v.Column]]
+	}
+	whereInputsWithType := strings.Join(whereInputWithTypeList, ", ")
+	whereInputs := strings.Join(whereInputList, ", ")
+
+	// fields: prepare field inputs
+	// "new" is appended to field in signature to make selecting and updating the same field possible
+	// further up find row (where) using var1 (var1Current) and update row (set) using new value for var1 (var1New)
+	fieldInputWithTypeList := make([]string, len(fields))
+	fieldInputList := make([]string, len(fields))
+	for i, v := range fields {
+		fieldInputList[i] = strcase.ToLowerCamel(v)
+		fieldInputWithTypeList[i] = strcase.ToLowerCamel(v) + "New" + " " +
+			structure.FieldMapNameToType[structure.FieldMapDBFlagToName[v]]
+	}
+	fieldInputsWithType := strings.Join(fieldInputWithTypeList, ", ")
+	fieldInputs := strings.Join(fieldInputList, ", ")
+
+	// fields: Combine field and where inputs for function signature
+	completeInputListWithType := make([]string, 2)
+	completeInputListWithType[0] = whereInputsWithType
+	completeInputListWithType[1] = fieldInputsWithType
+	completeInputsWithType := strings.Join(completeInputListWithType, ", ")
+
+	// fields: prepare outputs (update only returns updated row count or error)
+	var outputList []string
+
+	outputList = append(outputList, "int64")
+
+	outputList = append(outputList, "error")
+	outputs := strings.Join(outputList, ", ")
+
+	// fields: prepare real outputs without error (result is added in updateContextTemplate)
+	var realOutputList []string
+	realOutputList = append(realOutputList, "result.RowsAffected()")
+
+	// create signature
+	signatureData := struct {
+		FuncName string
+		Inputs   string
+		Outputs  string
+	}{
+		FuncName: functionName,
+		Inputs:   completeInputsWithType,
+		Outputs:  outputs,
+	}
+	var signatureBuilder strings.Builder
+	if err := signatureTemplate.Execute(&signatureBuilder, signatureData); err != nil {
+		panic(err)
+	}
+	signature = signatureBuilder.String()
+
+	// create exec query
+	// error output should return 0 affected rows along with error
+	outputsWithError := make([]string, len(realOutputList)+1)
+	for i, _ := range realOutputList {
+		outputsWithError[i] = "0"
+	}
+	outputsWithError[len(realOutputList)] = "err"
+
+	specialQuery := false
+	if dialect == MySQL || dialect == SQLite3 {
+		specialQuery = true
+	}
+
+	// seperated where from set (field) inputs since they should come first
+	execQueryData := struct {
+		Query          string
+		SpecialQuery   bool
+		OutputsWithErr string
+		WhereVars      string
+		FieldVars      string
+	}{
+		Query:          q,
+		SpecialQuery:   specialQuery,
+		OutputsWithErr: strings.Join(outputsWithError, ", "),
+		WhereVars:      whereInputs,
+		FieldVars:      fieldInputs,
+	}
+	var updateContextBuilder strings.Builder
+	if err := updateContextTemplate.Execute(&updateContextBuilder, execQueryData); err != nil {
+		panic(err)
+	}
+	updateContextQuery := updateContextBuilder.String()
+
+	// create function
+	functionData := struct {
+		ModelName         string
+		Signature         string
+		ExecQueryTemplate string
+		Outputs           string
+	}{
+		ModelName:         structure.Name,
+		Signature:         signature,
+		ExecQueryTemplate: updateContextQuery,
+		Outputs:           strings.Join(append(realOutputList, "nil"), ", "),
+	}
+	var updateFunctionBuilder strings.Builder
+	if err := updateFunctionTemplate.Execute(&updateFunctionBuilder, functionData); err != nil {
+		panic(err)
+	}
+	function = updateFunctionBuilder.String()
+
+	return function, signature
+}
 
 func BuildRepository(
 	signatureTemplateList []string,
@@ -405,6 +555,17 @@ var selectContextTemplate *template.Template = template.Must(
 	template.New("selectContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
 		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`err := d.db.SelectContext(ctx, &{{.Dest}}, query, {{.Inputs}})
+if err != nil {
+	return {{.OutputsWithErr}}
+}
+`))
+
+// Reused the execContext template and put set and where variables in separate inputs
+// Renamed main output to result instead of ignoring it in order to get affected rows count further down
+var updateContextTemplate *template.Template = template.Must(
+	template.New("updateContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
+		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
+		`result, err := d.db.ExecContext(ctx, query, {{.FieldVars}}, {{.WhereVars}})
 if err != nil {
 	return {{.OutputsWithErr}}
 }
@@ -452,6 +613,15 @@ func (d *database{{.ModelName}}) {{.Signature}} {
 
 	var dst {{.DstModel}}
 
+	{{.ExecQueryTemplate}}
+
+	return {{.Outputs}}
+}
+`))
+
+// Simplified the function template for use in update queries since there is no output except the row count
+var updateFunctionTemplate *template.Template = template.Must(template.New("updateFunction").Parse(`
+func (d *database{{.ModelName}}) {{.Signature}} {
 	{{.ExecQueryTemplate}}
 
 	return {{.Outputs}}
