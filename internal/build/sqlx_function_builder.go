@@ -427,8 +427,6 @@ func BuildInsertFunction(
 	functionData := struct {
 		ModelName         string
 		Signature         string
-		DesStructTemplate string
-		DstModel          string
 		ExecQueryTemplate string
 		Outputs           string
 	}{
