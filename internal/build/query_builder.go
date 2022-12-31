@@ -110,7 +110,12 @@ type Select struct {
 	OrderType       OrderType        `yaml:"order_type"`
 	Limit           uint             `yaml:"limit"`
 	GroupBy         []string         `yaml:"group_by"`
-	ObjectName      string           `yaml:"object_name"`
+}
+
+type Insert struct {
+	Fields       []string `yaml:"fields"`
+	FunctionName string   `yaml:"function_name"`
+	ObjectName   string   `yaml:"object_name"`
 }
 
 type Repo struct {
@@ -123,6 +128,7 @@ type Repo struct {
 	DBLibrary   string      `yaml:"db_library"`
 	Test        bool        `yaml:"test"`
 	Select      []Select    `yaml:"select"`
+	Insert      []Insert    `yaml:"insert"`
 }
 
 // BuildSelectQuery builds a select query
