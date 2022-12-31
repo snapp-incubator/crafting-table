@@ -62,21 +62,22 @@ func Generate(repo Repo) error {
 			)
 			functionList = append(functionList, function)
 			signatureList = append(signatureList, signature)
-		} else if r.Type == TypeInsert {
-			function, signature := BuildInsertFunction(
-				s,
-				repo.Dialect,
-				tableName,
-				r.Fields,
-				r.WhereConditions,
-				r.ObjectName,
-				r.FunctionName,
-			)
-			functionList = append(functionList, function)
-			signatureList = append(signatureList, signature)
 		}
 	}
 
+	// Insert
+	for _, insert := range repo.Insert {
+		function, signature := BuildInsertFunction(
+			s,
+			repo.Dialect,
+			tableName,
+			insert.Fields,
+			insert.ObjectName,
+			insert.FunctionName,
+		)
+		functionList = append(functionList, function)
+		signatureList = append(signatureList, signature)
+	}
 	repoTemplate := BuildRepository(signatureList, functionList, repo.PackageName, s.TableName, s.Name)
 
 	err = exportRepository(repoTemplate, repo.Destination)
