@@ -78,6 +78,7 @@ func Generate(repo Repo) error {
 		functionList = append(functionList, function)
 		signatureList = append(signatureList, signature)
 	}
+
 	repoTemplate := BuildRepository(signatureList, functionList, repo.PackageName, s.TableName, s.Name)
 
 	err = exportRepository(repoTemplate, repo.Destination)
