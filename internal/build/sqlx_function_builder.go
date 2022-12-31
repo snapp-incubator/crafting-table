@@ -410,11 +410,11 @@ func BuildInsertFunction(
 		fields,
 	)
 	execQueryData := struct {
-		Query      string
-		ObjectName string
+		Query string
+		Dst   string
 	}{
-		Query:      insertQuery,
-		ObjectName: objectName,
+		Query: insertQuery,
+		Dst:   objectName,
 	}
 	var execQueryBuilder strings.Builder
 	if err := insertContext.Execute(&execQueryBuilder, execQueryData); err != nil {
@@ -501,7 +501,7 @@ if err != nil {
 
 var insertContext *template.Template = template.Must(
 	template.New("insertContext").Parse("query := `{{.Query}}`\n" +
-		`_, err := d.db.NamedExecContext(ctx, query , {{.ObjectName}})
+		`_, err := d.db.NamedExecContext(ctx, query , {{.Dst}})
 if err != nil {
 	return err
 }
