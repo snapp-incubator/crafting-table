@@ -22,7 +22,6 @@ type SelectType string
 const (
 	SelectTypeSelect SelectType = "select"
 	SelectTypeGet    SelectType = "get"
-	TypeInsert       SelectType = "insert"
 )
 
 type OperatorType string
