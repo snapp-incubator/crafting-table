@@ -22,11 +22,9 @@ The command for creating functions is as below:
 crafting-table manifest apply <manifest-file-path>
 ```
 
-
-## Manifest file
+## Manifest File
 The manifest file is a yaml file that contains the information about the functions that you want to create.  
 You can find more details about the manifest file in [here]().
-
 
 # Help Us
 You can contribute to improving this tool by sending pull requests or issues on GitHub.  
