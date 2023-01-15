@@ -1,4 +1,3 @@
-![alt text](https://user-images.githubusercontent.com/49960770/161902750-b853f8ad-5ab1-4676-9868-9be63ed3f8c3.jpeg)
 ![new logo](https://user-images.githubusercontent.com/49960770/212420359-aea418eb-e5e5-49b4-8564-8257d0cbae57.png)  
 #### logo by: Midjourney
 
