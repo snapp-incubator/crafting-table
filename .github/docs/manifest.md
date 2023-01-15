@@ -76,5 +76,87 @@ Type is a string that is used to identify the type of the select function. Craft
 - `get`
   - Get one row from the database. (In this case, if database returns more than one row, query will return an error.)
 
+#### Fields
+Fields is an array of strings that is used to identify the fields that you want to select from the database.
+If you want to select all fields, you can use empty array as the value of the fields.
+
+#### Aggregate Fields
+Aggregate Fields is an array of objects that is used to identify the aggregate fields 
+that you want to select from the database.
+Crafting table supports the following fields for aggregate fields:
+- `function`
+    - The function that you want to use for aggregate fields. Crafting table supports the following functions:
+        - COUNT
+        - SUM
+        - AVG
+        - MAX
+        - MIN
+        - FIRST
+        - LAST
+- `on`
+    - The field that you want to use for aggregate function.
+- `as`
+    - The name of the field that you want to use for the result of the aggregate function.
+
+#### Where Conditions
+Where Conditions is an array of objects that is used to identify the where conditions.
+Crafting table supports the following fields for where conditions:
+- `column`
+    - The column that you want to use for where condition.
+- `operator`
+    - The operator that you want to use for where condition. Crafting table supports the following operators:
+        - equal
+        - not_equal
+        - in
+        - not_in
+        - gt
+        - gte
+        - lt
+        - lte 
+        - is_null
+        - is_not_null
 
 
+#### Join Fields
+Join Fields is an array of objects that is used to identify the join fields.
+Crafting table supports the following fields for join fields:
+- `table`
+    - The table that you want to join with.
+- `as`
+    - The alias of the table that you want to join with.
+- `on_source`
+    - The column of the source table that you want to use for join condition.
+- `on_join`
+    - The column of the join table that you want to use for join condition.
+- `function`
+    - The function that you want to use for join fields. Crafting table supports the following functions:
+        - Join
+        - inner
+        - fullOuter
+        - rightOuter
+        - leftOuter
+        - full
+        - left
+        - right
+        - natural
+        - naturalLeft
+        - naturalRight
+        - naturalFull
+        - cross
+
+#### Order By
+Order By is a string that is used to identify the field that you want to use for order by.
+
+#### Order Type
+Order Type is a string that is used to identify the type of the order by.
+Crafting table supports the following fields for order by:
+- `asc`
+    - Order by ascending.
+- `desc`
+    - Order by descending.
+
+#### Limit
+Limit is an integer that is used to identify the limit of the select function.
+
+#### Group By
+Group By is an array of strings that is used to identify the fields that you want to use for group by.
