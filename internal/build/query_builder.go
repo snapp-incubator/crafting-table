@@ -111,6 +111,13 @@ type Select struct {
 	GroupBy         []string         `yaml:"group_by"`
 }
 
+type Update struct {
+	Fields          []string         `yaml:"fields"`
+	FunctionName    string           `yaml:"function_name"`
+	WhereConditions []WhereCondition `yaml:"where_conditions"`
+}
+
+// Repo added Update in the same manner as Select
 type Repo struct {
 	Source      string      `yaml:"source"`
 	Destination string      `yaml:"destination"`
@@ -121,6 +128,7 @@ type Repo struct {
 	DBLibrary   string      `yaml:"db_library"`
 	Test        bool        `yaml:"test"`
 	Select      []Select    `yaml:"select"`
+	Update      []Update    `yaml:"update"`
 }
 
 // BuildSelectQuery builds a select query

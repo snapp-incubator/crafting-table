@@ -65,6 +65,20 @@ func Generate(repo Repo) error {
 		}
 	}
 
+	// Update
+	for _, r := range repo.Update {
+		function, signature := BuildUpdateFunction(
+			s,
+			repo.Dialect,
+			tableName,
+			r.Fields,
+			r.WhereConditions,
+			r.FunctionName,
+		)
+		functionList = append(functionList, function)
+		signatureList = append(signatureList, signature)
+	}
+
 	repoTemplate := BuildRepository(signatureList, functionList, repo.PackageName, s.TableName, s.Name)
 
 	err = exportRepository(repoTemplate, repo.Destination)
