@@ -13,6 +13,7 @@
 * Fix bug for using table name in manifest. (2022-12-05, @n25a, !76)  
 * Fix bug for checking `where` in build query layer and fix naming function. (2022-12-05, @n25a, !77)
 * Add aggregate set for validation. (2022-12-05, @n25a, !78)
+* Update README and add new documents. (2023-01-15, @n25a, !82)
 
 # v2.0.0 - Nov 08 2022 
 
