@@ -24,7 +24,7 @@ crafting-table manifest apply <manifest-file-path>
 
 ## Manifest File
 The manifest file is a yaml file that contains the information about the functions that you want to create.  
-You can find more details about the manifest file in [here]().
+You can find more details about the manifest file in [here](https://github.com/snapp-incubator/crafting-table/blob/master/.github/docs/manifest.md).
 
 # Help Us
 You can contribute to improving this tool by sending pull requests or issues on GitHub.  
