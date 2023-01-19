@@ -72,6 +72,7 @@ func Generate(repo Repo) error {
 			repo.Dialect,
 			tableName,
 			insert.Fields,
+			insert.WithObject,
 			insert.ObjectName,
 			insert.FunctionName,
 		)
