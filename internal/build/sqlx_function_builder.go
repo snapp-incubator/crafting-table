@@ -385,7 +385,12 @@ func BuildInsertFunction(
 		functionName = customFunctionName
 	}
 
-	inputs := fmt.Sprintf("%s *%s.%s", objectName, structure.PackageName, structure.Name)
+	var inputs string
+	if withObject {
+		inputs = fmt.Sprintf("%s *%s.%s", objectName, structure.PackageName, structure.Name)
+	} else {
+		inputs = ""
+	}
 
 	// make functions signature
 	signatureData := struct {
@@ -411,11 +416,13 @@ func BuildInsertFunction(
 		fields,
 	)
 	execQueryData := struct {
-		Query string
-		Dst   string
+		Query      string
+		Dst        string
+		WithObject bool
 	}{
-		Query: insertQuery,
-		Dst:   objectName,
+		Query:      insertQuery,
+		Dst:        objectName,
+		WithObject: withObject,
 	}
 	var execQueryBuilder strings.Builder
 	if err := insertContext.Execute(&execQueryBuilder, execQueryData); err != nil {
@@ -502,7 +509,7 @@ if err != nil {
 
 var insertContext *template.Template = template.Must(
 	template.New("insertContext").Parse("query := `{{.Query}}`\n" +
-		`_, err := d.db.NamedExecContext(ctx, query , {{.Dst}})
+		`_, err := d.db.NamedExecContext(ctx, query{{ if .WithObject }}, {{.Dst}} {{ end }})
 if err != nil {
 	return err
 }
