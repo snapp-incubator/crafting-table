@@ -374,6 +374,7 @@ func BuildInsertFunction(
 	dialect DialectType,
 	table string,
 	fields []string,
+	withObject bool,
 	objectName string,
 	customFunctionName string,
 ) (function string, signature string) {
