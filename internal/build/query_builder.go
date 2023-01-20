@@ -375,6 +375,10 @@ func BuildInsertQuery(
 	ds := d.Insert(table)
 
 	// Set
+	if len(fields) == 0 {
+		panic("insert fields is empty")
+	}
+
 	setRecords := make(goqu.Record, 0)
 	for _, f := range fields {
 		setRecords[f] = ":" + f
@@ -384,11 +388,5 @@ func BuildInsertQuery(
 	// Build
 	query, _, _ := ds.ToSQL()
 
-	// Replace 9999999999999999 with "?"
-	query = strings.ReplaceAll(query, "'9999999999999999'", "?")
-	query = strings.ReplaceAll(query, "9999999999999999", "?")
-
 	return query
 }
-
-// in Build insert query there is no need for WhereCondition array .
