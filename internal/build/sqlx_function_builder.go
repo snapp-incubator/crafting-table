@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"text/template"
 
@@ -375,7 +376,6 @@ func BuildInsertFunction(
 	table string,
 	fields []string,
 	withObject bool,
-	objectName string,
 	customFunctionName string,
 ) (function string, signature string) {
 	var functionName string
@@ -387,9 +387,24 @@ func BuildInsertFunction(
 
 	var inputs string
 	if withObject {
-		inputs = fmt.Sprintf("%s *%s.%s", objectName, structure.PackageName, structure.Name)
+		inputs = fmt.Sprintf(
+			"%s *%s.%s",
+			strcase.ToLowerCamel(structure.Name),
+			structure.PackageName,
+			structure.Name)
 	} else {
-		inputs = ""
+		if len(fields) == 0 {
+			panic("fields is empty")
+		}
+
+		for _, f := range fields {
+			name, ok := structure.FieldMapDBFlagToName[f]
+			if !ok {
+				log.Fatalf("field %s not found in structure", f)
+			}
+			fieldType := structure.FieldMapNameToType[name]
+			inputs += fmt.Sprintf("%s %s, ", strcase.ToLowerCamel(name), fieldType)
+		}
 	}
 
 	// make functions signature
@@ -415,13 +430,14 @@ func BuildInsertFunction(
 		table,
 		fields,
 	)
+
 	execQueryData := struct {
 		Query      string
 		Dst        string
 		WithObject bool
 	}{
 		Query:      insertQuery,
-		Dst:        objectName,
+		Dst:        strcase.ToLowerCamel(structure.Name),
 		WithObject: withObject,
 	}
 	var execQueryBuilder strings.Builder
