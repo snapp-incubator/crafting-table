@@ -369,6 +369,7 @@ func BuildInsertQuery(
 	dialect DialectType,
 	table string,
 	fields []string,
+	withObject bool,
 ) string {
 	d := goqu.Dialect(string(dialect))
 	ds := d.Insert(table)
@@ -379,8 +380,14 @@ func BuildInsertQuery(
 	}
 
 	setRecords := make(goqu.Record, 0)
-	for _, f := range fields {
-		setRecords[f] = ":" + f
+	if withObject {
+		for _, f := range fields {
+			setRecords[f] = ":" + f
+		}
+	} else {
+		for _, f := range fields {
+			setRecords[f] = "?"
+		}
 	}
 	ds = ds.Rows(setRecords)
 

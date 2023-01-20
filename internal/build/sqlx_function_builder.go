@@ -385,7 +385,15 @@ func BuildInsertFunction(
 		functionName = customFunctionName
 	}
 
+	for _, f := range fields {
+		_, ok := structure.FieldMapDBFlagToName[f]
+		if !ok {
+			log.Fatalf("field %s not found in structure", f)
+		}
+	}
+
 	var inputs string
+	var execVars string
 	if withObject {
 		inputs = fmt.Sprintf(
 			"%s *%s.%s",
@@ -398,12 +406,10 @@ func BuildInsertFunction(
 		}
 
 		for _, f := range fields {
-			name, ok := structure.FieldMapDBFlagToName[f]
-			if !ok {
-				log.Fatalf("field %s not found in structure", f)
-			}
+			name := structure.FieldMapDBFlagToName[f]
 			fieldType := structure.FieldMapNameToType[name]
 			inputs += fmt.Sprintf("%s %s, ", strcase.ToLowerCamel(name), fieldType)
+			execVars += fmt.Sprintf("%s, ", strcase.ToLowerCamel(name))
 		}
 	}
 
@@ -429,20 +435,41 @@ func BuildInsertFunction(
 		dialect,
 		table,
 		fields,
+		withObject,
 	)
 
-	execQueryData := struct {
-		Query      string
-		Dst        string
-		WithObject bool
-	}{
-		Query:      insertQuery,
-		Dst:        strcase.ToLowerCamel(structure.Name),
-		WithObject: withObject,
+	specialQuery := false
+	if dialect == MySQL || dialect == SQLite3 {
+		specialQuery = true
 	}
+
 	var execQueryBuilder strings.Builder
-	if err := insertContext.Execute(&execQueryBuilder, execQueryData); err != nil {
-		panic(err)
+	if withObject {
+		execQueryData := struct {
+			SpecialQuery bool
+			Query        string
+			Dest         string
+		}{
+			SpecialQuery: specialQuery,
+			Query:        insertQuery,
+			Dest:         strcase.ToLowerCamel(structure.Name),
+		}
+		if err := namedExecContextTemplate.Execute(&execQueryBuilder, execQueryData); err != nil {
+			panic(err)
+		}
+	} else {
+		execQueryData := struct {
+			SpecialQuery bool
+			Query        string
+			ExecVars     string
+		}{
+			SpecialQuery: specialQuery,
+			Query:        insertQuery,
+			ExecVars:     execVars,
+		}
+		if err := execContextTemplate.Execute(&execQueryBuilder, execQueryData); err != nil {
+			panic(err)
+		}
 	}
 
 	insertContextQuery := execQueryBuilder.String()
@@ -523,20 +550,12 @@ if err != nil {
 }
 `))
 
-var insertContext *template.Template = template.Must(
-	template.New("insertContext").Parse("query := `{{.Query}}`\n" +
-		`_, err := d.db.NamedExecContext(ctx, query{{ if .WithObject }}, {{.Dst}} {{ end }})
-if err != nil {
-	return err
-}
-`))
-
 var namedExecContextTemplate *template.Template = template.Must(
 	template.New("namedExecContext").Parse("{{ if .SpecialQuery }}query := \"{{.Query}}\"" +
 		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`_, err := d.db.NamedExecContext(ctx, query, {{.Dest}})
 if err != nil {
-	return {{.OutputsWithErr}}
+	return err
 }
 `))
 
@@ -545,7 +564,7 @@ var execContextTemplate *template.Template = template.Must(
 		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`_, err := d.db.ExecContext(ctx, query, {{.ExecVars}})
 if err != nil {
-	return {{.OutputsWithErr}}
+	return err
 }
 `))
 
