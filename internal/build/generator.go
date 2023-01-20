@@ -73,7 +73,6 @@ func Generate(repo Repo) error {
 			tableName,
 			insert.Fields,
 			insert.WithObject,
-			insert.ObjectName,
 			insert.FunctionName,
 		)
 		functionList = append(functionList, function)

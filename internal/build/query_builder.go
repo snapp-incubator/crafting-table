@@ -115,7 +115,6 @@ type Insert struct {
 	Fields       []string `yaml:"fields"`
 	FunctionName string   `yaml:"function_name"`
 	WithObject   bool     `yaml:"with_object"`
-	ObjectName   string   `yaml:"object_name"`
 }
 
 type Repo struct {
