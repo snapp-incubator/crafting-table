@@ -1,6 +1,8 @@
 package build
 
 import (
+	"fmt"
+	"log"
 	"strings"
 	"text/template"
 
@@ -368,6 +370,131 @@ func BuildSelectFunction(
 
 // TODO: add more functions like: update, insert.
 
+func BuildInsertFunction(
+	structure *structure.Structure,
+	dialect DialectType,
+	table string,
+	fields []string,
+	withObject bool,
+	customFunctionName string,
+) (function string, signature string) {
+	var functionName string
+	if customFunctionName == "" {
+		functionName = "Create"
+	} else {
+		functionName = customFunctionName
+	}
+
+	for _, f := range fields {
+		_, ok := structure.FieldMapDBFlagToName[f]
+		if !ok {
+			log.Fatalf("field %s not found in structure", f)
+		}
+	}
+
+	var inputs string
+	var execVars string
+	if withObject {
+		inputs = fmt.Sprintf(
+			"%s *%s.%s",
+			strcase.ToLowerCamel(structure.Name),
+			structure.PackageName,
+			structure.Name)
+	} else {
+		if len(fields) == 0 {
+			panic("fields is empty")
+		}
+
+		for _, f := range fields {
+			name := structure.FieldMapDBFlagToName[f]
+			fieldType := structure.FieldMapNameToType[name]
+			inputs += fmt.Sprintf("%s %s, ", strcase.ToLowerCamel(name), fieldType)
+			execVars += fmt.Sprintf("%s, ", strcase.ToLowerCamel(name))
+		}
+	}
+
+	// make functions signature
+	signatureData := struct {
+		FuncName string
+		Inputs   string
+		Outputs  string
+	}{
+		FuncName: functionName,
+		Inputs:   inputs,
+		Outputs:  "error",
+	}
+	var signatureBuilder strings.Builder
+	if err := signatureTemplate.Execute(&signatureBuilder, signatureData); err != nil {
+		panic(err)
+	}
+
+	signature = signatureBuilder.String()
+
+	// make functions body
+	insertQuery := BuildInsertQuery(
+		dialect,
+		table,
+		fields,
+		withObject,
+	)
+
+	specialQuery := false
+	if dialect == MySQL || dialect == SQLite3 {
+		specialQuery = true
+	}
+
+	var execQueryBuilder strings.Builder
+	if withObject {
+		execQueryData := struct {
+			SpecialQuery bool
+			Query        string
+			Dest         string
+		}{
+			SpecialQuery: specialQuery,
+			Query:        insertQuery,
+			Dest:         strcase.ToLowerCamel(structure.Name),
+		}
+		if err := namedExecContextTemplate.Execute(&execQueryBuilder, execQueryData); err != nil {
+			panic(err)
+		}
+	} else {
+		execQueryData := struct {
+			SpecialQuery bool
+			Query        string
+			ExecVars     string
+		}{
+			SpecialQuery: specialQuery,
+			Query:        insertQuery,
+			ExecVars:     execVars,
+		}
+		if err := execContextTemplate.Execute(&execQueryBuilder, execQueryData); err != nil {
+			panic(err)
+		}
+	}
+
+	insertContextQuery := execQueryBuilder.String()
+
+	functionData := struct {
+		ModelName         string
+		Signature         string
+		ExecQueryTemplate string
+		Outputs           string
+	}{
+		ModelName:         structure.Name,
+		Signature:         signature,
+		ExecQueryTemplate: insertContextQuery,
+		Outputs:           "nil",
+	}
+
+	var functionBuilder strings.Builder
+	if err := insertFunctionTemplate.Execute(&functionBuilder, functionData); err != nil {
+		panic(err)
+	}
+	function = functionBuilder.String()
+
+	return function, signature
+}
+
 func BuildRepository(
 	signatureTemplateList []string,
 	functionTemplateList []string,
@@ -428,7 +555,7 @@ var namedExecContextTemplate *template.Template = template.Must(
 		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`_, err := d.db.NamedExecContext(ctx, query, {{.Dest}})
 if err != nil {
-	return {{.OutputsWithErr}}
+	return err
 }
 `))
 
@@ -437,7 +564,7 @@ var execContextTemplate *template.Template = template.Must(
 		"{{ else }}query := `{{.Query}}`{{ end }} \n" +
 		`_, err := d.db.ExecContext(ctx, query, {{.ExecVars}})
 if err != nil {
-	return {{.OutputsWithErr}}
+	return err
 }
 `))
 
@@ -454,6 +581,14 @@ func (d *database{{.ModelName}}) {{.Signature}} {
 
 	{{.ExecQueryTemplate}}
 
+	return {{.Outputs}}
+}
+`))
+
+// insertFunctionTemplate is function's body for insert methods
+var insertFunctionTemplate *template.Template = template.Must(template.New("function").Parse(`
+func (d *database{{.ModelName}}) {{.Signature}} {
+	{{.ExecQueryTemplate}}
 	return {{.Outputs}}
 }
 `))

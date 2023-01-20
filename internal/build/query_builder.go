@@ -111,6 +111,12 @@ type Select struct {
 	GroupBy         []string         `yaml:"group_by"`
 }
 
+type Insert struct {
+	Fields       []string `yaml:"fields"`
+	FunctionName string   `yaml:"function_name"`
+	WithObject   bool     `yaml:"with_object"`
+}
+
 type Repo struct {
 	Source      string      `yaml:"source"`
 	Destination string      `yaml:"destination"`
@@ -121,6 +127,7 @@ type Repo struct {
 	DBLibrary   string      `yaml:"db_library"`
 	Test        bool        `yaml:"test"`
 	Select      []Select    `yaml:"select"`
+	Insert      []Insert    `yaml:"insert"`
 }
 
 // BuildSelectQuery builds a select query
@@ -361,24 +368,31 @@ func BuildUpdateQuery(
 func BuildInsertQuery(
 	dialect DialectType,
 	table string,
-	fields []interface{},
+	fields []string,
+	withObject bool,
 ) string {
 	d := goqu.Dialect(string(dialect))
 	ds := d.Insert(table)
 
 	// Set
+	if len(fields) == 0 {
+		panic("insert fields is empty")
+	}
+
 	setRecords := make(goqu.Record, 0)
-	for _, f := range fields {
-		setRecords[f.(string)] = ":" + f.(string)
+	if withObject {
+		for _, f := range fields {
+			setRecords[f] = ":" + f
+		}
+	} else {
+		for _, f := range fields {
+			setRecords[f] = "?"
+		}
 	}
 	ds = ds.Rows(setRecords)
 
 	// Build
 	query, _, _ := ds.ToSQL()
-
-	// Replace 9999999999999999 with "?"
-	query = strings.ReplaceAll(query, "'9999999999999999'", "?")
-	query = strings.ReplaceAll(query, "9999999999999999", "?")
 
 	return query
 }
