@@ -33,6 +33,13 @@ select:
     order_type : string
     limit : int
     group_by : ArrayOfString
+insert:
+  - fields: ["var2", "var3", "var4"]
+    function_name: ""
+    with_object: true
+  - fields: [ "var1", "var3", "var4"]
+    function_name: "ThisFunctionAddExample"
+    with_object: false
 ```
 
 ### Tag
@@ -160,3 +167,18 @@ Limit is an integer that is used to identify the limit of the select function.
 
 #### Group By
 Group By is an array of strings that is used to identify the fields that you want to use for group by.
+
+
+### Insert
+This section for insert functions. Crafting table supports the following fields for insert functions:
+
+#### Fields
+Fields is an array of strings that is used to identify the fields that you want to insert into the database.
+
+#### Function Name
+Function Name is a string that is used to identify the name of the function that you want to create.
+As default, crafting table sets "Create" as the function name.
+
+#### With Object
+With Object is a boolean that is used to identify if you want to create function with object or not.
+Object is a struct that contains the fields that you want to insert into the database.

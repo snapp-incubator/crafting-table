@@ -21,26 +21,39 @@ You better know about each packages before you start contributing.
 ### Crafting-Table Packages
 The following is a list of packages that be existed in Crafting-table.
 
-#### cmd
-* `cmd` is a package for command line interface. we used `cobra` for creating command line interface.
+[//]: # (#### cmd)
 
-#### example
-* `example` is a package for showing what repository created by crafting table.
+[//]: # (* `cmd` is a package for command line interface. we used `cobra` for creating command line interface.)
 
-#### app
-* `app` is a package for application. we initiate every dependency for running the crafting table.
+[//]: # ()
+[//]: # (#### example)
 
-#### assets
-* `assets` is a package for storing every database library's template. 
+[//]: # (* `example` is a package for showing what repository created by crafting table.)
 
-#### parser
-* `parser` is a package for parsing variable from input flags.
+[//]: # ()
+[//]: # (#### app)
 
-#### repository
-* `repository` is a package for creating repository in based on database library's template.
+[//]: # (* `app` is a package for application. we initiate every dependency for running the crafting table.)
 
-#### structure
-* `structure` is a package for binding and extracting data from selected golang struct.
+[//]: # ()
+[//]: # (#### assets)
+
+[//]: # (* `assets` is a package for storing every database library's template. )
+
+[//]: # ()
+[//]: # (#### parser)
+
+[//]: # (* `parser` is a package for parsing variable from input flags.)
+
+[//]: # ()
+[//]: # (#### repository)
+
+[//]: # (* `repository` is a package for creating repository in based on database library's template.)
+
+[//]: # ()
+[//]: # (#### structure)
+
+[//]: # (* `structure` is a package for binding and extracting data from selected golang struct.)
 
 
 ## How Can I Contribute?
