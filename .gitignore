@@ -22,3 +22,6 @@ vendor/
 
 # Project Binary file
 crafting-table
+
+# Generated Files
+*_gen.go

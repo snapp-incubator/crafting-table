@@ -15,6 +15,7 @@
 * Add aggregate set for validation. (2022-12-05, @n25a, !78)
 * Update README and add new documents. (2023-01-15, @n25a, !82)
 * Add insert function to function builder. (2023-01-21, @parsaeisa, !79)
+* Add query builder generator feature. (2023-01-30, @amirrezaask, !62)
 
 # v2.0.0 - Nov 08 2022 
 

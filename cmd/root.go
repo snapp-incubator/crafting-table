@@ -31,5 +31,5 @@ func Execute() {
 
 func init() {
 	manifestCMD.AddCommand(applyCMD)
-	rootCMD.AddCommand(manifestCMD)
+	rootCMD.AddCommand(manifestCMD, queryBuilderCmd)
 }
