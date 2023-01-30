@@ -274,13 +274,6 @@ func (q *{{ToLowerCamelCase .ModelName }}SQLQueryBuilder) SQL() (string, error) 
 
 `
 
-const newselect = `
-func (q *{{ToLowerCamelCase .ModelName}}SQLQueryBuilder) Select(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
-	q.projected = append(q.projected, string(column))
-	return q
-}
-`
-
 const orderBy = `
 func (q *{{ToLowerCamelCase $.ModelName}}SQLQueryBuilder) OrderByAsc(column {{.ModelName}}Column) {{ $.ModelName }}SQLQueryBuilder {
     q.mode = "select"

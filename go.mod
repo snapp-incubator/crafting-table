@@ -6,6 +6,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/bxcodec/faker/v3 v3.8.0
 	github.com/doug-martin/goqu/v9 v9.18.0
+	github.com/gertd/go-pluralize v0.2.1
 	github.com/iancoleman/strcase v0.2.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/spf13/cobra v1.3.0

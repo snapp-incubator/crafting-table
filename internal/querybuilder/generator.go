@@ -39,10 +39,6 @@ func isComparable(typeExpr ast.Expr) bool {
 	return false
 }
 
-func isNullable(typeExpr ast.Expr) bool {
-	return false
-}
-
 func resolveTypes(structDecl *ast.GenDecl) []structField {
 	var fields []structField
 	for _, field := range structDecl.Specs[0].(*ast.TypeSpec).Type.(*ast.StructType).Fields.List {
@@ -51,7 +47,7 @@ func resolveTypes(structDecl *ast.GenDecl) []structField {
 				Name:         name.Name,
 				Type:         fmt.Sprint(field.Type),
 				IsComparable: isComparable(field.Type),
-				IsNullable:   isNullable(field.Type),
+				IsNullable:   false, // TODO: fix this
 			}
 			if field.Tag != nil {
 				sf.Tag = field.Tag.Value
